@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from api.v1.schemas.incident_parser import ParseRequest
-from services import incident_parser_service
-from core.exceptions import (
+from app.api.v1.schemas.incident_parser import ParseRequest
+from app.services import incident_parser_service
+from app.core.exceptions import (
     IncidentParsingError, 
     AIServiceUnavailableError, 
     InvalidInputError,

@@ -7,12 +7,13 @@ import {
   useColorModeValue,
 } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
-import { MessageBubble, Message } from './MessageBubble'
+import { MessageBubble } from './MessageBubble'
+import { ChatMessage } from '../../../types/chat'
 
 const MotionBox = motion(Box)
 
 interface ChatWindowProps {
-  messages: Message[]
+  messages: ChatMessage[]
 }
 
 /**
@@ -58,10 +59,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ messages }) => {
             >
               <VStack spacing={4}>
                 <Text fontSize="2xl" fontWeight="bold">
-                  欢迎使用 PortSentinel AI 事件解析器
+                  欢迎使用 PortSentinel AI 智能助手
                 </Text>
                 <Text fontSize="md" maxW="md">
-                  请在下方输入框中粘贴或输入事件报告内容，AI 将为您智能解析并提取关键信息。
+                  请在下方输入框中粘贴或输入事件报告内容，AI 将为您智能解析事件并检索相关的 SOP 建议。
                 </Text>
               </VStack>
             </MotionBox>

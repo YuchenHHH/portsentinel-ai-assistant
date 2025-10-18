@@ -2,7 +2,10 @@ import axios from 'axios'
 import {
   ParseRequestData,
   IncidentReportResponse,
+  EnrichmentRequest,
+  EnrichmentResponse,
   isIncidentReportResponse,
+  isEnrichmentResponse,
   isApiErrorResponse
 } from '../types/api'
 
@@ -76,6 +79,42 @@ export const parseIncidentReport = async (data: ParseRequestData): Promise<Incid
     }
     console.error('Unexpected Error:', error);
     throw new Error('An unexpected error occurred.');
+  }
+}
+
+// RAG 增强事件报告
+export const enrichIncident = async (data: EnrichmentRequest): Promise<EnrichmentResponse> => {
+  try {
+    const response = await apiClient.post<EnrichmentResponse>('/api/v1/rag/enrich', data);
+    
+    // 验证响应数据类型
+    if (!isEnrichmentResponse(response.data)) {
+      console.error('RAG API 响应数据格式不正确:', response.data);
+      throw new Error('RAG 服务器返回的数据格式不正确');
+    }
+    
+    return response.data;
+  } catch (error: any) {
+    if (axios.isAxiosError(error)) {
+      const errorData = error.response?.data;
+      
+      // 检查是否是结构化的错误响应
+      if (isApiErrorResponse(errorData)) {
+        console.error('RAG API Error:', errorData);
+        throw new Error(`${errorData.error}: ${errorData.message}`);
+      } else if (errorData?.detail) {
+        // 处理 FastAPI 的错误格式
+        console.error('RAG API Error:', errorData.detail);
+        throw new Error(typeof errorData.detail === 'string' 
+          ? errorData.detail 
+          : JSON.stringify(errorData.detail));
+      } else {
+        console.error('RAG API Error:', error.message);
+        throw new Error(error.message || 'RAG 服务发生意外错误');
+      }
+    }
+    console.error('RAG Unexpected Error:', error);
+    throw new Error('RAG 增强过程中发生意外错误');
   }
 }
 

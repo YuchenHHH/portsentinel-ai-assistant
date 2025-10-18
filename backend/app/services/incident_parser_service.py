@@ -4,7 +4,7 @@ import logging
 from typing import Optional
 
 # 导入自定义异常
-from core.exceptions import (
+from app.core.exceptions import (
     IncidentParsingError, 
     AIServiceUnavailableError, 
     InvalidInputError,

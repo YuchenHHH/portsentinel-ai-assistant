@@ -3,8 +3,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from core.config import settings
-from api.v1.endpoints import incident_parser
+from app.core.config import settings
+from app.api.v1.endpoints import incident_parser, rag
 
 # 配置日志
 logging.basicConfig(
@@ -37,6 +37,12 @@ app.include_router(
     incident_parser.router,
     prefix=f"{settings.api_v1_prefix}/incidents",
     tags=["事件解析"]
+)
+
+app.include_router(
+    rag.router,
+    prefix=f"{settings.api_v1_prefix}",
+    tags=["RAG知识检索"]
 )
 
 

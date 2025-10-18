@@ -12,21 +12,20 @@ import {
 import { motion } from 'framer-motion'
 import { TypingIndicator } from './TypingIndicator'
 import { ResultDisplay } from './ResultDisplay'
-import { IncidentReportResponse } from '../../../types/api'
+import { EnrichmentDisplay } from './EnrichmentDisplay'
+import { 
+  ChatMessage, 
+  isUserMessage, 
+  isAssistantMessage, 
+  isEnrichmentMessage, 
+  isLoadingMessage,
+  isSystemMessage 
+} from '../../../types/chat'
 
 const MotionBox = motion(Box)
 
-export interface Message {
-  id: string
-  role: 'user' | 'assistant'
-  content: string | IncidentReportResponse
-  timestamp: string
-  isLoading?: boolean
-  sourceType?: 'Email' | 'SMS' | 'Call'
-}
-
 interface MessageBubbleProps {
-  message: Message
+  message: ChatMessage
 }
 
 /**
@@ -35,10 +34,12 @@ interface MessageBubbleProps {
 export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   const userBgColor = useColorModeValue('blue.50', 'blue.900')
   const assistantBgColor = useColorModeValue('gray.50', 'gray.700')
+  const systemBgColor = useColorModeValue('yellow.50', 'yellow.900')
   const borderColor = useColorModeValue('gray.200', 'gray.600')
+  const systemBorderColor = useColorModeValue('yellow.200', 'yellow.700')
 
-  const formatTime = (timestamp: string) => {
-    return new Date(timestamp).toLocaleTimeString('zh-CN', {
+  const formatTime = (timestamp: Date) => {
+    return timestamp.toLocaleTimeString('zh-CN', {
       hour: '2-digit',
       minute: '2-digit'
     })
@@ -62,7 +63,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     }
   }
 
-  if (message.role === 'user') {
+  // 用户消息
+  if (isUserMessage(message)) {
     return (
       <Flex justify="flex-end" mb={4}>
         <MotionBox
@@ -85,14 +87,42 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                 {formatTime(message.timestamp)}
               </Text>
             </HStack>
-            <Text whiteSpace="pre-wrap">{message.content as string}</Text>
+            <Text whiteSpace="pre-wrap">{message.content}</Text>
           </VStack>
         </MotionBox>
       </Flex>
     )
   }
 
-  if (message.role === 'assistant') {
+  // 系统消息
+  if (isSystemMessage(message)) {
+    return (
+      <Flex justify="center" mb={4}>
+        <MotionBox
+          bg={systemBgColor}
+          p={3}
+          borderRadius="lg"
+          border="1px"
+          borderColor={systemBorderColor}
+          variants={animationVariants}
+          initial="initial"
+          animate="animate"
+        >
+          <HStack>
+            <Text fontSize="sm" color="yellow.700">
+              系统消息:
+            </Text>
+            <Text fontSize="xs" color="yellow.600">
+              {message.content}
+            </Text>
+          </HStack>
+        </MotionBox>
+      </Flex>
+    )
+  }
+
+  // 助手消息（包括解析结果、RAG增强、加载状态）
+  if (message.type === 'assistant') {
     return (
       <Flex justify="flex-start" mb={4}>
         <MotionBox
@@ -122,26 +152,37 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
               border="1px"
               borderColor={borderColor}
             >
-              {message.isLoading ? (
+              {/* 加载状态 */}
+              {isLoadingMessage(message) ? (
                 <HStack spacing={3}>
                   <Text fontSize="sm" color="gray.600">
-                    正在解析中
+                    {message.content}
                   </Text>
                   <TypingIndicator />
                 </HStack>
-              ) : typeof message.content === 'string' ? (
-                // 错误消息显示
-                <Box>
-                  <Text fontSize="sm" color="red.600" fontWeight="medium">
-                    ❌ 解析失败
-                  </Text>
-                  <Text fontSize="sm" color="gray.600" mt={2}>
+              ) : isEnrichmentMessage(message) ? (
+                // RAG 增强结果显示
+                <VStack align="stretch" spacing={3}>
+                  <Text fontSize="sm" fontWeight="medium" color="gray.700">
                     {message.content}
                   </Text>
-                </Box>
+                  <EnrichmentDisplay enrichmentData={message.enrichmentData} />
+                </VStack>
+              ) : isAssistantMessage(message) ? (
+                // 普通助手消息（解析结果或错误）
+                <VStack align="stretch" spacing={3}>
+                  <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                    {message.content}
+                  </Text>
+                  {message.incidentReport && (
+                    <ResultDisplay result={message.incidentReport} />
+                  )}
+                </VStack>
               ) : (
-                // 正常解析结果显示
-                <ResultDisplay result={message.content as IncidentReportResponse} />
+                // 默认文本消息
+                <Text fontSize="sm" color="gray.600">
+                  未知消息类型
+                </Text>
               )}
             </Box>
           </VStack>

@@ -2,7 +2,7 @@
  * 聊天消息类型定义
  */
 
-import { IncidentReportResponse } from './api';
+import { IncidentReportResponse, EnrichmentResponse } from './api';
 
 // 消息类型
 export type MessageType = 'user' | 'assistant' | 'system';
@@ -32,6 +32,21 @@ export interface AssistantMessage extends BaseMessage {
   incidentReport: IncidentReportResponse;
 }
 
+// RAG 增强消息
+export interface EnrichmentMessage extends BaseMessage {
+  type: 'assistant';
+  content: string;
+  enrichmentData: EnrichmentResponse;
+  isEnrichment: true;
+}
+
+// 加载消息
+export interface LoadingMessage extends BaseMessage {
+  type: 'assistant';
+  content: string;
+  isLoading: true;
+}
+
 // 系统消息
 export interface SystemMessage extends BaseMessage {
   type: 'system';
@@ -39,7 +54,7 @@ export interface SystemMessage extends BaseMessage {
 }
 
 // 联合消息类型
-export type ChatMessage = UserMessage | AssistantMessage | SystemMessage;
+export type ChatMessage = UserMessage | AssistantMessage | EnrichmentMessage | LoadingMessage | SystemMessage;
 
 // 聊天状态
 export interface ChatState {
@@ -80,6 +95,28 @@ export const createAssistantMessage = (
   status: 'sent'
 });
 
+export const createEnrichmentMessage = (
+  content: string,
+  enrichmentData: EnrichmentResponse
+): EnrichmentMessage => ({
+  id: `enrichment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+  type: 'assistant',
+  content,
+  enrichmentData,
+  isEnrichment: true,
+  timestamp: new Date(),
+  status: 'sent'
+});
+
+export const createLoadingMessage = (content: string): LoadingMessage => ({
+  id: `loading_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+  type: 'assistant',
+  content,
+  isLoading: true,
+  timestamp: new Date(),
+  status: 'sending'
+});
+
 export const createSystemMessage = (content: string): SystemMessage => ({
   id: `system_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
   type: 'system',
@@ -95,6 +132,14 @@ export const isUserMessage = (message: ChatMessage): message is UserMessage => {
 
 export const isAssistantMessage = (message: ChatMessage): message is AssistantMessage => {
   return message.type === 'assistant';
+};
+
+export const isEnrichmentMessage = (message: ChatMessage): message is EnrichmentMessage => {
+  return message.type === 'assistant' && 'isEnrichment' in message && message.isEnrichment === true;
+};
+
+export const isLoadingMessage = (message: ChatMessage): message is LoadingMessage => {
+  return message.type === 'assistant' && 'isLoading' in message && message.isLoading === true;
 };
 
 export const isSystemMessage = (message: ChatMessage): message is SystemMessage => {
