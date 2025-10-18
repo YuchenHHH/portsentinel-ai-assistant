@@ -11,6 +11,7 @@ This module contains the Planner responsible for:
 
 import os
 import json
+import re
 from typing import List, Dict, Any, Optional
 from dotenv import load_dotenv
 from langchain_openai import AzureChatOpenAI
@@ -83,12 +84,14 @@ class SOPPlanner:
         Returns:
             ChatPromptTemplate configured for resolution planning
         """
-        system_message = """You are an expert operations planner. Your goal is to convert a vague, historical resolution log into a clear, step-by-step executable plan.
+        system_message = """You are an expert operations planner for a critical port community system (PORTNET). Your goal is to convert a vague, historical resolution log into a clear, step-by-step executable plan.
 
-You have deep expertise in port operations, container management, vessel operations, and EDI/API systems. You understand the complexities of PORTNET operations and can break down complex resolution logs into actionable steps."""
+You have deep expertise in port operations, container management, vessel operations, and EDI/API systems. Your plans must be precise, factual, and directly executable by an automated agent."""
         
-        human_message = """**Incident Data:**
-{incident_data}
+        # --- MODIFICATION START ---
+        # This new human_message template includes our critical rules
+        human_message = """**Incident Context (The Facts):**
+{incident_context}
 
 **Available Tools (for context):**
 {available_tools}
@@ -96,19 +99,16 @@ You have deep expertise in port operations, container management, vessel operati
 **Vague Historical Log (Your Goal):**
 "{vague_resolution_text}"
 
+**CRITICAL RULES FOR PLANNING:**
+1.  **Factuality is essential:** You MUST strictly adhere to the entities (like message types, error codes, and IDs) provided in the 'Incident Context' and 'Vague Historical Log'. DO NOT invent or substitute entities (e.g., if the log says 'COARRI', you MUST use 'COARRI', not 'COPARN').
+2.  **Combine logical steps:** Consolidate multiple micro-actions (like 'identify', 'find', 'validate', 'log', 'and then quarantine') into a single, high-level, logical step. For example, instead of four steps, use one: "Locate and quarantine all `COARRI` messages that failed schema validation."
+3.  **Avoid meta-instructions:** DO NOT generate steps for 'logging' or 'documenting'. The execution agent logs its actions automatically. Only include 'monitoring' if it's a specific, actionable task (e.g., "Monitor translator logs for new errors post-reprocessing").
+4.  **Focus on Action:** Every step in your plan must be an *actionable instruction* for the agent.
+
 **Your New Executable Plan:**
 Respond *only* with a JSON list of strings. Each string is a clear, actionable instruction for the execution agent.
-Keep steps simple and focused on one action.
-Make sure each step is specific and can be executed by an automated system.
-
-Example:
-[
-  "Check for container range overlap using CONTAINER_ID and BSIU 323099",
-  "Document the conflicting serial number 'BSIU 3430001'",
-  "Confirm scope on a safe test entity",
-  "Check for recent deployments",
-  "Apply compliant fix and document the change"
-]"""
+"""
+        # --- MODIFICATION END ---
         
         return ChatPromptTemplate.from_messages([
             ("system", system_message),
@@ -117,7 +117,7 @@ Example:
     
     def create_execution_plan(
         self,
-        incident_data: Dict[str, Any],
+        incident_context: Dict[str, Any],  # Changed from incident_data
         vague_resolution_text: str,
         available_tools: Optional[List[str]] = None
     ) -> List[str]:
@@ -125,7 +125,8 @@ Example:
         Convert a vague resolution log into a clear, executable plan.
         
         Args:
-            incident_data: Dictionary containing incident information
+            incident_context: Dictionary containing ALL incident information 
+                              (e.g., ID, Title, Error Code, SOP Title, etc.)
             vague_resolution_text: The vague historical resolution text to convert
             available_tools: List of available tools for context (optional)
             
@@ -136,8 +137,8 @@ Example:
             ValueError: If required parameters are missing
             Exception: If planning fails
         """
-        if not incident_data:
-            raise ValueError("incident_data cannot be empty")
+        if not incident_context:
+            raise ValueError("incident_context cannot be empty")
         
         if not vague_resolution_text or not vague_resolution_text.strip():
             raise ValueError("vague_resolution_text cannot be empty")
@@ -156,7 +157,7 @@ Example:
         try:
             # Prepare the input data for the chain
             chain_input = {
-                "incident_data": json.dumps(incident_data, indent=2),
+                "incident_context": json.dumps(incident_context, indent=2), # Pass the full context
                 "available_tools": "\n".join([f"- {tool}" for tool in available_tools]),
                 "vague_resolution_text": vague_resolution_text
             }
@@ -167,9 +168,16 @@ Example:
             # Extract the content from the response
             response_content = response.content.strip()
             
+            # Attempt to find the JSON block, even if there's other text
+            json_match = re.search(r'\[.*\]', response_content, re.DOTALL)
+            if not json_match:
+                raise Exception(f"No JSON list found in LLM response.\nResponse: {response_content}")
+            
+            plan_json_str = json_match.group(0)
+
             # Parse the JSON response
             try:
-                execution_plan = json.loads(response_content)
+                execution_plan = json.loads(plan_json_str)
                 
                 # Validate that it's a list of strings
                 if not isinstance(execution_plan, list):
@@ -185,45 +193,22 @@ Example:
                 return execution_plan
                 
             except json.JSONDecodeError as e:
-                raise Exception(f"Failed to parse LLM response as JSON: {e}\nResponse: {response_content}")
+                raise Exception(f"Failed to parse LLM response as JSON: {e}\nResponse: {plan_json_str}")
             except ValueError as e:
-                raise Exception(f"Invalid execution plan format: {e}\nResponse: {response_content}")
+                raise Exception(f"Invalid execution plan format: {e}\nResponse: {plan_json_str}")
                 
         except Exception as e:
+            # Re-raise with more context
             raise Exception(f"Failed to create execution plan: {e}")
     
-    def create_execution_plan_from_sop(
-        self,
-        incident_data: Dict[str, Any],
-        sop_resolution: str,
-        sop_title: str,
-        available_tools: Optional[List[str]] = None
-    ) -> List[str]:
-        """
-        Create an execution plan from SOP resolution text.
-        
-        Args:
-            incident_data: Dictionary containing incident information
-            sop_resolution: The resolution text from the SOP
-            sop_title: The title of the SOP
-            available_tools: List of available tools for context (optional)
-            
-        Returns:
-            List of clear, actionable execution steps
-        """
-        # Enhance the resolution text with SOP context
-        enhanced_resolution = f"SOP: {sop_title}\n\nResolution: {sop_resolution}"
-        
-        return self.create_execution_plan(
-            incident_data=incident_data,
-            vague_resolution_text=enhanced_resolution,
-            available_tools=available_tools
-        )
+    # We no longer need the separate `create_execution_plan_from_sop`
+    # because the main `create_execution_plan` now handles all context.
+    # This simplifies the interface.
 
 
 # Convenience function for one-off planning
 def create_execution_plan(
-    incident_data: Dict[str, Any],
+    incident_context: Dict[str, Any],
     vague_resolution_text: str,
     available_tools: Optional[List[str]] = None,
     model_name: str = "gpt-4.1-mini"
@@ -235,7 +220,7 @@ def create_execution_plan(
     creates the plan in one call.
     
     Args:
-        incident_data: Dictionary containing incident information
+        incident_context: Dictionary containing ALL incident information
         vague_resolution_text: The vague historical resolution text to convert
         available_tools: List of available tools for context (optional)
         model_name: OpenAI model to use (default: gpt-4.1-mini)
@@ -249,7 +234,7 @@ def create_execution_plan(
     """
     planner = SOPPlanner(model_name=model_name)
     return planner.create_execution_plan(
-        incident_data=incident_data,
+        incident_context=incident_context,
         vague_resolution_text=vague_resolution_text,
         available_tools=available_tools
     )
