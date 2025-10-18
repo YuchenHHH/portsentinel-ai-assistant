@@ -174,22 +174,46 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                   <Text fontSize="sm" fontWeight="medium" color="gray.700">
                     {message.content}
                   </Text>
-                  {message.incidentReport && (
-                    <ResultDisplay result={message.incidentReport} />
-                  )}
-                  {/* 执行计划步骤显示 */}
-                  {message.incidentReport && (message.incidentReport as any).plan_step && (
+                  {/* 执行计划步骤显示 - 只显示步骤，不显示解析结果框框 */}
+                  {message.incidentReport && (message.incidentReport as any).plan_step ? (
                     <Box
                       bg="blue.50"
-                      p={3}
-                      borderRadius="md"
-                      borderLeft="4px"
-                      borderLeftColor="blue.400"
+                      p={4}
+                      borderRadius="lg"
+                      border="1px"
+                      borderColor="blue.200"
+                      boxShadow="sm"
                     >
-                      <Text fontSize="sm" color="blue.800" fontWeight="medium">
-                        {(message.incidentReport as any).plan_step}
-                      </Text>
+                      <VStack align="stretch" spacing={2}>
+                        <HStack>
+                          <Box
+                            bg="blue.500"
+                            color="white"
+                            borderRadius="full"
+                            w={6}
+                            h={6}
+                            display="flex"
+                            alignItems="center"
+                            justifyContent="center"
+                            fontSize="xs"
+                            fontWeight="bold"
+                          >
+                            {(message.incidentReport as any).step_number}
+                          </Box>
+                          <Text fontSize="sm" fontWeight="semibold" color="blue.700">
+                            执行步骤 {(message.incidentReport as any).step_number}/{(message.incidentReport as any).total_steps}
+                          </Text>
+                        </HStack>
+                        <Text fontSize="sm" color="blue.800" lineHeight="1.5">
+                          {(message.incidentReport as any).plan_step}
+                        </Text>
+                      </VStack>
                     </Box>
+                  ) : (
+                    // 普通解析结果显示
+                    message.incidentReport && (
+                      <ResultDisplay result={message.incidentReport} />
+                    )
                   )}
                 </VStack>
               ) : (

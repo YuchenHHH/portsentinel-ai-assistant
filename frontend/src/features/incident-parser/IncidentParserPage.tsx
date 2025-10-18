@@ -117,13 +117,31 @@ export const IncidentParserPage: React.FC = () => {
           const planResult = await fetchExecutionPlan(planRequest)
 
           if (planResult.success && planResult.plan.length > 0) {
-            // 将执行计划步骤转换为聊天消息
-            const planMessages: ChatMessage[] = planResult.plan.map((step, index) => 
-              createAssistantMessage(
-                `📋 执行步骤 ${index + 1}/${planResult.plan.length}`,
-                { plan_step: step, step_number: index + 1, total_steps: planResult.plan.length } as any
-              )
-            )
+            // 将执行计划步骤转换为聊天消息，只显示步骤内容，不显示解析结果框框
+            const planMessages: ChatMessage[] = planResult.plan.map((step, index) => ({
+              id: `plan-step-${Date.now()}-${index}`,
+              type: 'assistant' as const,
+              content: `📋 执行步骤 ${index + 1}/${planResult.plan.length}`,
+              timestamp: new Date(),
+              status: 'sent' as const,
+              incidentReport: {
+                incident_id: parsedResult.incident_id,
+                source_type: parsedResult.source_type,
+                received_timestamp_utc: parsedResult.received_timestamp_utc,
+                reported_timestamp_hint: parsedResult.reported_timestamp_hint,
+                urgency: parsedResult.urgency,
+                affected_module: parsedResult.affected_module,
+                entities: parsedResult.entities,
+                error_code: parsedResult.error_code,
+                problem_summary: parsedResult.problem_summary,
+                potential_cause_hint: parsedResult.potential_cause_hint,
+                raw_text: parsedResult.raw_text,
+                // 添加执行计划步骤信息
+                plan_step: step,
+                step_number: index + 1,
+                total_steps: planResult.plan.length
+              } as IncidentReportResponse & { plan_step: string; step_number: number; total_steps: number }
+            }))
 
             // 移除加载消息并添加执行计划消息
             setMessages((prev) => [
