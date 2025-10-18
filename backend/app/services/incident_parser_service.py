@@ -11,7 +11,7 @@ if module_path not in sys.path:
 
 try:
     from parsing_agent.parser import parse_incident_report, ParsingError
-    from parsing_agent.models import IncidentReport
+    from parsing_agent.models import IncidentReport, Entity
 except ImportError as e:
     raise ImportError(f"无法从 '{module_path}' 导入 parsing_agent。请检查路径和模块是否正确。 Error: {e}")
 
