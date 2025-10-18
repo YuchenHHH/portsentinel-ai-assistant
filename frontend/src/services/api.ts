@@ -7,7 +7,8 @@ import {
 } from '../types/api'
 
 // API 基础配置
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000'
+// 在开发模式下，使用代理，所以使用相对路径
+const API_BASE_URL = process.env.REACT_APP_API_URL || ''
 
 // 创建 axios 实例
 const apiClient = axios.create({

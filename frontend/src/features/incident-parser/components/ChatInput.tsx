@@ -2,18 +2,19 @@ import React, { useState, useRef, useEffect } from 'react'
 import {
   Box,
   Flex,
-  Input,
-  Select,
-  Button,
+  Textarea,
   IconButton,
-  useToast,
-  useColorModeValue,
-  Text,
+  Select,
   HStack,
+  Text,
   VStack,
+  useColorModeValue,
+  useToast,
 } from '@chakra-ui/react'
-import { AddIcon, ArrowForwardIcon } from '@chakra-ui/icons'
-import { ChatInputState } from '../../../types/chat'
+import { ArrowForwardIcon } from '@chakra-ui/icons'
+import { motion } from 'framer-motion'
+
+const MotionBox = motion(Box)
 
 interface ChatInputProps {
   onSubmit: (text: string, sourceType: 'Email' | 'SMS' | 'Call') => void
@@ -21,65 +22,47 @@ interface ChatInputProps {
   disabled?: boolean
 }
 
+/**
+ * 聊天输入组件 - 固定在页面底部的输入栏
+ */
 export const ChatInput: React.FC<ChatInputProps> = ({
   onSubmit,
   isLoading,
-  disabled = false
+  disabled = false,
 }) => {
-  const [state, setState] = useState<ChatInputState>({
-    text: '',
-    sourceType: 'Email',
-    isSubmitting: false
-  })
-
-  const inputRef = useRef<HTMLTextAreaElement>(null)
+  const [text, setText] = useState('')
+  const [sourceType, setSourceType] = useState<'Email' | 'SMS' | 'Call'>('Email')
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
   const toast = useToast()
 
-  // 颜色主题
   const bgColor = useColorModeValue('white', 'gray.800')
   const borderColor = useColorModeValue('gray.200', 'gray.600')
   const focusBorderColor = useColorModeValue('blue.500', 'blue.300')
 
-  // 自动聚焦
+  // 自动调整文本域高度
   useEffect(() => {
-    if (inputRef.current && !disabled) {
-      inputRef.current.focus()
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`
     }
-  }, [disabled])
+  }, [text])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!state.text.trim()) {
+    if (!text.trim()) {
       toast({
-        title: '请输入内容',
-        description: '请先输入事件报告内容',
+        title: '输入为空',
+        description: '请输入事件报告内容',
         status: 'warning',
-        duration: 3000,
+        duration: 2000,
         isClosable: true,
       })
       return
     }
 
-    if (state.isSubmitting || isLoading) {
-      return
-    }
-
-    setState(prev => ({ ...prev, isSubmitting: true }))
-
-    try {
-      await onSubmit(state.text.trim(), state.sourceType)
-      setState(prev => ({ ...prev, text: '', isSubmitting: false }))
-    } catch (error) {
-      setState(prev => ({ ...prev, isSubmitting: false }))
-      toast({
-        title: '发送失败',
-        description: '消息发送失败，请重试',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      })
-    }
+    onSubmit(text.trim(), sourceType)
+    setText('') // 清空输入
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -89,10 +72,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
   }
 
-  const isDisabled = disabled || isLoading || state.isSubmitting || !state.text.trim()
+  const isDisabled = disabled || isLoading
 
   return (
-    <Box
+    <MotionBox
       position="fixed"
       bottom={0}
       left={0}
@@ -100,82 +83,77 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       bg={bgColor}
       borderTop="1px"
       borderColor={borderColor}
-      p={4}
-      zIndex={10}
-      boxShadow="0 -4px 6px -1px rgba(0, 0, 0, 0.1)"
+      boxShadow="lg"
+      zIndex={1000}
+      initial={{ y: 100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
     >
-      <Box maxW="4xl" mx="auto">
-        <form onSubmit={handleSubmit}>
-          <VStack spacing={3} align="stretch">
-            {/* 来源类型选择 */}
-            <HStack spacing={3} justify="space-between">
-              <Text fontSize="sm" color="gray.600" minW="fit-content">
-                来源类型:
-              </Text>
-              <Select
-                value={state.sourceType}
-                onChange={(e) => setState(prev => ({ 
-                  ...prev, 
-                  sourceType: e.target.value as 'Email' | 'SMS' | 'Call' 
-                }))}
-                size="sm"
-                maxW="120px"
-                disabled={isDisabled}
-              >
-                <option value="Email">邮件</option>
-                <option value="SMS">短信</option>
-                <option value="Call">电话</option>
-              </Select>
-            </HStack>
+      <VStack spacing={3} p={4} maxW="container.xl" mx="auto">
+        {/* 来源类型选择器 */}
+        <HStack width="100%" justify="flex-end">
+          <Text fontSize="sm" color="gray.500">
+            来源类型:
+          </Text>
+          <Select
+            value={sourceType}
+            onChange={(e) => setSourceType(e.target.value as 'Email' | 'SMS' | 'Call')}
+            size="sm"
+            maxW="120px"
+            disabled={isDisabled}
+          >
+            <option value="Email">邮件</option>
+            <option value="SMS">短信</option>
+            <option value="Call">电话</option>
+          </Select>
+        </HStack>
 
-            {/* 输入区域 */}
-            <Flex gap={3} align="end">
-              <Box flex={1}>
-                <Input
-                  ref={inputRef}
-                  as="textarea"
-                  value={state.text}
-                  onChange={(e) => setState(prev => ({ ...prev, text: e.target.value }))}
-                  onKeyPress={handleKeyPress}
-                  placeholder="请输入事件报告内容... (按 Enter 发送，Shift+Enter 换行)"
-                  rows={2}
-                  resize="none"
-                  disabled={isDisabled}
-                  borderColor={borderColor}
-                  _focus={{
-                    borderColor: focusBorderColor,
-                    boxShadow: `0 0 0 1px ${focusBorderColor}`,
-                  }}
-                  _disabled={{
-                    opacity: 0.6,
-                    cursor: 'not-allowed'
-                  }}
-                />
-              </Box>
-              
-              <IconButton
-                type="submit"
-                aria-label="发送消息"
-                icon={<ArrowForwardIcon />}
-                colorScheme="blue"
-                size="md"
-                isLoading={state.isSubmitting || isLoading}
-                loadingText="发送中"
-                isDisabled={isDisabled}
-                _disabled={{
-                  opacity: 0.6,
-                  cursor: 'not-allowed'
-                }}
-              />
-            </Flex>
+        {/* 输入区域 */}
+        <Flex gap={3} align="end" width="100%">
+          <Box flex={1}>
+            <Textarea
+              ref={textareaRef}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="请输入事件报告内容... (按 Enter 发送，Shift+Enter 换行)"
+              minH="40px"
+              maxH="120px"
+              resize="none"
+              disabled={isDisabled}
+              borderColor={borderColor}
+              _focus={{
+                borderColor: focusBorderColor,
+                boxShadow: `0 0 0 1px ${focusBorderColor}`,
+              }}
+              _disabled={{
+                opacity: 0.6,
+                cursor: 'not-allowed',
+              }}
+            />
+          </Box>
 
-            {/* 提示文本 */}
-            <Text fontSize="xs" color="gray.500" textAlign="center">
-              支持多行文本输入，AI 将智能解析事件报告并提取关键信息
-            </Text>
-          </VStack>
-        </form>
-      </Box>
-    </Box>
+          <IconButton
+            type="submit"
+            aria-label="发送消息"
+            icon={<ArrowForwardIcon />}
+            colorScheme="blue"
+            size="md"
+            isLoading={isLoading}
+            isDisabled={isDisabled || !text.trim()}
+            onClick={handleSubmit}
+            _disabled={{
+              opacity: 0.6,
+              cursor: 'not-allowed',
+            }}
+          />
+        </Flex>
+
+        {/* 提示文本 */}
+        <Text fontSize="xs" color="gray.500" textAlign="center">
+          支持多行文本输入，AI 将智能解析事件报告并提取关键信息
+        </Text>
+      </VStack>
+    </MotionBox>
   )
 }

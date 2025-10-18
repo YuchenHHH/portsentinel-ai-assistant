@@ -1,10 +1,10 @@
 import React from 'react'
 import {
   Box,
+  Text,
   VStack,
   HStack,
-  Text,
-  Badge,
+  useColorModeValue,
   Divider,
   Code,
   Accordion,
@@ -12,58 +12,44 @@ import {
   AccordionButton,
   AccordionPanel,
   AccordionIcon,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  TableContainer,
+  Card,
+  CardBody,
+  CardHeader,
+  SimpleGrid,
+  Tag,
+  TagLabel,
+  TagLeftIcon,
+  Icon,
+  Wrap,
+  WrapItem,
+  Stat,
+  StatLabel,
+  StatNumber,
+  StatHelpText,
 } from '@chakra-ui/react'
+import { 
+  WarningIcon, 
+  InfoIcon, 
+  TimeIcon, 
+  CheckCircleIcon,
+  ExternalLinkIcon 
+} from '@chakra-ui/icons'
 import { IncidentReportResponse } from '../../../types/api'
 
 interface ResultDisplayProps {
-  result: IncidentReportResponse | null
-  isLoading: boolean
+  result: IncidentReportResponse
 }
 
-export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, isLoading }) => {
-  if (isLoading) {
-    return (
-      <Box
-        bg="white"
-        p={6}
-        borderRadius="lg"
-        boxShadow="sm"
-        border="1px"
-        borderColor="gray.200"
-        textAlign="center"
-      >
-        <Text color="gray.500">正在解析中，请稍候...</Text>
-      </Box>
-    )
-  }
-
-  if (!result) {
-    return (
-      <Box
-        bg="white"
-        p={6}
-        borderRadius="lg"
-        boxShadow="sm"
-        border="1px"
-        borderColor="gray.200"
-        textAlign="center"
-      >
-        <Text color="gray.500">请输入事件报告内容并点击解析</Text>
-      </Box>
-    )
-  }
+/**
+ * 结果展示组件 - 美观的信息卡片
+ */
+export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result }) => {
+  const borderColor = useColorModeValue('gray.200', 'gray.600')
 
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {
       case 'High': return 'red'
-      case 'Medium': return 'yellow'
+      case 'Medium': return 'orange'
       case 'Low': return 'green'
       default: return 'gray'
     }
@@ -79,170 +65,219 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, isLoading 
   }
 
   return (
-    <Box
-      bg="white"
-      p={6}
-      borderRadius="lg"
-      boxShadow="sm"
-      border="1px"
-      borderColor="gray.200"
-    >
-      <VStack spacing={6} align="stretch">
-        {/* 基本信息 */}
-        <Box>
-          <Text fontSize="lg" fontWeight="bold" mb={4} color="gray.700">
+    <Card shadow="lg" border="1px" borderColor={borderColor}>
+      <CardHeader pb={3}>
+        <HStack>
+          <Icon as={CheckCircleIcon} color="green.500" />
+          <Text fontSize="lg" fontWeight="bold" color="gray.700">
             解析结果
           </Text>
-          
-          <VStack spacing={3} align="stretch">
-            <HStack justify="space-between">
-              <Text fontWeight="medium">事件ID:</Text>
-              <Text>{result.incident_id || '未识别'}</Text>
-            </HStack>
+        </HStack>
+      </CardHeader>
+      
+      <CardBody pt={0}>
+        <VStack spacing={6} align="stretch">
+          {/* 关键信息网格 */}
+          <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+            <Stat textAlign="center" p={3} bg="gray.50" borderRadius="md">
+              <StatLabel fontSize="xs" color="gray.600">事件ID</StatLabel>
+              <StatNumber fontSize="sm" color="blue.600">
+                {result.incident_id || '未识别'}
+              </StatNumber>
+              <StatHelpText fontSize="xs" m={0}>
+                <Icon as={InfoIcon} mr={1} />
+                自动生成
+              </StatHelpText>
+            </Stat>
             
-            <HStack justify="space-between">
-              <Text fontWeight="medium">来源类型:</Text>
-              <Badge colorScheme="blue">{result.source_type}</Badge>
-            </HStack>
+            <Stat textAlign="center" p={3} bg="gray.50" borderRadius="md">
+              <StatLabel fontSize="xs" color="gray.600">紧急程度</StatLabel>
+              <StatNumber fontSize="sm">
+                <Tag 
+                  size="md" 
+                  colorScheme={getUrgencyColor(result.urgency)}
+                  variant="solid"
+                >
+                  <TagLeftIcon as={WarningIcon} />
+                  <TagLabel>{result.urgency}</TagLabel>
+                </Tag>
+              </StatNumber>
+              <StatHelpText fontSize="xs" m={0}>
+                <Icon as={TimeIcon} mr={1} />
+                优先级评估
+              </StatHelpText>
+            </Stat>
             
-            <HStack justify="space-between">
-              <Text fontWeight="medium">紧急程度:</Text>
-              <Badge colorScheme={getUrgencyColor(result.urgency)}>
-                {result.urgency}
-              </Badge>
-            </HStack>
-            
-            <HStack justify="space-between">
-              <Text fontWeight="medium">受影响模块:</Text>
-              <Badge colorScheme={getModuleColor(result.affected_module)}>
-                {result.affected_module || '未识别'}
-              </Badge>
-            </HStack>
-            
-            {result.error_code && (
-              <HStack justify="space-between">
-                <Text fontWeight="medium">错误代码:</Text>
-                <Code colorScheme="red">{result.error_code}</Code>
-              </HStack>
-            )}
-          </VStack>
-        </Box>
+            <Stat textAlign="center" p={3} bg="gray.50" borderRadius="md">
+              <StatLabel fontSize="xs" color="gray.600">受影响模块</StatLabel>
+              <StatNumber fontSize="sm">
+                {result.affected_module ? (
+                  <Tag 
+                    size="md" 
+                    colorScheme={getModuleColor(result.affected_module)}
+                    variant="solid"
+                  >
+                    <TagLabel>{result.affected_module}</TagLabel>
+                  </Tag>
+                ) : (
+                  <Text fontSize="sm" color="gray.500">未识别</Text>
+                )}
+              </StatNumber>
+              <StatHelpText fontSize="xs" m={0}>
+                <Icon as={ExternalLinkIcon} mr={1} />
+                系统模块
+              </StatHelpText>
+            </Stat>
+          </SimpleGrid>
 
-        <Divider />
-
-        {/* 时间信息 */}
-        <Box>
-          <Text fontSize="md" fontWeight="bold" mb={3} color="gray.700">
-            时间信息
-          </Text>
-          <VStack spacing={2} align="stretch">
-            <HStack justify="space-between">
-              <Text fontWeight="medium">接收时间:</Text>
-              <Text fontSize="sm" color="gray.600">
-                {new Date(result.received_timestamp_utc).toLocaleString('zh-CN')}
-              </Text>
-            </HStack>
-            {result.reported_timestamp_hint && (
-              <HStack justify="space-between">
-                <Text fontWeight="medium">报告时间提示:</Text>
-                <Text fontSize="sm" color="gray.600">
-                  {result.reported_timestamp_hint}
+          {/* 错误代码 */}
+          {result.error_code && (
+            <Box>
+              <Divider mb={3} />
+              <HStack mb={2}>
+                <Icon as={WarningIcon} color="red.500" />
+                <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                  错误代码
                 </Text>
               </HStack>
-            )}
-          </VStack>
-        </Box>
-
-        <Divider />
-
-        {/* 问题摘要 */}
-        <Box>
-          <Text fontSize="md" fontWeight="bold" mb={3} color="gray.700">
-            问题摘要
-          </Text>
-          <Text bg="gray.50" p={3} borderRadius="md" fontSize="sm">
-            {result.problem_summary}
-          </Text>
-        </Box>
-
-        {/* 潜在原因 */}
-        {result.potential_cause_hint && (
-          <>
-            <Divider />
-            <Box>
-              <Text fontSize="md" fontWeight="bold" mb={3} color="gray.700">
-                潜在原因分析
-              </Text>
-              <Text bg="blue.50" p={3} borderRadius="md" fontSize="sm">
-                {result.potential_cause_hint}
-              </Text>
-            </Box>
-          </>
-        )}
-
-        {/* 提取的实体 */}
-        {result.entities && result.entities.length > 0 && (
-          <>
-            <Divider />
-            <Box>
-              <Text fontSize="md" fontWeight="bold" mb={3} color="gray.700">
-                提取的实体 ({result.entities.length})
-              </Text>
-              <TableContainer>
-                <Table size="sm" variant="simple">
-                  <Thead>
-                    <Tr>
-                      <Th>类型</Th>
-                      <Th>值</Th>
-                    </Tr>
-                  </Thead>
-                  <Tbody>
-                    {result.entities.map((entity, index) => (
-                      <Tr key={index}>
-                        <Td>
-                          <Badge colorScheme="purple" variant="subtle">
-                            {entity.type}
-                          </Badge>
-                        </Td>
-                        <Td>
-                          <Code>{entity.value}</Code>
-                        </Td>
-                      </Tr>
-                    ))}
-                  </Tbody>
-                </Table>
-              </TableContainer>
-            </Box>
-          </>
-        )}
-
-        {/* 原始文本 */}
-        <Accordion allowToggle>
-          <AccordionItem>
-            <h2>
-              <AccordionButton>
-                <Box as="span" flex="1" textAlign="left" fontWeight="medium">
-                  原始文本
-                </Box>
-                <AccordionIcon />
-              </AccordionButton>
-            </h2>
-            <AccordionPanel pb={4}>
-              <Box
-                bg="gray.50"
-                p={3}
+              <Code 
+                fontSize="sm" 
+                colorScheme="red" 
+                p={2} 
                 borderRadius="md"
-                maxH="200px"
-                overflowY="auto"
+                display="block"
+                textAlign="center"
               >
-                <Text fontSize="sm" whiteSpace="pre-wrap">
-                  {result.raw_text}
+                {result.error_code}
+              </Code>
+            </Box>
+          )}
+
+          {/* 问题摘要 */}
+          <Box>
+            <Divider mb={3} />
+            <HStack mb={3}>
+              <Icon as={InfoIcon} color="blue.500" />
+              <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                问题摘要
+              </Text>
+            </HStack>
+            <Box 
+              bg="blue.50" 
+              p={4} 
+              borderRadius="md" 
+              border="1px" 
+              borderColor="blue.200"
+            >
+              <Text fontSize="sm" color="gray.700" lineHeight="1.6">
+                {result.problem_summary}
+              </Text>
+            </Box>
+          </Box>
+
+          {/* 潜在原因 */}
+          {result.potential_cause_hint && (
+            <Box>
+              <Divider mb={3} />
+              <HStack mb={3}>
+                <Icon as={WarningIcon} color="orange.500" />
+                <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                  潜在原因分析
+                </Text>
+              </HStack>
+              <Box 
+                bg="orange.50" 
+                p={4} 
+                borderRadius="md" 
+                border="1px" 
+                borderColor="orange.200"
+              >
+                <Text fontSize="sm" color="gray.700" lineHeight="1.6">
+                  {result.potential_cause_hint}
                 </Text>
               </Box>
-            </AccordionPanel>
-          </AccordionItem>
-        </Accordion>
-      </VStack>
-    </Box>
+            </Box>
+          )}
+
+          {/* 提取的实体 */}
+          {result.entities && result.entities.length > 0 && (
+            <Box>
+              <Divider mb={3} />
+              <HStack mb={3}>
+                <Icon as={CheckCircleIcon} color="purple.500" />
+                <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                  提取的实体 ({result.entities.length})
+                </Text>
+              </HStack>
+              <Wrap spacing={2}>
+                {result.entities.map((entity, index) => (
+                  <WrapItem key={index}>
+                    <Tag 
+                      size="md" 
+                      colorScheme="purple" 
+                      variant="subtle"
+                      cursor="pointer"
+                      _hover={{ transform: 'scale(1.05)' }}
+                      transition="all 0.2s"
+                    >
+                      <TagLabel>
+                        <Text as="span" fontWeight="medium" mr={1}>
+                          {entity.type}:
+                        </Text>
+                        <Text as="span" fontFamily="mono">
+                          {entity.value}
+                        </Text>
+                      </TagLabel>
+                    </Tag>
+                  </WrapItem>
+                ))}
+              </Wrap>
+            </Box>
+          )}
+
+          {/* 原始文本（可折叠） */}
+          <Box>
+            <Divider mb={3} />
+            <Accordion allowToggle>
+              <AccordionItem border="none">
+                <h2>
+                  <AccordionButton 
+                    p={0} 
+                    _hover={{ bg: 'transparent' }}
+                    _expanded={{ bg: 'transparent' }}
+                  >
+                    <Box as="span" flex="1" textAlign="left">
+                      <HStack>
+                        <Icon as={ExternalLinkIcon} color="gray.500" />
+                        <Text fontSize="sm" fontWeight="medium" color="gray.600">
+                          查看原始文本
+                        </Text>
+                      </HStack>
+                    </Box>
+                    <AccordionIcon />
+                  </AccordionButton>
+                </h2>
+                <AccordionPanel pb={0}>
+                  <Box
+                    bg="gray.50"
+                    p={4}
+                    borderRadius="md"
+                    border="1px"
+                    borderColor="gray.200"
+                    maxH="200px"
+                    overflowY="auto"
+                    mt={3}
+                  >
+                    <Text fontSize="xs" whiteSpace="pre-wrap" color="gray.600">
+                      {result.raw_text}
+                    </Text>
+                  </Box>
+                </AccordionPanel>
+              </AccordionItem>
+            </Accordion>
+          </Box>
+        </VStack>
+      </CardBody>
+    </Card>
   )
 }
