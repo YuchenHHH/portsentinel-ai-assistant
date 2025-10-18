@@ -153,3 +153,51 @@ export const isEnrichmentResponse = (data: any): data is EnrichmentResponse => {
     Array.isArray(data.retrieved_sops)
   );
 };
+
+// Orchestrator 相关接口
+
+// 解析后的事件数据结构
+export interface ParsedIncident {
+  incident_id: string;
+  problem_summary: string;
+  affected_module: string;
+  error_code: string | null;
+  urgency: string;
+  entities: Record<string, any>;
+  raw_text: string | null;
+}
+
+// SOP 响应数据结构
+export interface SOPResponse {
+  title: string;
+  module: string;
+  resolution: string;
+  overview: string | null;
+  preconditions: string | null;
+  verification: string | null;
+  sop_snippets: SopSnippet[];
+}
+
+// 执行计划请求接口
+export interface PlanRequest {
+  incident_context: ParsedIncident;
+  sop_response: SOPResponse;
+}
+
+// 执行计划响应接口
+export interface PlanResponse {
+  plan: string[];
+  success: boolean;
+  message: string | null;
+}
+
+// 类型守卫函数
+export const isPlanResponse = (data: any): data is PlanResponse => {
+  return (
+    data &&
+    typeof data === 'object' &&
+    Array.isArray(data.plan) &&
+    typeof data.success === 'boolean' &&
+    (data.message === null || typeof data.message === 'string')
+  );
+};

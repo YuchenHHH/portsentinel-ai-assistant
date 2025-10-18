@@ -3,8 +3,8 @@ import { Box, Container, Heading, VStack } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
 import { ChatInput } from './components/ChatInput'
 import { ChatWindow } from './components/ChatWindow'
-import { parseIncidentReport, enrichIncident } from '../../services/api'
-import { IncidentReportResponse, EnrichmentRequest } from '../../types/api'
+import { parseIncidentReport, enrichIncident, fetchExecutionPlan } from '../../services/api'
+import { IncidentReportResponse, EnrichmentRequest, PlanRequest, ParsedIncident, SOPResponse } from '../../types/api'
 import { 
   createUserMessage, 
   createAssistantMessage, 
@@ -82,6 +82,81 @@ export const IncidentParserPage: React.FC = () => {
             msg.id === ragLoadingMessage.id ? enrichmentMessage : msg
           )
         )
+
+        // 第三步：生成执行计划
+        const planLoadingMessage = createLoadingMessage('正在生成执行计划...')
+        setMessages((prev) => [...prev, planLoadingMessage])
+
+        try {
+          // 构建执行计划请求
+          const planRequest: PlanRequest = {
+            incident_context: {
+              incident_id: parsedResult.incident_id || '',
+              problem_summary: parsedResult.problem_summary,
+              affected_module: parsedResult.affected_module || '',
+              error_code: parsedResult.error_code,
+              urgency: parsedResult.urgency,
+              entities: parsedResult.entities.reduce((acc, entity) => {
+                acc[entity.type] = entity.value
+                return acc
+              }, {} as Record<string, any>),
+              raw_text: parsedResult.raw_text,
+            },
+            sop_response: {
+              title: enrichmentResult.retrieved_sops[0]?.metadata.sop_title || 'Unknown SOP',
+              module: enrichmentResult.retrieved_sops[0]?.metadata.module || 'Unknown Module',
+              resolution: enrichmentResult.retrieved_sops[0]?.metadata.complete_sop?.Resolution || 'No resolution available',
+              overview: enrichmentResult.retrieved_sops[0]?.metadata.complete_sop?.Overview || null,
+              preconditions: enrichmentResult.retrieved_sops[0]?.metadata.complete_sop?.Preconditions || null,
+              verification: enrichmentResult.retrieved_sops[0]?.metadata.complete_sop?.Verification || null,
+              sop_snippets: enrichmentResult.retrieved_sops,
+            }
+          }
+
+          // 调用执行计划生成API
+          const planResult = await fetchExecutionPlan(planRequest)
+
+          if (planResult.success && planResult.plan.length > 0) {
+            // 将执行计划步骤转换为聊天消息
+            const planMessages: ChatMessage[] = planResult.plan.map((step, index) => 
+              createAssistantMessage(
+                `📋 执行步骤 ${index + 1}/${planResult.plan.length}`,
+                { plan_step: step, step_number: index + 1, total_steps: planResult.plan.length } as any
+              )
+            )
+
+            // 移除加载消息并添加执行计划消息
+            setMessages((prev) => [
+              ...prev.filter((msg) => msg.id !== planLoadingMessage.id),
+              ...planMessages
+            ])
+          } else {
+            // 计划生成失败
+            const planErrorMessage = createAssistantMessage(
+              `执行计划生成失败: ${planResult.message || '无法生成执行计划'}`,
+              {} as IncidentReportResponse
+            )
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === planLoadingMessage.id ? planErrorMessage : msg
+              )
+            )
+          }
+
+        } catch (planError: any) {
+          console.error('执行计划生成失败:', planError)
+          const planErrorMessage = createAssistantMessage(
+            `执行计划生成失败: ${planError.message || 'Orchestrator 服务暂时不可用'}`,
+            {} as IncidentReportResponse
+          )
+
+          // 更新计划加载消息为错误信息
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === planLoadingMessage.id ? planErrorMessage : msg
+            )
+          )
+        }
 
       } catch (ragError: any) {
         console.error('RAG 增强失败:', ragError)

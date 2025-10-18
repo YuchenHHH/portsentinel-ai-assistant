@@ -169,13 +169,27 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                   <EnrichmentDisplay enrichmentData={message.enrichmentData} />
                 </VStack>
               ) : isAssistantMessage(message) ? (
-                // 普通助手消息（解析结果或错误）
+                // 普通助手消息（解析结果、错误或执行计划步骤）
                 <VStack align="stretch" spacing={3}>
                   <Text fontSize="sm" fontWeight="medium" color="gray.700">
                     {message.content}
                   </Text>
                   {message.incidentReport && (
                     <ResultDisplay result={message.incidentReport} />
+                  )}
+                  {/* 执行计划步骤显示 */}
+                  {message.incidentReport && (message.incidentReport as any).plan_step && (
+                    <Box
+                      bg="blue.50"
+                      p={3}
+                      borderRadius="md"
+                      borderLeft="4px"
+                      borderLeftColor="blue.400"
+                    >
+                      <Text fontSize="sm" color="blue.800" fontWeight="medium">
+                        {(message.incidentReport as any).plan_step}
+                      </Text>
+                    </Box>
                   )}
                 </VStack>
               ) : (

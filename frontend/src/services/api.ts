@@ -4,8 +4,11 @@ import {
   IncidentReportResponse,
   EnrichmentRequest,
   EnrichmentResponse,
+  PlanRequest,
+  PlanResponse,
   isIncidentReportResponse,
   isEnrichmentResponse,
+  isPlanResponse,
   isApiErrorResponse
 } from '../types/api'
 
@@ -115,6 +118,42 @@ export const enrichIncident = async (data: EnrichmentRequest): Promise<Enrichmen
     }
     console.error('RAG Unexpected Error:', error);
     throw new Error('RAG 增强过程中发生意外错误');
+  }
+}
+
+// 生成执行计划
+export const fetchExecutionPlan = async (planRequest: PlanRequest): Promise<PlanResponse> => {
+  try {
+    const response = await apiClient.post<PlanResponse>('/api/v1/orchestrator/plan', planRequest);
+    
+    // 验证响应数据类型
+    if (!isPlanResponse(response.data)) {
+      console.error('Orchestrator API 响应数据格式不正确:', response.data);
+      throw new Error('Orchestrator 服务器返回的数据格式不正确');
+    }
+    
+    return response.data;
+  } catch (error: any) {
+    if (axios.isAxiosError(error)) {
+      const errorData = error.response?.data;
+      
+      // 检查是否是结构化的错误响应
+      if (isApiErrorResponse(errorData)) {
+        console.error('Orchestrator API Error:', errorData);
+        throw new Error(`${errorData.error}: ${errorData.message}`);
+      } else if (errorData?.detail) {
+        // 处理 FastAPI 的错误格式
+        console.error('Orchestrator API Error:', errorData.detail);
+        throw new Error(typeof errorData.detail === 'string' 
+          ? errorData.detail 
+          : JSON.stringify(errorData.detail));
+      } else {
+        console.error('Orchestrator API Error:', error.message);
+        throw new Error(error.message || 'Orchestrator 服务发生意外错误');
+      }
+    }
+    console.error('Orchestrator Unexpected Error:', error);
+    throw new Error('执行计划生成过程中发生意外错误');
   }
 }
 
