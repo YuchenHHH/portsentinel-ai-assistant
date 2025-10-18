@@ -37,30 +37,44 @@ apiClient.interceptors.response.use(
 )
 
 // 事件解析请求接口
-export interface ParseRequest {
-  source_type: string
-  raw_text: string
+export interface ParseRequestData {
+  source_type: 'Email' | 'SMS' | 'Call';
+  raw_text: string;
 }
 
-// 事件解析响应接口
-export interface ParseResponse {
-  success: boolean
-  data?: any
-  error?: string
-  message?: string
+// 实体接口
+export interface Entity {
+  type: string;
+  value: string;
+}
+
+// 事件解析响应接口 - 使用真实的 IncidentReport 结构
+export interface IncidentReportResponse {
+  incident_id: string | null;
+  source_type: "Email" | "SMS" | "Call";
+  received_timestamp_utc: string;
+  reported_timestamp_hint: string | null;
+  urgency: "High" | "Medium" | "Low";
+  affected_module: "Container" | "Vessel" | "EDI/API" | null;
+  entities: Entity[];
+  error_code: string | null;
+  problem_summary: string;
+  potential_cause_hint: string | null;
+  raw_text: string;
 }
 
 // 解析事件报告
-export const parseIncident = async (request: ParseRequest): Promise<ParseResponse> => {
+export const parseIncidentReport = async (data: ParseRequestData): Promise<IncidentReportResponse> => {
   try {
-    const response = await apiClient.post<ParseResponse>('/api/v1/incidents/parse', request)
-    return response.data
+    const response = await apiClient.post<IncidentReportResponse>('/api/v1/incidents/parse', data);
+    return response.data;
   } catch (error: any) {
-    console.error('解析事件报告失败:', error)
-    return {
-      success: false,
-      error: error.response?.data?.detail || error.message || '解析失败',
+    if (axios.isAxiosError(error)) {
+      console.error('API Error:', error.response?.data?.detail || error.message);
+      throw new Error(error.response?.data?.detail || 'An unexpected API error occurred.');
     }
+    console.error('Unexpected Error:', error);
+    throw new Error('An unexpected error occurred.');
   }
 }
 

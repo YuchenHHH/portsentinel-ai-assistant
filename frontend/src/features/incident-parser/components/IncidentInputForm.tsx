@@ -9,10 +9,10 @@ import {
   VStack,
   useToast,
 } from '@chakra-ui/react'
-import { parseIncident, ParseRequest } from '../../../services/api'
+import { parseIncidentReport, ParseRequestData, IncidentReportResponse } from '../../../services/api'
 
 interface IncidentInputFormProps {
-  onResult: (result: any) => void
+  onResult: (result: IncidentReportResponse | null) => void
   onLoading: (loading: boolean) => void
 }
 
@@ -43,25 +43,21 @@ export const IncidentInputForm: React.FC<IncidentInputFormProps> = ({
     onLoading(true)
 
     try {
-      const request: ParseRequest = {
-        source_type: sourceType,
+      const requestData: ParseRequestData = {
+        source_type: sourceType as 'Email' | 'SMS' | 'Call',
         raw_text: rawText.trim(),
       }
 
-      const response = await parseIncident(request)
+      const response = await parseIncidentReport(requestData)
       
-      if (response.success) {
-        onResult(response.data)
-        toast({
-          title: '解析成功',
-          description: '事件报告已成功解析',
-          status: 'success',
-          duration: 3000,
-          isClosable: true,
-        })
-      } else {
-        throw new Error(response.error || '解析失败')
-      }
+      onResult(response)
+      toast({
+        title: '解析成功',
+        description: '事件报告已成功解析',
+        status: 'success',
+        duration: 3000,
+        isClosable: true,
+      })
     } catch (error: any) {
       console.error('解析失败:', error)
       toast({
@@ -104,11 +100,9 @@ export const IncidentInputForm: React.FC<IncidentInputFormProps> = ({
               onChange={(e) => setSourceType(e.target.value)}
               bg="white"
             >
-              <option value="email">邮件</option>
-              <option value="log">日志文件</option>
-              <option value="manual">手动输入</option>
-              <option value="system">系统报告</option>
-              <option value="other">其他</option>
+              <option value="Email">邮件</option>
+              <option value="SMS">短信</option>
+              <option value="Call">电话</option>
             </Select>
           </FormControl>
 
