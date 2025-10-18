@@ -9,7 +9,8 @@ import {
   VStack,
   useToast,
 } from '@chakra-ui/react'
-import { parseIncidentReport, ParseRequestData, IncidentReportResponse } from '../../../services/api'
+import { parseIncidentReport } from '../../../services/api'
+import { ParseRequestData, IncidentReportResponse } from '../../../types/api'
 
 interface IncidentInputFormProps {
   onResult: (result: IncidentReportResponse | null) => void

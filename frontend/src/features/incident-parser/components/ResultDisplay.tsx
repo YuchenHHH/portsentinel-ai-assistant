@@ -20,7 +20,7 @@ import {
   Td,
   TableContainer,
 } from '@chakra-ui/react'
-import { IncidentReportResponse } from '../../../services/api'
+import { IncidentReportResponse } from '../../../types/api'
 
 interface ResultDisplayProps {
   result: IncidentReportResponse | null

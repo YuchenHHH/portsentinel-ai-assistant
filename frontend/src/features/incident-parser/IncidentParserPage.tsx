@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Box, Container, Heading, VStack } from '@chakra-ui/react'
 import { IncidentInputForm } from './components/IncidentInputForm'
 import { ResultDisplay } from './components/ResultDisplay'
-import { IncidentReportResponse } from '../../services/api'
+import { IncidentReportResponse } from '../../types/api'
 
 export const IncidentParserPage: React.FC = () => {
   const [result, setResult] = useState<IncidentReportResponse | null>(null)
