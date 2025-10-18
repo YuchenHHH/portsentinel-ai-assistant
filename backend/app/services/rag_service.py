@@ -261,6 +261,70 @@ class RAGService:
         
         return incident_report
     
+    def _filter_by_relevance(self, sop_snippets: List, incident_module: str = None, original_request = None, top_k: int = 3) -> List:
+        """
+        Filter SOP snippets by relevance to the incident module
+        
+        Args:
+            sop_snippets: List of SOP snippets to filter
+            incident_module: The affected module from the incident report
+            top_k: Maximum number of results to return
+            
+        Returns:
+            Filtered list of most relevant SOP snippets
+        """
+        if not sop_snippets:
+            return sop_snippets
+        
+        # Calculate relevance scores for each SOP
+        scored_sops = []
+        for sop in sop_snippets:
+            relevance_score = 0.0
+            
+            # 1. Module matching bonus (highest priority)
+            if incident_module and sop.metadata.get('module'):
+                if sop.metadata['module'].lower() == incident_module.lower():
+                    relevance_score += 10.0  # Exact module match
+                elif incident_module.lower() in sop.metadata['module'].lower():
+                    relevance_score += 5.0   # Partial module match
+            
+            # 2. Score-based relevance (use the highest available score)
+            primary_score = sop.score or 0.0
+            if hasattr(sop, 'rerank_score') and sop.rerank_score:
+                primary_score = max(primary_score, sop.rerank_score)
+            if hasattr(sop, 'hybrid_score') and sop.hybrid_score:
+                primary_score = max(primary_score, sop.hybrid_score)
+            if hasattr(sop, 'vector_score') and sop.vector_score:
+                primary_score = max(primary_score, sop.vector_score)
+            
+            relevance_score += primary_score * 5.0  # Scale score contribution
+            
+            # 3. Content relevance bonus
+            if sop.metadata.get('sop_title'):
+                title = sop.metadata['sop_title'].lower()
+                if incident_module and incident_module.lower() in title:
+                    relevance_score += 2.0
+            
+            # 4. Error code matching bonus
+            if original_request and original_request.error_code and sop.metadata.get('sop_title'):
+                title = sop.metadata['sop_title'].upper()
+                if original_request.error_code.upper() in title:
+                    relevance_score += 3.0
+            
+            scored_sops.append((sop, relevance_score))
+        
+        # Sort by relevance score (highest first)
+        scored_sops.sort(key=lambda x: x[1], reverse=True)
+        
+        # Return top-k most relevant SOPs
+        filtered_sops = [sop for sop, score in scored_sops[:top_k]]
+        
+        logger.info(f"Filtered {len(sop_snippets)} SOPs to {len(filtered_sops)} most relevant ones")
+        if scored_sops:
+            logger.info(f"Top relevance scores: {[score for _, score in scored_sops[:3]]}")
+        
+        return filtered_sops
+
     def _convert_enriched_to_response(self, enriched, original_request: EnrichmentRequest) -> EnrichmentResponse:
         """Convert enriched context to EnrichmentResponse"""
         # Convert SOP snippets with complete data and deduplicate by SOP ID
@@ -363,6 +427,14 @@ class RAGService:
                         score=primary_score
                     )
                     sop_snippets.append(snippet)
+        
+        # Apply relevance filtering to keep only the most relevant SOPs
+        sop_snippets = self._filter_by_relevance(
+            sop_snippets, 
+            incident_module=original_request.affected_module,
+            original_request=original_request,
+            top_k=3  # Keep top 3 most relevant SOPs
+        )
         
         # Create response with retrieval metrics
         # Convert RetrievalMetrics to dict if it's an object
