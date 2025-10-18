@@ -1,6 +1,15 @@
 from fastapi import APIRouter, Depends
-from api.v1.schemas.incident_parser import ParseRequest, IncidentReport
+from api.v1.schemas.incident_parser import ParseRequest
 from services import incident_parser_service
+import sys
+import os
+
+# 导入真实的 AI 模块模型
+module_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../modules/incident_parser/src'))
+if module_path not in sys.path:
+    sys.path.append(module_path)
+
+from parsing_agent.models import IncidentReport
 
 router = APIRouter()
 
