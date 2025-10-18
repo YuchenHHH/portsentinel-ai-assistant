@@ -1,0 +1,223 @@
+# 依赖目录
+node_modules/
+*/node_modules/
+**/node_modules/
+
+# 构建输出
+build/
+dist/
+*/build/
+*/dist/
+**/build/
+**/dist/
+
+# 环境变量文件
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 日志文件
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 运行时数据
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# 覆盖率目录
+coverage/
+*.lcov
+
+# nyc 测试覆盖率
+.nyc_output
+
+# Grunt 中间存储
+.grunt
+
+# Bower 依赖目录
+bower_components
+
+# node-waf 配置
+.lock-wscript
+
+# 编译的二进制插件
+build/Release
+
+# 依赖目录
+node_modules/
+jspm_packages/
+
+# TypeScript 缓存
+*.tsbuildinfo
+
+# 可选的 npm 缓存目录
+.npm
+
+# 可选的 eslint 缓存
+.eslintcache
+
+# Microbundle 缓存
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# 可选的 REPL 历史
+.node_repl_history
+
+# 输出的 yarn 日志
+yarn-debug.log
+yarn-error.log
+
+# parcel-bundler 缓存
+.cache
+.parcel-cache
+
+# Next.js 构建输出
+.next
+
+# Nuxt.js 构建/生成输出
+.nuxt
+dist
+
+# Gatsby 文件
+.cache/
+public
+
+# Storybook 构建输出
+.out
+.storybook-out
+
+# 临时文件夹
+tmp/
+temp/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# celery beat schedule file
+celerybeat-schedule
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 项目特定
+*.sqlite
+*.db
+uploads/
+downloads/

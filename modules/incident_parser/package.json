@@ -1,0 +1,16 @@
+{
+  "name": "incident-parser",
+  "version": "1.0.0",
+  "description": "AI-powered incident report parsing module",
+  "private": true,
+  "main": "src/parsing_agent/__init__.py",
+  "scripts": {
+    "install-deps": "pip install -r requirements.txt",
+    "test": "python -m pytest tests/ -v",
+    "lint": "python -m flake8 src/ && python -m black --check src/",
+    "format": "python -m black src/ && python -m isort src/"
+  },
+  "engines": {
+    "python": ">=3.8.0"
+  }
+}

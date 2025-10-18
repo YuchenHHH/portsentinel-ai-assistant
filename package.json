@@ -1,0 +1,25 @@
+{
+  "name": "portsentinel-ai-assistant",
+  "version": "1.0.0",
+  "description": "PortSentinel AI Assistant - Web application for integrating and calling multiple Python AI function modules",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "modules/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"yarn workspace frontend dev\" \"yarn workspace backend dev\"",
+    "build": "yarn workspace frontend build",
+    "start": "yarn workspace frontend start",
+    "test": "yarn workspaces run test"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "yarn": ">=1.22.0"
+  }
+}
