@@ -1,7 +1,15 @@
 import sys
 import os
 import logging
-from fastapi import HTTPException, status
+from typing import Optional
+
+# 导入自定义异常
+from core.exceptions import (
+    IncidentParsingError, 
+    AIServiceUnavailableError, 
+    InvalidInputError,
+    ConfigurationError
+)
 
 # 确保 Python 解释器能找到 modules/ 目录下的代码
 # 这是一个用于开发的简单解决方案
@@ -13,36 +21,84 @@ try:
     from parsing_agent.parser import parse_incident_report, ParsingError
     from parsing_agent.models import IncidentReport, Entity
 except ImportError as e:
-    raise ImportError(f"无法从 '{module_path}' 导入 parsing_agent。请检查路径和模块是否正确。 Error: {e}")
+    raise ConfigurationError(
+        f"无法从 '{module_path}' 导入 parsing_agent。请检查路径和模块是否正确。",
+        details={"module_path": module_path, "original_error": str(e)}
+    )
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def run_parser(source_type: str, raw_text: str) -> IncidentReport:
+def run_parser(source_type: str, raw_text: str, use_fallback: bool = True) -> IncidentReport:
     """
-    调用真实的 AI 模块解析事件报告，如果失败则使用模拟解析
+    调用真实的 AI 模块解析事件报告
+    
+    Args:
+        source_type: 事件来源类型
+        raw_text: 原始事件文本
+        use_fallback: 是否在 AI 解析失败时使用模拟解析回退
+        
+    Returns:
+        IncidentReport: 解析后的事件报告
+        
+    Raises:
+        InvalidInputError: 输入参数无效
+        AIServiceUnavailableError: AI 服务不可用且不允许回退
+        IncidentParsingError: 其他解析相关错误
     """
+    # 输入验证
+    if not source_type or not isinstance(source_type, str):
+        raise InvalidInputError("source_type 必须是非空字符串")
+    
+    if not raw_text or not isinstance(raw_text, str) or len(raw_text.strip()) == 0:
+        raise InvalidInputError("raw_text 必须是非空字符串")
+    
+    if source_type not in ["Email", "SMS", "Call"]:
+        raise InvalidInputError(f"不支持的 source_type: {source_type}")
+    
     logger.info(f"开始真实解析，来源: {source_type}")
+    
     try:
-        # 调用你真正的解析函数
+        # 调用真实的 AI 解析函数
         report = parse_incident_report(
             source_type=source_type,
             raw_text=raw_text
         )
         logger.info(f"真实解析完成，事件ID: {report.incident_id}")
         return report
+        
     except ParsingError as e:
         logger.error(f"AI 模块解析失败: {str(e)}")
-        logger.info("回退到模拟解析")
-        return _create_mock_report(source_type, raw_text)
+        if use_fallback:
+            logger.info("回退到模拟解析")
+            return _create_mock_report(source_type, raw_text)
+        else:
+            raise AIServiceUnavailableError(
+                f"AI 解析服务暂时不可用: {str(e)}",
+                details={"original_error": str(e), "source_type": source_type}
+            )
+            
     except ValueError as e:
         logger.warning(f"AI 模块输入值错误: {str(e)}")
-        logger.info("回退到模拟解析")
-        return _create_mock_report(source_type, raw_text)
+        if use_fallback:
+            logger.info("回退到模拟解析")
+            return _create_mock_report(source_type, raw_text)
+        else:
+            raise InvalidInputError(
+                f"输入数据格式错误: {str(e)}",
+                details={"original_error": str(e), "source_type": source_type}
+            )
+            
     except Exception as e:
         logger.error(f"AI 模块未知错误: {str(e)}", exc_info=True)
-        logger.info("回退到模拟解析")
-        return _create_mock_report(source_type, raw_text)
+        if use_fallback:
+            logger.info("回退到模拟解析")
+            return _create_mock_report(source_type, raw_text)
+        else:
+            raise IncidentParsingError(
+                f"解析过程中发生未知错误: {str(e)}",
+                details={"original_error": str(e), "source_type": source_type}
+            )
 
 
 def _create_mock_report(source_type: str, raw_text: str) -> IncidentReport:
