@@ -33,3 +33,13 @@ class ConfigurationError(IncidentParsingError):
     
     def __init__(self, message: str = "系统配置错误", details: dict = None):
         super().__init__(message, "CONFIGURATION_ERROR", details)
+
+
+class OrchestratorError(Exception):
+    """Orchestrator 业务异常"""
+    
+    def __init__(self, message: str, error_code: str = None, details: dict = None):
+        self.message = message
+        self.error_code = error_code
+        self.details = details or {}
+        super().__init__(self.message)

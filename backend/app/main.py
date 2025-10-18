@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.core.config import settings
-from app.api.v1.endpoints import incident_parser, rag
+from app.api.v1.endpoints import incident_parser, rag, orchestrator
 
 # 配置日志
 logging.basicConfig(
@@ -43,6 +43,12 @@ app.include_router(
     rag.router,
     prefix=f"{settings.api_v1_prefix}",
     tags=["RAG知识检索"]
+)
+
+app.include_router(
+    orchestrator.router,
+    prefix=f"{settings.api_v1_prefix}/orchestrator",
+    tags=["Orchestrator"]
 )
 
 
