@@ -1,13 +1,20 @@
-# Incident Parser AI Module
-# 事件解析AI模块
-
 """
-PortSentinel AI Assistant - 事件解析模块
+Incident Report Parsing Agent for PORTNET® Support System.
 
-这个模块包含用于解析事件报告的AI功能。
-目前作为占位符，后续将实现具体的AI解析逻辑。
+This package provides AI-powered parsing of incident reports from various
+sources (Email, SMS, Call transcripts) into structured data for automated
+incident management and resolution.
 """
+
+from .models import IncidentReport, Entity, ParsingError
+from .parser import IncidentReportParser, parse_incident_report
 
 __version__ = "1.0.0"
-__author__ = "PortSentinel Team"
-__description__ = "AI-powered incident report parsing module"
+
+__all__ = [
+    "IncidentReport",
+    "Entity",
+    "ParsingError",
+    "IncidentReportParser",
+    "parse_incident_report",
+]
