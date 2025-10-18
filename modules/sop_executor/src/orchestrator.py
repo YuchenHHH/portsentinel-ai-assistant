@@ -1,14 +1,14 @@
 """
-SOP Execution Orchestrator
+Planner / 规划者
 
-This module contains the orchestrator responsible for:
-- Managing multi-step SOP execution
-- Coordinating between different execution tools
-- Handling execution state and progress tracking
-- Managing rollback and error recovery
+This module contains the Planner responsible for:
+- Planning and strategizing SOP execution sequences
+- Analyzing SOP requirements and dependencies
+- Creating execution plans and workflows
+- Optimizing execution order and resource allocation
 """
 
-# TODO: Implement execution orchestrator
-# TODO: Implement state management
-# TODO: Implement progress tracking
-# TODO: Implement error handling and rollback
+# TODO: Implement Planner orchestrator
+# TODO: Implement execution planning logic
+# TODO: Implement dependency analysis
+# TODO: Implement workflow optimization

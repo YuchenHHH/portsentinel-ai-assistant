@@ -1,12 +1,13 @@
 """
-Decision AI Agent for SOP Execution
+Executor / 执行者
 
-This module contains the AI agent responsible for:
-- Analyzing SOP steps and making execution decisions
-- Determining the next action based on current context
-- Handling conditional logic and branching in SOPs
+This module contains the Executor responsible for:
+- Executing individual SOP steps and actions
+- Performing concrete operations (database queries, API calls, etc.)
+- Handling step-by-step execution with real-time feedback
+- Managing execution state and progress tracking
 """
 
-# TODO: Implement decision AI agent
-# TODO: Implement step analysis logic
-# TODO: Implement conditional execution logic
+# TODO: Implement Executor agent
+# TODO: Implement step execution logic
+# TODO: Implement operation handlers (MySQL, API, etc.)
