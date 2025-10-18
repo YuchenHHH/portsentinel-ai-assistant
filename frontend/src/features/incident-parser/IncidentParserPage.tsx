@@ -117,11 +117,11 @@ export const IncidentParserPage: React.FC = () => {
           const planResult = await fetchExecutionPlan(planRequest)
 
           if (planResult.success && planResult.plan.length > 0) {
-            // 将执行计划步骤转换为聊天消息，只显示步骤内容，不显示解析结果框框
-            const planMessages: ChatMessage[] = planResult.plan.map((step, index) => ({
-              id: `plan-step-${Date.now()}-${index}`,
+            // 将所有执行计划步骤合并到一个消息中
+            const planMessage: ChatMessage = {
+              id: `plan-steps-${Date.now()}`,
               type: 'assistant' as const,
-              content: `📋 执行步骤 ${index + 1}/${planResult.plan.length}`,
+              content: `📋 执行计划生成完成，共 ${planResult.plan.length} 个步骤`,
               timestamp: new Date(),
               status: 'sent' as const,
               incidentReport: {
@@ -136,17 +136,16 @@ export const IncidentParserPage: React.FC = () => {
                 problem_summary: parsedResult.problem_summary,
                 potential_cause_hint: parsedResult.potential_cause_hint,
                 raw_text: parsedResult.raw_text,
-                // 添加执行计划步骤信息
-                plan_step: step,
-                step_number: index + 1,
+                // 添加完整的执行计划步骤信息
+                plan_steps: planResult.plan,
                 total_steps: planResult.plan.length
-              } as IncidentReportResponse & { plan_step: string; step_number: number; total_steps: number }
-            }))
+              } as IncidentReportResponse & { plan_steps: string[]; total_steps: number }
+            }
 
             // 移除加载消息并添加执行计划消息
             setMessages((prev) => [
               ...prev.filter((msg) => msg.id !== planLoadingMessage.id),
-              ...planMessages
+              planMessage
             ])
           } else {
             // 计划生成失败
