@@ -174,8 +174,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                   <Text fontSize="sm" fontWeight="medium" color="gray.700">
                     {message.content}
                   </Text>
-                  {/* 执行计划步骤显示 - 只显示步骤，不显示解析结果框框 */}
-                  {message.incidentReport && (message.incidentReport as any).plan_step ? (
+                  {/* 执行计划步骤显示 - 多个步骤在同一个对话框中 */}
+                  {message.incidentReport && (message.incidentReport as any).plan_steps ? (
                     <Box
                       bg="blue.50"
                       p={4}
@@ -184,29 +184,44 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                       borderColor="blue.200"
                       boxShadow="sm"
                     >
-                      <VStack align="stretch" spacing={2}>
-                        <HStack>
-                          <Box
-                            bg="blue.500"
-                            color="white"
-                            borderRadius="full"
-                            w={6}
-                            h={6}
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="center"
-                            fontSize="xs"
-                            fontWeight="bold"
-                          >
-                            {(message.incidentReport as any).step_number}
-                          </Box>
-                          <Text fontSize="sm" fontWeight="semibold" color="blue.700">
-                            执行步骤 {(message.incidentReport as any).step_number}/{(message.incidentReport as any).total_steps}
-                          </Text>
-                        </HStack>
-                        <Text fontSize="sm" color="blue.800" lineHeight="1.5">
-                          {(message.incidentReport as any).plan_step}
-                        </Text>
+                      <VStack align="stretch" spacing={4}>
+                        
+                        {/* 显示所有执行步骤 */}
+                        <VStack align="stretch" spacing={3}>
+                          {(message.incidentReport as any).plan_steps.map((step: string, index: number) => (
+                            <Box
+                              key={index}
+                              bg="white"
+                              p={3}
+                              borderRadius="md"
+                              border="1px"
+                              borderColor="blue.100"
+                              boxShadow="xs"
+                            >
+                              <HStack align="start" spacing={3}>
+                                <Box
+                                  bg="blue.400"
+                                  color="white"
+                                  borderRadius="full"
+                                  w={5}
+                                  h={5}
+                                  display="flex"
+                                  alignItems="center"
+                                  justifyContent="center"
+                                  fontSize="xs"
+                                  fontWeight="bold"
+                                  flexShrink={0}
+                                  mt={0.5}
+                                >
+                                  {index + 1}
+                                </Box>
+                                <Text fontSize="sm" color="blue.800" lineHeight="1.5">
+                                  {step}
+                                </Text>
+                              </HStack>
+                            </Box>
+                          ))}
+                        </VStack>
                       </VStack>
                     </Box>
                   ) : (
