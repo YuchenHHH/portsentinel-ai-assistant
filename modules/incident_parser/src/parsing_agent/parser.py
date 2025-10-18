@@ -33,7 +33,7 @@ class IncidentReportParser:
 
     def __init__(
         self,
-        model_name: str = "gpt-4o",
+        model_name: str = "gpt-4.1-mini",
         temperature: float = 0.0,
         api_key: Optional[str] = None,
         azure_endpoint: Optional[str] = None,
@@ -57,7 +57,7 @@ class IncidentReportParser:
         # Get Azure credentials from parameters or environment
         self.api_key = api_key or os.getenv("AZURE_OPENAI_API_KEY")
         self.azure_endpoint = azure_endpoint or os.getenv("AZURE_OPENAI_ENDPOINT")
-        self.api_version = api_version or os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-15-preview")
+        self.api_version = api_version or os.getenv("AZURE_OPENAI_API_VERSION", "2025-01-01-preview")
         self.deployment_name = deployment_name or os.getenv("AZURE_OPENAI_DEPLOYMENT") or model_name
 
         if not self.api_key:
@@ -219,7 +219,7 @@ Provide the output in the exact JSON format specified above."""
 def parse_incident_report(
     source_type: str,
     raw_text: str,
-    model_name: str = "gpt-4o",
+    model_name: str = "gpt-4.1-mini",
     api_key: Optional[str] = None
 ) -> IncidentReport:
     """

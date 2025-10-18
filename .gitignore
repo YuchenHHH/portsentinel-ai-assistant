@@ -221,3 +221,8 @@ Thumbs.db
 *.db
 uploads/
 downloads/
+
+# 测试文件
+test/
+test_*.py
+*_test.py
