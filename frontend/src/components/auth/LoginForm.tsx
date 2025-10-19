@@ -1,5 +1,5 @@
 /**
- * 登录表单组件
+ * Login Form Component
  */
 
 import React, { useState } from 'react';
@@ -49,7 +49,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
     try {
       await login(formData);
     } catch (err: any) {
-      setError(err.message || '登录失败，请检查邮箱和密码');
+      setError(err.message || 'Login failed, please check your email and password');
     } finally {
       setIsLoading(false);
     }
@@ -76,7 +76,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
     >
       <VStack spacing={6}>
         <Text fontSize="2xl" fontWeight="bold" color="blue.600">
-          登录到 PortSentinel AI
+          Login to PortSentinel AI
         </Text>
 
         {error && (
@@ -89,32 +89,32 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         <form onSubmit={handleSubmit} style={{ width: '100%' }}>
           <VStack spacing={4}>
             <FormControl isRequired>
-              <FormLabel>邮箱地址</FormLabel>
+              <FormLabel>Email Address</FormLabel>
               <Input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                placeholder="请输入您的邮箱"
+                placeholder="Enter your email"
                 size="lg"
                 borderRadius="lg"
               />
             </FormControl>
 
             <FormControl isRequired>
-              <FormLabel>密码</FormLabel>
+              <FormLabel>Password</FormLabel>
               <InputGroup size="lg">
                 <Input
                   type={showPassword ? 'text' : 'password'}
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  placeholder="请输入您的密码"
+                  placeholder="Enter your password"
                   borderRadius="lg"
                 />
                 <InputRightElement>
                   <IconButton
-                    aria-label={showPassword ? '隐藏密码' : '显示密码'}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                     icon={showPassword ? <ViewOffIcon /> : <ViewIcon />}
                     variant="ghost"
                     onClick={() => setShowPassword(!showPassword)}
@@ -129,10 +129,10 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
               size="lg"
               w="100%"
               isLoading={isLoading}
-              loadingText="登录中..."
+              loadingText="Logging in..."
               borderRadius="lg"
             >
-              登录
+              Login
             </Button>
           </VStack>
         </form>
@@ -140,14 +140,14 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         <Divider />
 
         <Text fontSize="sm" color="gray.600" textAlign="center">
-          还没有账户？{' '}
+          Don't have an account?{' '}
           <Button
             variant="link"
             colorScheme="blue"
             onClick={onSwitchToRegister}
             size="sm"
           >
-            立即注册
+            Register Now
           </Button>
         </Text>
       </VStack>

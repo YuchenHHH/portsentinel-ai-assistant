@@ -1,5 +1,5 @@
 /**
- * 注册表单组件
+ * Registration Form Component
  */
 
 import React, { useState } from 'react';
@@ -48,15 +48,15 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
     e.preventDefault();
     setError(null);
 
-    // 验证密码匹配
+    // Validate password match
     if (formData.password !== confirmPassword) {
-      setError('两次输入的密码不匹配');
+      setError('Passwords do not match');
       return;
     }
 
-    // 验证密码长度
+    // Validate password length
     if (formData.password.length < 6) {
-      setError('密码长度至少6位');
+      setError('Password must be at least 6 characters');
       return;
     }
 
@@ -65,7 +65,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
     try {
       await register(formData);
     } catch (err: any) {
-      setError(err.message || '注册失败，请稍后重试');
+      setError(err.message || 'Registration failed, please try again later');
     } finally {
       setIsLoading(false);
     }
@@ -96,7 +96,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
     >
       <VStack spacing={6}>
         <Text fontSize="2xl" fontWeight="bold" color="blue.600">
-          注册 PortSentinel AI
+          Register for PortSentinel AI
         </Text>
 
         {error && (
@@ -109,45 +109,45 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
         <form onSubmit={handleSubmit} style={{ width: '100%' }}>
           <VStack spacing={4}>
             <FormControl isRequired>
-              <FormLabel>姓名</FormLabel>
+              <FormLabel>Full Name</FormLabel>
               <Input
                 type="text"
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                placeholder="请输入您的姓名"
+                placeholder="Enter your full name"
                 size="lg"
                 borderRadius="lg"
               />
             </FormControl>
 
             <FormControl isRequired>
-              <FormLabel>邮箱地址</FormLabel>
+              <FormLabel>Email Address</FormLabel>
               <Input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                placeholder="请输入您的邮箱"
+                placeholder="Enter your email"
                 size="lg"
                 borderRadius="lg"
               />
             </FormControl>
 
             <FormControl isRequired>
-              <FormLabel>密码</FormLabel>
+              <FormLabel>Password</FormLabel>
               <InputGroup size="lg">
                 <Input
                   type={showPassword ? 'text' : 'password'}
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
-                  placeholder="请输入密码（至少6位）"
+                  placeholder="Enter password (at least 6 characters)"
                   borderRadius="lg"
                 />
                 <InputRightElement>
                   <IconButton
-                    aria-label={showPassword ? '隐藏密码' : '显示密码'}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                     icon={showPassword ? <ViewOffIcon /> : <ViewIcon />}
                     variant="ghost"
                     onClick={() => setShowPassword(!showPassword)}
@@ -157,19 +157,19 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
             </FormControl>
 
             <FormControl isRequired>
-              <FormLabel>确认密码</FormLabel>
+              <FormLabel>Confirm Password</FormLabel>
               <InputGroup size="lg">
                 <Input
                   type={showConfirmPassword ? 'text' : 'password'}
                   name="confirmPassword"
                   value={confirmPassword}
                   onChange={handleInputChange}
-                  placeholder="请再次输入密码"
+                  placeholder="Confirm your password"
                   borderRadius="lg"
                 />
                 <InputRightElement>
                   <IconButton
-                    aria-label={showConfirmPassword ? '隐藏密码' : '显示密码'}
+                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                     icon={showConfirmPassword ? <ViewOffIcon /> : <ViewIcon />}
                     variant="ghost"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -184,10 +184,10 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
               size="lg"
               w="100%"
               isLoading={isLoading}
-              loadingText="注册中..."
+              loadingText="Registering..."
               borderRadius="lg"
             >
-              注册
+              Register
             </Button>
           </VStack>
         </form>
@@ -195,14 +195,14 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) =
         <Divider />
 
         <Text fontSize="sm" color="gray.600" textAlign="center">
-          已有账户？{' '}
+          Already have an account?{' '}
           <Button
             variant="link"
             colorScheme="blue"
             onClick={onSwitchToLogin}
             size="sm"
           >
-            立即登录
+            Login Now
           </Button>
         </Text>
       </VStack>

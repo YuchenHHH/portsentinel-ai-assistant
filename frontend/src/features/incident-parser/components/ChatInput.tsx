@@ -23,7 +23,7 @@ interface ChatInputProps {
 }
 
 /**
- * 聊天输入组件 - 固定在页面底部的输入栏
+ * Chat Input Component - Fixed input bar at the bottom of the page
  */
 export const ChatInput: React.FC<ChatInputProps> = ({
   onSubmit,
@@ -39,7 +39,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const borderColor = useColorModeValue('gray.200', 'gray.600')
   const focusBorderColor = useColorModeValue('blue.500', 'blue.300')
 
-  // 自动调整文本域高度
+  // Auto-adjust textarea height
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
@@ -52,8 +52,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     
     if (!text.trim()) {
       toast({
-        title: '输入为空',
-        description: '请输入事件报告内容',
+        title: 'Empty Input',
+        description: 'Please enter incident report content',
         status: 'warning',
         duration: 2000,
         isClosable: true,
@@ -62,7 +62,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
     }
 
     onSubmit(text.trim(), sourceType)
-    setText('') // 清空输入
+    setText('') // Clear input
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -90,10 +90,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       transition={{ duration: 0.3, ease: "easeOut" }}
     >
       <VStack spacing={3} p={4} maxW="container.xl" mx="auto">
-        {/* 来源类型选择器 */}
+        {/* Source Type Selector */}
         <HStack width="100%" justify="flex-end">
           <Text fontSize="sm" color="gray.500">
-            来源类型:
+            Source Type:
           </Text>
           <Select
             value={sourceType}
@@ -102,13 +102,13 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             maxW="120px"
             disabled={isDisabled}
           >
-            <option value="Email">邮件</option>
-            <option value="SMS">短信</option>
-            <option value="Call">电话</option>
+            <option value="Email">Email</option>
+            <option value="SMS">SMS</option>
+            <option value="Call">Call</option>
           </Select>
         </HStack>
 
-        {/* 输入区域 */}
+        {/* Input Area */}
         <Flex gap={3} align="end" width="100%">
           <Box flex={1}>
             <Textarea
@@ -116,7 +116,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               value={text}
               onChange={(e) => setText(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="请输入事件报告内容... (按 Enter 发送，Shift+Enter 换行)"
+              placeholder="Enter incident report content... (Press Enter to send, Shift+Enter for new line)"
               minH="40px"
               maxH="120px"
               resize="none"
@@ -135,7 +135,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
           <IconButton
             type="submit"
-            aria-label="发送消息"
+            aria-label="Send message"
             icon={<ArrowForwardIcon />}
             colorScheme="blue"
             size="md"
@@ -149,9 +149,9 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           />
         </Flex>
 
-        {/* 提示文本 */}
+        {/* Hint Text */}
         <Text fontSize="xs" color="gray.500" textAlign="center">
-          支持多行文本输入，AI 将智能解析事件报告并提取关键信息
+          Supports multi-line text input, AI will intelligently parse incident reports and extract key information
         </Text>
       </VStack>
     </MotionBox>
