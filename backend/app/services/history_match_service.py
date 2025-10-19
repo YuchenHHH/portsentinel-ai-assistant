@@ -310,35 +310,36 @@ class HistoryMatchService:
             return []
     
     def _gpt_validation(self, request: HistoryMatchRequest, case_scores: List[Tuple[HistoricalCase, SimilarityScore]]) -> List[MatchedCase]:
-        """第4层：GPT验证"""
+        """第4层：GPT验证 - 只返回通过验证的案例"""
         try:
             if not self.gpt_client or not case_scores:
-                # 如果没有GPT客户端，返回前3个案例
-                matched_cases = []
-                for case, score in case_scores[:3]:
+                # 如果没有GPT客户端，返回空列表（不显示任何案例）
+                logger.warning("GPT客户端不可用，跳过历史案例验证")
+                return []
+            
+            # 验证前5个案例，只返回通过验证的
+            validated_cases = []
+            logger.info(f"[LLM Validation] 开始验证 {min(5, len(case_scores))} 个历史案例...")
+            
+            for i, (case, score) in enumerate(case_scores[:5]):
+                logger.info(f"  [LLM Validation] 验证历史案例 {i+1}: {case.id}")
+                is_similar, reasoning = self._validate_with_gpt(request, case)
+                logger.info(f"  [LLM Validation] 验证结果: {'通过' if is_similar else '未通过'}")
+                
+                if is_similar:
                     matched_case = MatchedCase(
                         case=case,
                         similarity_score=score,
-                        gpt_validation=True,  # 假设通过
-                        gpt_reasoning="GPT验证不可用，基于相似度分数判断"
+                        gpt_validation=True,
+                        gpt_reasoning=reasoning
                     )
-                    matched_cases.append(matched_case)
-                return matched_cases
+                    validated_cases.append(matched_case)
+                    logger.info(f"历史案例匹配 - 添加通过验证的案例: {case.id}")
+                else:
+                    logger.info(f"历史案例匹配 - 案例被LLM拒绝: {case.id} - {reasoning}")
             
-            # 验证前3个案例
-            matched_cases = []
-            for case, score in case_scores[:3]:
-                is_similar, reasoning = self._validate_with_gpt(request, case)
-                
-                matched_case = MatchedCase(
-                    case=case,
-                    similarity_score=score,
-                    gpt_validation=is_similar,
-                    gpt_reasoning=reasoning
-                )
-                matched_cases.append(matched_case)
-            
-            return matched_cases
+            logger.info(f"[LLM Validation] 历史案例验证完成: {len(validated_cases)}/{min(5, len(case_scores))} 个案例通过验证")
+            return validated_cases
             
         except Exception as e:
             logger.error(f"GPT validation failed: {e}")
