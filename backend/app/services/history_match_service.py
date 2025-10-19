@@ -71,7 +71,7 @@ class HistoryMatchService:
             if api_key and api_base:
                 self.gpt_client = AzureOpenAI(
                     api_key=api_key,
-                    api_base=api_base,
+                    azure_endpoint=api_base,
                     api_version=api_version
                 )
                 self.gpt_deployment = deployment_name
