@@ -358,7 +358,12 @@ class RAGService:
                         "overview": sop_dict.get("Overview"),
                         "preconditions": sop_dict.get("Preconditions"),
                         "resolution": sop_dict.get("Resolution"),
-                        "verification": sop_dict.get("Verification")
+                        "verification": sop_dict.get("Verification"),
+                        # 添加LLM验证信息
+                        "_llm_validation": sop_dict.get("_llm_validation", False),
+                        "_validation_reason": sop_dict.get("_validation_reason", ""),
+                        "_rerank_score": sop_dict.get("_rerank_score", 0.0),
+                        "_rank": sop_dict.get("_rank", 0)
                     }
                     
                     # Create content from title and overview

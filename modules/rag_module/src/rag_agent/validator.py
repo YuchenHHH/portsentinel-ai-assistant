@@ -373,15 +373,42 @@ class HybridRagAgent:
         for i, (sop, score) in enumerate(reranked_results, 1):
             print(f"  {i}. {sop.get('Title', 'Unknown')[:60]}... (score: {score:.4f})")
         
-        # ===== Step 5: 提取完整 SOP 并保留分数 =====
-        final_sops = []
-        for i, (sop, score) in enumerate(reranked_results):
-            # 添加分数信息到SOP字典中
-            sop_with_score = sop.copy()
-            sop_with_score['_rerank_score'] = score
-            sop_with_score['_rank'] = i + 1
-            print(f"RAG Agent - Adding score {score} to SOP: {sop.get('Title', 'Unknown')}")
-            final_sops.append(sop_with_score)
+        # ===== Step 5: LLM 验证 SOP 适用性 =====
+        if self.use_llm:
+            print(f"\n[LLM Validation] 开始验证 {len(reranked_results)} 个SOP...")
+            validated_sops = []
+            for i, (sop, score) in enumerate(reranked_results):
+                print(f"  [LLM Validation] 验证SOP {i+1}: {sop.get('Title', 'Unknown')}")
+                # 验证SOP是否适用
+                is_valid, validation_reason = self._validate_sop_with_llm(report, sop)
+                print(f"  [LLM Validation] 验证结果: {'通过' if is_valid else '未通过'}")
+                
+                if is_valid:
+                    # 添加分数和验证信息到SOP字典中
+                    sop_with_score = sop.copy()
+                    sop_with_score['_rerank_score'] = score
+                    sop_with_score['_rank'] = len(validated_sops) + 1
+                    sop_with_score['_llm_validation'] = True
+                    sop_with_score['_validation_reason'] = validation_reason
+                    print(f"RAG Agent - Adding score {score} to SOP: {sop.get('Title', 'Unknown')}")
+                    validated_sops.append(sop_with_score)
+                else:
+                    print(f"RAG Agent - SOP rejected by LLM: {sop.get('Title', 'Unknown')} - {validation_reason}")
+            
+            print(f"[LLM Validation] 验证完成: {len(validated_sops)}/{len(reranked_results)} 个SOP通过验证")
+            # 使用验证后的SOP
+            final_sops = validated_sops
+        else:
+            print(f"\n[LLM Validation] 跳过LLM验证 (use_llm=False)")
+            # 不使用LLM验证，直接使用rerank结果
+            final_sops = []
+            for i, (sop, score) in enumerate(reranked_results):
+                sop_with_score = sop.copy()
+                sop_with_score['_rerank_score'] = score
+                sop_with_score['_rank'] = i + 1
+                sop_with_score['_llm_validation'] = False
+                sop_with_score['_validation_reason'] = "未进行LLM验证"
+                final_sops.append(sop_with_score)
         
         # ===== Step 6: 生成摘要 =====
         retrieval_summary = self._generate_summary(
@@ -415,6 +442,94 @@ class HybridRagAgent:
         
         return enriched_context
     
+    def _validate_sop_with_llm(self, report: IncidentReport, sop: Dict[str, Any]) -> Tuple[bool, str]:
+        """
+        使用LLM验证SOP是否适用于当前问题
+        
+        Args:
+            report: 事件报告
+            sop: SOP字典
+            
+        Returns:
+            (is_valid, reason): 是否适用和原因
+        """
+        try:
+            # 构建验证提示
+            prompt = f"""
+请分析以下SOP是否适用于当前问题：
+
+【当前问题】
+- 问题摘要: {report.problem_summary}
+- 影响模块: {report.affected_module or '未指定'}
+- 错误代码: {report.error_code or '无'}
+- 紧急程度: {report.urgency}
+- 提取的实体: {', '.join([f"{e.type}: {e.value}" for e in report.entities])}
+
+【SOP信息】
+- 标题: {sop.get('Title', 'N/A')}
+- 模块: {sop.get('Module', 'N/A')}
+- 概述: {sop.get('Overview', 'N/A')}
+- 前置条件: {sop.get('Preconditions', 'N/A')}
+- 解决方案: {sop.get('Resolution', 'N/A')}
+
+请从以下角度分析：
+1. 语义相关性：SOP是否与当前问题在语义上相关？
+2. 前置条件检查：当前问题是否满足SOP的前置条件？
+3. 模块匹配：SOP的模块是否与问题的影响模块匹配？
+4. 适用性评估：这个SOP是否真的能解决当前问题？
+
+请回答：
+- 是否适用: [是/否]
+- 适用性评分: [1-10分]
+- 详细分析: [详细说明为什么适用或不适用，特别关注前置条件是否满足]
+"""
+            
+            # 调用LLM进行验证
+            response = self.reranker.llm.invoke(prompt)
+            
+            result_text = response.content.strip()
+            is_valid, reason = self._parse_llm_validation_response(result_text)
+            
+            return is_valid, reason
+            
+        except Exception as e:
+            print(f"Warning: LLM validation failed: {e}")
+            # 如果LLM验证失败，默认接受SOP
+            return True, f"LLM验证失败，默认接受: {str(e)}"
+    
+    def _parse_llm_validation_response(self, response_text: str) -> Tuple[bool, str]:
+        """解析LLM验证响应"""
+        try:
+            is_valid = False
+            
+            # 检查是否适用
+            if "是否适用: 是" in response_text or "适用: 是" in response_text:
+                is_valid = True
+            elif "是否适用: 否" in response_text or "适用: 否" in response_text:
+                is_valid = False
+            else:
+                # 模糊匹配
+                if "适用" in response_text and "是" in response_text:
+                    is_valid = True
+                elif "不适用" in response_text or "否" in response_text:
+                    is_valid = False
+                else:
+                    # 默认接受
+                    is_valid = True
+            
+            # 提取详细分析
+            reason = response_text
+            if "详细分析:" in response_text:
+                reason = response_text.split("详细分析:")[-1].strip()
+            elif "分析:" in response_text:
+                reason = response_text.split("分析:")[-1].strip()
+            
+            return is_valid, reason
+            
+        except Exception as e:
+            print(f"Warning: Failed to parse LLM validation response: {e}")
+            return True, f"解析响应失败: {str(e)}"
+    
     def _generate_summary(
         self,
         report: IncidentReport,
@@ -426,17 +541,21 @@ class HybridRagAgent:
         if not final_sops:
             return (
                 f"No relevant SOPs found for incident {report.incident_id} "
-                f"after multi-query hybrid search. Manual review recommended."
+                f"after multi-query hybrid search and LLM validation. Manual review recommended."
             )
         
         top_sop = final_sops[0]
         top_title = top_sop.get("Title", "Unknown")
         
+        # 统计LLM验证信息
+        validated_count = sum(1 for sop in final_sops if sop.get('_llm_validation', False))
+        
         summary_parts = [
             f"Retrieved {len(final_sops)} SOP(s) for incident {report.incident_id} "
-            f"using hybrid search (BM25 + Vector + Multi-Query + RRF + Rerank).",
+            f"using hybrid search (BM25 + Vector + Multi-Query + RRF + Rerank + LLM Validation).",
             f"Generated {num_queries} query variants.",
             f"Processed {num_candidates_after_rrf} candidates after RRF.",
+            f"LLM validated {validated_count} SOPs for semantic relevance and precondition matching.",
             f"Top match: {top_title}"
         ]
         

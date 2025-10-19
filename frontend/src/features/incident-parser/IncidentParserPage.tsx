@@ -99,13 +99,14 @@ export const IncidentParserPage: React.FC = () => {
             msg.id === historyLoadingMessage.id ? errorMessage : msg
           )
         )
+        return // 如果历史案例匹配失败，直接返回，不继续执行后续步骤
       }
 
       // 第三步：调用RAG增强
-        const ragLoadingMessage = createLoadingMessage('正在检索知识库...')
-        setMessages((prev) => [...prev, ragLoadingMessage])
+      const ragLoadingMessage = createLoadingMessage('正在检索知识库...')
+      setMessages((prev) => [...prev, ragLoadingMessage])
 
-        try {
+      try {
           // 构建RAG请求
           const enrichmentRequest: EnrichmentRequest = {
             incident_id: parsedResult.incident_id,

@@ -81,6 +81,14 @@ const ClickableSopCard: React.FC<{ sop: SopSnippet; index: number; getModuleColo
                   相似度: {formatScore(sop.score)}
                 </Badge>
               )}
+              {sop.metadata._llm_validation !== undefined && (
+                <Badge 
+                  colorScheme={sop.metadata._llm_validation ? "green" : "red"} 
+                  variant="solid"
+                >
+                  {sop.metadata._llm_validation ? "✓ LLM验证通过" : "✗ LLM验证未通过"}
+                </Badge>
+              )}
             </HStack>
           </VStack>
           <HStack spacing={2}>
@@ -279,6 +287,27 @@ const CompleteSopDisplay: React.FC<{ sop: SopSnippet }> = ({ sop }) => {
                   <Text fontSize="xs" color="gray.500">索引:</Text>
                   <Text fontSize="xs" color="gray.600">{sop.metadata.sop_index}</Text>
                 </HStack>
+              )}
+              {sop.metadata._validation_reason && (
+                <Box>
+                  <HStack mb={2}>
+                    <Icon as={InfoIcon} color="blue.500" />
+                    <Text fontSize="xs" fontWeight="bold" color="gray.700">
+                      LLM验证推理
+                    </Text>
+                  </HStack>
+                  <Box
+                    bg={sop.metadata._llm_validation ? "green.50" : "red.50"}
+                    p={2}
+                    borderRadius="md"
+                    border="1px"
+                    borderColor={sop.metadata._llm_validation ? "green.200" : "red.200"}
+                  >
+                    <Text fontSize="xs" color="gray.700" lineHeight="1.4" whiteSpace="pre-wrap">
+                      {sop.metadata._validation_reason}
+                    </Text>
+                  </Box>
+                </Box>
               )}
             </VStack>
           </Box>
