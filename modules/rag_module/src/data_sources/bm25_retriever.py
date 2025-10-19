@@ -24,7 +24,7 @@ class BM25Retriever:
         """
         if kb_json_path is None:
             # 默认路径：相对于 rag_module
-            kb_json_path = Path(__file__).parent.parent.parent.parent / "knowledge_base_structured.json"
+            kb_json_path = Path(__file__).parent.parent.parent.parent.parent/ "data" / "knowledge_base_structured.json"
         
         self.kb_json_path = str(kb_json_path)
         
