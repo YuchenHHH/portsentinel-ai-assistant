@@ -2,7 +2,7 @@
  * 聊天消息类型定义
  */
 
-import { IncidentReportResponse, EnrichmentResponse } from './api';
+import { IncidentReportResponse, EnrichmentResponse, HistoryMatchResponse } from './api';
 
 // 消息类型
 export type MessageType = 'user' | 'assistant' | 'system';
@@ -38,6 +38,14 @@ export interface EnrichmentMessage extends BaseMessage {
   content: string;
   enrichmentData: EnrichmentResponse;
   isEnrichment: true;
+}
+
+// 历史案例匹配消息
+export interface HistoryMatchMessage extends BaseMessage {
+  type: 'assistant';
+  content: string;
+  historyData: HistoryMatchResponse;
+  isHistoryMatch: true;
 }
 
 // 加载消息
@@ -102,7 +110,7 @@ export interface SystemMessage extends BaseMessage {
 }
 
 // 联合消息类型
-export type ChatMessage = UserMessage | AssistantMessage | EnrichmentMessage | LoadingMessage | SOPExecutionMessage | ApprovalRequestMessage | PlanConfirmationMessage | SystemMessage;
+export type ChatMessage = UserMessage | AssistantMessage | EnrichmentMessage | HistoryMatchMessage | LoadingMessage | SOPExecutionMessage | ApprovalRequestMessage | PlanConfirmationMessage | SystemMessage;
 
 // 聊天状态
 export interface ChatState {
@@ -152,6 +160,19 @@ export const createEnrichmentMessage = (
   content,
   enrichmentData,
   isEnrichment: true,
+  timestamp: new Date(),
+  status: 'sent'
+});
+
+export const createHistoryMatchMessage = (
+  content: string,
+  historyData: HistoryMatchResponse
+): HistoryMatchMessage => ({
+  id: `history_match_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+  type: 'assistant',
+  content,
+  historyData,
+  isHistoryMatch: true,
   timestamp: new Date(),
   status: 'sent'
 });
@@ -223,6 +244,10 @@ export const isAssistantMessage = (message: ChatMessage): message is AssistantMe
 
 export const isEnrichmentMessage = (message: ChatMessage): message is EnrichmentMessage => {
   return message.type === 'assistant' && 'isEnrichment' in message && message.isEnrichment === true;
+};
+
+export const isHistoryMatchMessage = (message: ChatMessage): message is HistoryMatchMessage => {
+  return message.type === 'assistant' && 'isHistoryMatch' in message && message.isHistoryMatch === true;
 };
 
 export const isLoadingMessage = (message: ChatMessage): message is LoadingMessage => {

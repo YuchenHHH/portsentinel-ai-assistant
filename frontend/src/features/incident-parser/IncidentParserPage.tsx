@@ -4,11 +4,12 @@ import { motion } from 'framer-motion'
 import { ChatInput } from './components/ChatInput'
 import { ChatWindow } from './components/ChatWindow'
 import DatabaseConnectionModal from './components/DatabaseConnectionModal'
-import { parseIncidentReport, enrichIncident, fetchExecutionPlan, executeSOPPlan, approveSOPExecution, getDatabaseStatus } from '../../services/api'
-import { IncidentReportResponse, EnrichmentRequest, PlanRequest, ParsedIncident, SOPResponse } from '../../types/api'
+import { parseIncidentReport, matchHistoryCases, enrichIncident, fetchExecutionPlan, executeSOPPlan, approveSOPExecution, getDatabaseStatus } from '../../services/api'
+import { IncidentReportResponse, HistoryMatchRequest, EnrichmentRequest, PlanRequest, ParsedIncident, SOPResponse } from '../../types/api'
 import { 
   createUserMessage, 
   createAssistantMessage, 
+  createHistoryMatchMessage,
   createEnrichmentMessage, 
   createLoadingMessage,
   createSOPExecutionMessage,
@@ -57,13 +58,13 @@ export const IncidentParserPage: React.FC = () => {
         )
       )
 
-      // 第二步：调用RAG增强
-      const ragLoadingMessage = createLoadingMessage('正在检索知识库...')
-      setMessages((prev) => [...prev, ragLoadingMessage])
+      // 第二步：历史案例匹配
+      const historyLoadingMessage = createLoadingMessage('正在匹配历史案例...')
+      setMessages((prev) => [...prev, historyLoadingMessage])
 
       try {
-        // 构建RAG请求
-        const enrichmentRequest: EnrichmentRequest = {
+        // 构建历史案例匹配请求
+        const historyRequest: HistoryMatchRequest = {
           incident_id: parsedResult.incident_id,
           source_type: parsedResult.source_type,
           problem_summary: parsedResult.problem_summary,
@@ -74,25 +75,68 @@ export const IncidentParserPage: React.FC = () => {
           raw_text: parsedResult.raw_text,
         }
 
-        // 调用RAG增强API
-        const enrichmentResult = await enrichIncident(enrichmentRequest)
+        // 调用历史案例匹配API
+        const historyResult = await matchHistoryCases(historyRequest)
 
-        // 创建RAG增强消息
-        const enrichmentMessage = createEnrichmentMessage(
-          '知识库检索完成，以下是相关SOP建议：',
-          enrichmentResult
+        // 创建历史案例匹配消息
+        const historyMessage = createHistoryMatchMessage(
+          '历史案例匹配完成，以下是相似的历史案例：',
+          historyResult
         )
 
-        // 更新RAG加载消息为增强结果
+        // 更新历史案例匹配加载消息为匹配结果
         setMessages((prev) =>
           prev.map((msg) =>
-            msg.id === ragLoadingMessage.id ? enrichmentMessage : msg
+            msg.id === historyLoadingMessage.id ? historyMessage : msg
           )
         )
 
-        // 第三步：生成执行计划
-        const planLoadingMessage = createLoadingMessage('正在生成执行计划...')
-        setMessages((prev) => [...prev, planLoadingMessage])
+      } catch (historyError: any) {
+        console.error('历史案例匹配失败:', historyError)
+        const errorMessage = createLoadingMessage(`历史案例匹配失败: ${historyError.message}`)
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === historyLoadingMessage.id ? errorMessage : msg
+          )
+        )
+      }
+
+      // 第三步：调用RAG增强
+        const ragLoadingMessage = createLoadingMessage('正在检索知识库...')
+        setMessages((prev) => [...prev, ragLoadingMessage])
+
+        try {
+          // 构建RAG请求
+          const enrichmentRequest: EnrichmentRequest = {
+            incident_id: parsedResult.incident_id,
+            source_type: parsedResult.source_type,
+            problem_summary: parsedResult.problem_summary,
+            affected_module: parsedResult.affected_module,
+            error_code: parsedResult.error_code,
+            urgency: parsedResult.urgency,
+            entities: parsedResult.entities,
+            raw_text: parsedResult.raw_text,
+          }
+
+          // 调用RAG增强API
+          const enrichmentResult = await enrichIncident(enrichmentRequest)
+
+          // 创建RAG增强消息
+          const enrichmentMessage = createEnrichmentMessage(
+            '知识库检索完成，以下是相关SOP建议：',
+            enrichmentResult
+          )
+
+          // 更新RAG加载消息为增强结果
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === ragLoadingMessage.id ? enrichmentMessage : msg
+            )
+          )
+
+          // 第四步：生成执行计划
+          const planLoadingMessage = createLoadingMessage('正在生成执行计划...')
+          setMessages((prev) => [...prev, planLoadingMessage])
 
         try {
           // 构建执行计划请求

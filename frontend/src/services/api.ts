@@ -12,12 +12,15 @@ import {
   ApprovalResponse,
   DatabaseConfigRequest,
   DatabaseConfigResponse,
+  HistoryMatchRequest,
+  HistoryMatchResponse,
   isIncidentReportResponse,
   isEnrichmentResponse,
   isPlanResponse,
   isExecutionResponse,
   isApprovalResponse,
   isDatabaseConfigResponse,
+  isHistoryMatchResponse,
   isApiErrorResponse
 } from '../types/api'
 
@@ -127,6 +130,42 @@ export const enrichIncident = async (data: EnrichmentRequest): Promise<Enrichmen
     }
     console.error('RAG Unexpected Error:', error);
     throw new Error('RAG 增强过程中发生意外错误');
+  }
+}
+
+// 历史案例匹配
+export const matchHistoryCases = async (data: HistoryMatchRequest): Promise<HistoryMatchResponse> => {
+  try {
+    const response = await apiClient.post<HistoryMatchResponse>('/api/v1/history/match', data);
+    
+    // 验证响应数据类型
+    if (!isHistoryMatchResponse(response.data)) {
+      console.error('History Match API 响应数据格式不正确:', response.data);
+      throw new Error('历史案例匹配服务器返回的数据格式不正确');
+    }
+    
+    return response.data;
+  } catch (error: any) {
+    if (axios.isAxiosError(error)) {
+      const errorData = error.response?.data;
+      
+      // 检查是否是结构化的错误响应
+      if (isApiErrorResponse(errorData)) {
+        console.error('History Match API Error:', errorData);
+        throw new Error(`${errorData.error}: ${errorData.message}`);
+      } else if (errorData?.detail) {
+        // 处理 FastAPI 的错误格式
+        console.error('History Match API Error:', errorData.detail);
+        throw new Error(typeof errorData.detail === 'string' 
+          ? errorData.detail 
+          : JSON.stringify(errorData.detail));
+      } else {
+        console.error('History Match API Error:', error.message);
+        throw new Error(error.message || '历史案例匹配服务发生意外错误');
+      }
+    }
+    console.error('History Match Unexpected Error:', error);
+    throw new Error('历史案例匹配过程中发生意外错误');
   }
 }
 

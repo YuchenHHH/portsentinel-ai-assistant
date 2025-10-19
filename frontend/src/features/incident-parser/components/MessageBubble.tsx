@@ -13,6 +13,7 @@ import { motion } from 'framer-motion'
 import { TypingIndicator } from './TypingIndicator'
 import { ResultDisplay } from './ResultDisplay'
 import { EnrichmentDisplay } from './EnrichmentDisplay'
+import { HistoryMatchDisplay } from './HistoryMatchDisplay'
 import SOPExecutionDisplay from './SOPExecutionDisplay'
 import ApprovalRequest from './ApprovalRequest'
 import PlanConfirmation from './PlanConfirmation'
@@ -21,6 +22,7 @@ import {
   isUserMessage, 
   isAssistantMessage, 
   isEnrichmentMessage, 
+  isHistoryMatchMessage,
   isLoadingMessage,
   isSOPExecutionMessage,
   isApprovalRequestMessage,
@@ -181,6 +183,14 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     {message.content}
                   </Text>
                   <EnrichmentDisplay enrichmentData={message.enrichmentData} />
+                </VStack>
+              ) : isHistoryMatchMessage(message) ? (
+                // 历史案例匹配结果显示
+                <VStack align="stretch" spacing={3}>
+                  <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                    {message.content}
+                  </Text>
+                  <HistoryMatchDisplay historyData={message.historyData} />
                 </VStack>
               ) : isSOPExecutionMessage(message) ? (
                 // SOP 执行结果显示

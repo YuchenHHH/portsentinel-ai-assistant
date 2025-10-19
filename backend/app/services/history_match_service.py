@@ -244,9 +244,10 @@ class HistoryMatchService:
             # 使用向量搜索
             results = self.collection.query(
                 query_texts=[request.problem_summary],
-                n_results=min(20, len(cases)),
-                where={"module": request.affected_module} if request.affected_module else None
+                n_results=min(20, len(cases))
             )
+            
+            logger.info(f"Vector similarity search results: {len(results.get('ids', [[]])[0]) if results.get('ids') else 0} candidates")
             
             # 获取匹配的案例
             matched_cases = []
@@ -255,6 +256,11 @@ class HistoryMatchService:
                     case = next((c for c in cases if c.id == case_id), None)
                     if case:
                         matched_cases.append(case)
+            
+            # 如果没有找到匹配的案例，返回前10个案例
+            if not matched_cases:
+                logger.warning("No vector similarity matches found, returning top 10 cases")
+                matched_cases = cases[:10]
             
             return matched_cases
             
