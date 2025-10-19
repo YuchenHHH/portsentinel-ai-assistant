@@ -6,6 +6,7 @@ import { AuthProvider } from './contexts/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { IncidentParserPage } from './features/incident-parser/IncidentParserPage'
 import { LandingPage } from './pages/LandingPage'
+import { Dashboard } from './pages/Dashboard'
 
 function App() {
   return (
@@ -18,7 +19,7 @@ function App() {
               path="/dashboard" 
               element={
                 <ProtectedRoute>
-                  <IncidentParserPage />
+                  <Dashboard />
                 </ProtectedRoute>
               } 
             />
