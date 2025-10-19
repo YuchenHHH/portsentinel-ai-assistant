@@ -1,30 +1,33 @@
+import sys
 import logging
 import json
 from typing import List, Dict, Any, Union, Optional
 from pydantic import BaseModel
+from pathlib import Path
 from langchain_core.messages import HumanMessage, AIMessage
 
+# 添加 SOP executor 模块到 Python 路径（与orchestrator_service.py相同的方式）
+# 从 backend/app/services/sop_execution_service.py 到 modules/sop_executor/src
+sop_executor_path = Path(__file__).parent.parent.parent.parent / "modules" / "sop_executor" / "src"
+sys.path.insert(0, str(sop_executor_path))
+
+logging.info(f"SOP execution service: SOP executor path added to sys.path: {sop_executor_path}")
+
 # 导入在 modules 中定义的 Agent
-# (需要正确设置 PYTHONPATH)
 try:
-    from modules.sop_executor.src.agent import SOPExecutorAgent
-except ImportError:
-    # 备用路径，根据您的项目结构调整
-    import sys
-    from pathlib import Path
-    sop_executor_path = Path(__file__).parent.parent.parent.parent / "modules" / "sop_executor" / "src"
-    sys.path.insert(0, str(sop_executor_path))
-    try:
-        from agent import SOPExecutorAgent
-    except ImportError:
-        # 如果仍然失败，创建一个模拟的 Agent 类
-        logging.warning("无法导入 SOPExecutorAgent，使用模拟实现")
-        class SOPExecutorAgent:
-            def __init__(self):
-                logging.info("SOPExecutorAgent (模拟) 初始化完毕")
-            
-            def execute_step(self, plan_step: str, incident_context: dict, chat_history: list) -> dict:
-                return {"output": f"模拟执行步骤: {plan_step}"}
+    from agent import SOPExecutorAgent
+    logging.info("Successfully imported SOPExecutorAgent")
+except ImportError as e:
+    logging.error(f"Failed to import SOPExecutorAgent: {e}")
+    logging.error(f"Available files in {sop_executor_path}: {list(sop_executor_path.iterdir())}")
+    # 创建一个模拟的 Agent 类
+    logging.warning("无法导入 SOPExecutorAgent，使用模拟实现")
+    class SOPExecutorAgent:
+        def __init__(self):
+            logging.info("SOPExecutorAgent (模拟) 初始化完毕")
+
+        def execute_step(self, plan_step: str, incident_context: dict, chat_history: list) -> dict:
+            return {"output": f"模拟执行步骤: {plan_step}"}
 
 
 # --- 用于在 API 和服务之间传递状态的数据模型 ---
@@ -49,13 +52,16 @@ class ExecutionStepResult(BaseModel):
 
 # --- 服务本身 ---
 
+# 全局状态缓存（跨请求共享）
+_global_state_cache: Dict[str, ExecutionState] = {}
+
 class SOPExecutionService:
-    
+
     def __init__(self):
         # Service 持有 Agent 实例
         self.agent = SOPExecutorAgent()
-        # 模拟一个用于存储暂停状态的数据库 (在生产中，这应该是 Redis 或数据库)
-        self.state_cache: Dict[str, ExecutionState] = {}
+        # 使用全局缓存而不是实例缓存
+        self.state_cache = _global_state_cache
         logging.info("SOPExecutionService 初始化完毕。")
 
     def _convert_history_to_messages(self, history_tuples: List[tuple]) -> List:
@@ -96,42 +102,77 @@ class SOPExecutionService:
         return await self._run_next_step(state)
 
     async def resume_plan_execution(
-        self, 
-        state_token: str, 
+        self,
+        state_token: str,
         approved_query: str
     ) -> ExecutionStepResult:
         """
         在获得人工批准后，恢复执行。
         """
         logging.info(f"收到恢复执行请求，令牌: {state_token}")
+        logging.info(f"批准的查询: {approved_query[:100]}...")
+
         state = self.state_cache.get(state_token)
         if not state:
+            logging.error("状态令牌无效或已过期")
             return ExecutionStepResult(
-                status="failed", 
+                status="failed",
                 step=0,
                 step_description="状态已过期",
                 message="执行状态已过期或无效。"
             )
-        
-        # 1. 更新聊天记录，告知 Agent 它已获得批准
-        chat_history = self._convert_history_to_messages(state.chat_history_tuples)
-        
-        # (这是关键) Agent 的上一步是 AI: "需要批准"
-        # 我们添加 Human: "已批准，请执行"
-        approval_message = (
-            f"人工操作员已批准执行以下高危查询。\n"
-            f"请使用 `approval_granted=True` 再次调用 `execute_sql_write_query` 工具。\n"
-            f"查询: {approved_query}"
-        )
-        chat_history.append(HumanMessage(content=approval_message))
-        
-        # 2. Agent 会再次执行 *同一步骤* (例如 "删除重复记录")
-        #    但这次，由于有新的人类消息，它会用 approval_granted=True 来调用工具
-        
-        # (我们不增加 current_step_index，因为我们是重试上一步)
-        state.chat_history_tuples = self._convert_messages_to_tuples(chat_history)
-        
-        return await self._run_next_step(state)
+
+        # 解析approved_query - 可能是JSON字符串
+        actual_query = approved_query
+        try:
+            query_json = json.loads(approved_query)
+            if isinstance(query_json, dict) and 'query' in query_json:
+                actual_query = query_json['query']
+                logging.info(f"从JSON中提取到SQL: {actual_query[:100]}...")
+        except (json.JSONDecodeError, TypeError):
+            # 不是JSON，直接使用原始字符串
+            pass
+
+        # 直接执行批准的SQL（不通过LLM）
+        try:
+            # 导入工具模块
+            import sys
+            from pathlib import Path
+            tools_path = Path(__file__).parent.parent.parent.parent / "modules" / "sop_executor" / "src"
+            if str(tools_path) not in sys.path:
+                sys.path.insert(0, str(tools_path))
+
+            from tools import execute_sql_write_query
+
+            # 直接执行已批准的写操作
+            logging.info("直接执行已批准的SQL...")
+            result = execute_sql_write_query.invoke({
+                "query": approved_query,
+                "approval_granted": True
+            })
+            logging.info(f"批准后执行结果: {result}")
+
+            # 更新聊天历史
+            chat_history = self._convert_history_to_messages(state.chat_history_tuples)
+            chat_history.append(HumanMessage(content=f"人工批准执行: {approved_query}"))
+            chat_history.append(AIMessage(content=f"执行成功: {result}"))
+            state.chat_history_tuples = self._convert_messages_to_tuples(chat_history)
+
+            # 步骤完成，进入下一步
+            state.current_step_index += 1
+
+            # 继续执行后续步骤
+            return await self._run_next_step(state)
+
+        except Exception as e:
+            logging.error(f"批准后执行失败: {e}", exc_info=True)
+            return ExecutionStepResult(
+                status="failed",
+                step=state.current_step_index,
+                step_description=state.plan[state.current_step_index] if state.current_step_index < len(state.plan) else "N/A",
+                message=f"批准后执行失败: {str(e)}",
+                tool_output=str(e)
+            )
 
 
     async def _run_next_step(self, state: ExecutionState) -> ExecutionStepResult:
@@ -213,35 +254,6 @@ class SOPExecutionService:
         # --- 4. 成功，进入下一步 ---
         logging.info(f"步骤 {state.current_step_index} ('{current_step_desc}') 执行成功。")
         state.current_step_index += 1
-        
-        # (为了演示，我们递归调用下一步。在 FastAPI 中，您可能会直接返回)
-        # return await self._run_next_step(state)
-        
-        # 在 FastAPI 服务中，您会保存状态并返回 "in_progress"
-        # 这里我们假设它会立即进行下一步 (简单起见)
-        if state.current_step_index < len(state.plan):
-             # 暂时只返回第一步的结果，并提示正在进行
-             # 在真实的 API 中，您会把状态保存到 Redis，只返回当前步骤结果
-             state_token = f"exec_token_{hash(tuple(state.plan))}_{state.current_step_index}"
-             self.state_cache[state_token] = state
-             
-             return ExecutionStepResult(
-                 status="in_progress",
-                 step=state.current_step_index - 1, # 返回刚完成的步骤
-                 step_description=state.plan[state.current_step_index - 1],
-                 tool_output=agent_output,
-                 state_token=state_token, # 客户端需要用这个令牌来请求下一步
-                 message="步骤成功，准备进行下一步。",
-                 agent_thoughts=agent_response.get("agent_thoughts"),
-                 tool_calls=agent_response.get("tool_calls")
-             )
-        else:
-             return ExecutionStepResult(
-                status="completed",
-                step=state.current_step_index - 1,
-                step_description=state.plan[state.current_step_index - 1],
-                tool_output=agent_output,
-                message="计划已成功执行完毕。",
-                agent_thoughts=agent_response.get("agent_thoughts"),
-                tool_calls=agent_response.get("tool_calls")
-            )
+
+        # 自动执行所有步骤（递归调用）
+        return await self._run_next_step(state)
