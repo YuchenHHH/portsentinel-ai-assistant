@@ -19,9 +19,9 @@
   },
   "expanded_queries": [
     "EDI message stuck in ERROR status, no acknowledgment received | Module: EDI/API | Entities: correlation_id: EDI-MSG-789456",
-    "EDI transaction remains in failure state without receiving acknowledgment | Component: EDI/API | Identifier: correlation_id EDI-MSG-789456",
-    "EDI message processing halted with error status, missing ACK response | System: EDI/API | Reference ID: EDI-MSG-789456",
-    "Troubleshooting EDI message error status due to absent acknowledgment | Module: EDI/API | Correlation ID: EDI-MSG-789456"
+    "EDI transmission failure with missing acknowledgment, error state persists | System: EDI/API | correlation_id: EDI-MSG-789456",
+    "Unacknowledged EDI message error status, troubleshooting EDI/API module | correlation_id: EDI-MSG-789456",
+    "EDI message processing halted due to absent acknowledgment, error flagged | Module: EDI/API | correlation_id: EDI-MSG-789456"
   ],
   "retrieved_sops": [
     {
@@ -30,7 +30,9 @@
       "Preconditions": "Access to the EDI message table (edi_message) in the database schema is available.\nThe message has been received and processed (status: PARSED), but no acknowledgment has occurred yet.\nThe message is in the ERROR status and doesn’t have the correct ack_at timestamp. Specifically, it has the value NULL in ack_at.\nLog file: edi_message_processing.log",
       "Resolution": "1.Confirm Error in Logs (Check the logs for any entries related to the specific message (e.g., REF-IFT-0007) to verify if the acknowledgment process was delayed or failed).\ngrep -i \"REF-IFT-N\" edi_message_processing.log\n2.Inspect Existing Messages\nRun a query on the edi_message table to find any messages that either:\n- Have the ERROR status or\n- Have been received and processed (status: PARSED) but haven't been properly acknowledged (i.e., ack_at is NULL).\nFor example, if a message was received by LINE-PSA and sent to PSA-TOS, but ack_at is NULL, it indicates that the message was parsed but wasn't properly acknowledged, leading to the ERROR status.\nRun a query on the edi_message table to find any messages that have been acknowledged (status: ACKED) but have not been properly acknowledged (ack_at is at NULL) after 24 hours.\nSELECT edi_id, message_ref, sender, receiver, status, sent_at, ack_at, error_text\nFROM edi_message\nWHERE status = 'ERROR' OR (status = 'PARSED' AND ack_at IS NULL);\nDecision Logic\nIf NO active message (no message stuck in ERROR status with missing ack_at):\nThe timeout issue shouldn't occur. Recheck the acknowledgment logic or network connection to confirm if any messages were delayed.\nIf active message exists and no acknowledgment (message is stuck in ACKED status but no proper acknowledgment):\nYou can manually trigger acknowledgment for the message, ensuring it gets an appropriate ack_at timestamp\nIf acknowledgment failed (even though the message was attempted for acknowledgment):\nYou must process the message again or trigger acknowledgment manually as described below.\nResolve the Timeout\nManually trigger the acknowledgment process for messages stuck in the ERROR status but not properly acknowledged. Update the status and set the ack_at timestamp.\n-- Trigger ACKED status update manually\nUPDATE edi_message\nSET status = 'ACKED', ack_at = NOW(), error_text = NULL\nWHERE edi_id = <edi_id>; -- Replace with the actual edi_id (1, 2, 3, 4, n)",
       "Verification": null,
-      "Module": "EDI/API"
+      "Module": "EDI/API",
+      "_rerank_score": 0.5844017513370517,
+      "_rank": 1
     },
     {
       "Title": "EDI: Spike in DLQ messages after routine maintenance; consumer group lag increased across EDI topic",
@@ -38,24 +40,28 @@
       "Preconditions": null,
       "Resolution": "1. Corrected cron schedule to UTC; added mutual exclusion lock and run-idempotency; published sanitized incident note and fixed dashboards.\n2. Communications used masked ticket references where applicable.\n3. Locate the problematic EDI message/file and quarantine it.\n4. Validate structure and partner-specific rules.\n4.1 Run schema validator (segments/qualifiers/max-occurrence).\n4.2 Fix qualifier mapping or split oversized occurrences.\n5. Correct normalization/mapping and reprocess safely.\n5.1 Use idempotency token to prevent duplicates.\n5.2 Re-ingest from quarantine and monitor translator logs.",
       "Verification": "1. Confirm next run processed successfully; no duplicates.\n2. Verify partner ACK/CONTRL is archived.\n3. Attach validator logs and sanitized sample.",
-      "Module": "EDI/API"
+      "Module": "EDI/API",
+      "_rerank_score": 0.05227856636047363,
+      "_rank": 2
     },
     {
-      "Title": "EDI: Intermittent 408 on '/auth/token' during webhook deliveries to PARTNER_ID",
-      "Overview": "Intermittent 408 on '/auth/token' during webhook deliveries to PARTNER_ID. slowest 5% of requests latency > 12s triggered breaker; retries hit max; delivery backlog observed. Downstream customer timeline showed gaps; LOCATION ops unaffected but visibility degraded.",
+      "Title": "EDI: Rate limiter throttled legitimate traffic after load surge",
+      "Overview": "Rate limiter throttled legitimate traffic after load surge. Hot keys on '/webhooks/delivery/DELIVERY_ID' created cache stampede; error budget burned for the window.",
       "Preconditions": null,
       "Resolution": "1. Scaled read replicas and split hot key namespaces; added half-open probes to breaker; restored normal delivery and rebuilt backlog safely.\n2. Communications used masked ticket references where applicable.\n3. Reproduce the failing call on a safe test entity.\n3.1 Use read-only token; capture status code and latency.\n3.2 Record request ID/correlation ID for log search.\n4. Check API gateway/service health around the incident window.\n5. Review auth and permissions for the calling user/client.\n5.1 Refresh/rotate token; confirm scopes.\n5.2 Verify NTP/clock skew; resync if >2 seconds.",
       "Verification": "1. Re-run the endpoint; expect 2xx and correct JSON fields.\n2. Observe error rate and latency for 30 minutes; under baseline.\n3. Attach request/response evidence to the case.",
-      "Module": "EDI/API"
+      "Module": "EDI/API",
+      "_rerank_score": 0.055847862991948924,
+      "_rank": 3
     }
   ],
-  "retrieval_summary": "Retrieved 3 SOP(s) for incident EDI-001 using hybrid search (BM25 + Vector + Multi-Query + RRF + Rerank). Generated 4 query variants. Processed 7 candidates after RRF. Top match: EDI: EDI Message Timeout or Delay in Acknowledgment Affected module: EDI/API",
+  "retrieval_summary": "Retrieved 3 SOP(s) for incident EDI-001 using hybrid search (BM25 + Vector + Multi-Query + RRF + Rerank). Generated 4 query variants. Processed 10 candidates after RRF. Top match: EDI: EDI Message Timeout or Delay in Acknowledgment Affected module: EDI/API",
   "retrieval_metrics": {
     "num_expanded_queries": 4,
-    "num_bm25_candidates": 0,
-    "num_vector_candidates": 17,
-    "num_merged_candidates": 7,
-    "num_after_rrf": 7,
+    "num_bm25_candidates": 35,
+    "num_vector_candidates": 24,
+    "num_merged_candidates": 22,
+    "num_after_rrf": 10,
     "num_final_results": 3,
     "bm25_weight": 0.4,
     "vector_weight": 0.6,
