@@ -215,6 +215,8 @@ export const IncidentParserPage: React.FC = () => {
 
       if (result.success && result.execution_result) {
         // 添加执行结果消息
+        console.log('批准执行结果:', result.execution_result)
+        console.log('completed_steps数量:', result.execution_result.completed_steps?.length)
         const executionMessage = createSOPExecutionMessage(
           `✅ 操作已批准并执行完成`,
           result.execution_result
@@ -287,11 +289,27 @@ export const IncidentParserPage: React.FC = () => {
 
       // 如果执行状态是 needs_approval，显示批准请求
       if (result.status === 'needs_approval' && result.state_token) {
+        // 解析 tool_output 中的 SQL 查询
+        let sqlQuery = '';
+        try {
+          if (result.tool_output) {
+            const toolOutput = JSON.parse(result.tool_output);
+            if (toolOutput && toolOutput.query) {
+              sqlQuery = toolOutput.query;
+            } else {
+              sqlQuery = result.tool_output; // 如果不是JSON格式，直接使用
+            }
+          }
+        } catch (e) {
+          // 如果解析失败，直接使用原始输出
+          sqlQuery = result.tool_output || '';
+        }
+
         const approvalMessage = createApprovalRequestMessage(
           `⚠️ 检测到高危操作，需要人工批准`,
           {
             state_token: result.state_token,
-            query: result.tool_output || '',
+            query: sqlQuery,
             step_description: result.step_description
           }
         )

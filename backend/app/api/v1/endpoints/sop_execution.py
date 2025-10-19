@@ -71,7 +71,10 @@ async def approve_execution(
                 step_description=result.step_description,
                 tool_output=result.tool_output,
                 state_token=result.state_token,
-                message=result.message
+                message=result.message,
+                agent_thoughts=result.agent_thoughts,
+                tool_calls=result.tool_calls,
+                completed_steps=result.completed_steps
             )
         )
         

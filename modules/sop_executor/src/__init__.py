@@ -19,3 +19,9 @@ Execution Flow:
 
 __version__ = "1.0.0"
 __author__ = "PortSentinel AI Assistant Team"
+
+# Export the main classes for easier imports
+from .agent import SOPExecutorAgent
+from .orchestrator import SOPPlanner
+
+__all__ = ["SOPExecutorAgent", "SOPPlanner"]

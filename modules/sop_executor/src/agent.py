@@ -31,12 +31,17 @@ SYSTEM_PROMPT = """你是一个"港口运营SOP执行助手"（Port Operations S
 
 2.  **精确使用工具：**
     * 你拥有一套工具，包括 `execute_sql_read_query` (只读) 和 `execute_sql_write_query` (写入)。
-    * 当计划步骤描述需要查询数据库时，你必须根据步骤描述编写相应的SQL语句并立即执行。
+    * **CRITICAL RULE - 提取并执行SQL: 如果步骤描述中包含冒号(:)后跟完整SQL语句，必须逐字提取冒号后的SQL并执行，绝对不要修改任何部分（包括表名、字段名、WHERE条件、常量值等）。**
+    * **示例1**: 步骤 "Query container records: SELECT * FROM container WHERE cntr_no = 'CMAU0000020' ORDER BY created_at DESC;"
+      → 你必须执行: `SELECT * FROM container WHERE cntr_no = 'CMAU0000020' ORDER BY created_at DESC;`
+      → 不要修改为: `SELECT * FROM container WHERE cntr_no = 'ABC';` (错误!)
+    * **示例2**: 步骤 "Delete duplicate: DELETE FROM container WHERE container_id = 123;"
+      → 你必须执行: `DELETE FROM container WHERE container_id = 123;`
+      → 不要修改container_id的值
+    * 如果步骤只是描述性的（不包含SQL语句），才需要根据描述自己编写SQL。
     * 对于查询操作，使用 `execute_sql_read_query` 工具。
     * 对于删除、更新、插入操作，使用 `execute_sql_write_query` 工具。
-    * **关键：严格按照步骤描述中的表名、字段名、条件等编写SQL语句，不要使用步骤中未提到的表名。**
-    * **如果步骤中包含完整的SQL语句，请直接执行该SQL语句。**
-    * 不要询问更多信息，直接根据步骤描述执行相应的操作。
+    * 不要询问更多信息，直接执行。
 
 3.  **安全第一（人工审批）：**
     * 涉及 `DELETE`、`UPDATE` 的操作是高风险的。
@@ -53,7 +58,7 @@ SYSTEM_PROMPT = """你是一个"港口运营SOP执行助手"（Port Operations S
 """
 
 class SOPExecutorAgent:
-    
+
     def __init__(self):
         self.llm = AzureChatOpenAI(
             temperature=0,
@@ -65,31 +70,105 @@ class SOPExecutorAgent:
             tools.execute_sql_read_query,
             tools.execute_sql_write_query,
         ]
-        
+
         prompt = ChatPromptTemplate.from_messages([
             SystemMessage(content=SYSTEM_PROMPT),
             MessagesPlaceholder(variable_name="chat_history"),
             HumanMessage(content="{input}"),
             MessagesPlaceholder(variable_name="agent_scratchpad"),
         ])
-        
+
         agent = create_openai_tools_agent(self.llm, self.tools, prompt)
-        
+
         self.agent_executor = AgentExecutor(
-            agent=agent, 
-            tools=self.tools, 
+            agent=agent,
+            tools=self.tools,
             verbose=True,
             handle_parsing_errors=True # 增加稳定性
         )
         logging.info("SOPExecutorAgent 初始化完毕。")
 
-    def execute_step(self, plan_step: str, incident_context: Dict[str, Any], chat_history: List) -> Dict[str, Any]:
+    def _extract_sql_from_step(self, plan_step: str) -> str:
+        """
+        从步骤描述中提取SQL语句。
+        如果步骤包含冒号后跟SQL关键字，提取完整的SQL语句。
+        """
+        import re
+
+        # 查找模式: "描述: SELECT/UPDATE/DELETE/INSERT ..."
+        # 支持多行SQL
+        pattern = r':\s*((?:SELECT|UPDATE|DELETE|INSERT|WITH)[^;]*;?)'
+
+        match = re.search(pattern, plan_step, re.IGNORECASE | re.DOTALL)
+        if match:
+            sql = match.group(1).strip()
+            # 确保SQL以分号结尾
+            if not sql.endswith(';'):
+                sql += ';'
+
+            # 【关键修复】移除占位符（:VESSEL_ID, :ETA_TS, <VESSEL_ID>, <ETA_TS>等）
+            # 如果SQL包含占位符，说明Planner期望这些值从前面的步骤获取
+            # 但由于我们直接执行SQL，需要移除这些条件或让LLM处理
+            if ((':' in sql and re.search(r':\w+', sql)) or ('<' in sql and re.search(r'<\w+>', sql))):
+                logging.warning(f"检测到SQL包含占位符，将使用LLM生成完整SQL")
+                logging.warning(f"原始SQL: {sql}")
+                # 移除包含占位符的WHERE条件
+                # 例如: "WHERE cntr_no = 'X' AND vessel_id = :VESSEL_ID" -> "WHERE cntr_no = 'X'"
+                # 例如: "WHERE cntr_no = 'X' AND vessel_id = '<VESSEL_ID>'" -> "WHERE cntr_no = 'X'"
+                sql = re.sub(r'\s+AND\s+\w+\s*=\s*:?\w+', '', sql, flags=re.IGNORECASE)
+                sql = re.sub(r'\s+AND\s+\w+\s*=\s*<\w+>', '', sql, flags=re.IGNORECASE)
+                sql = re.sub(r'\s+WHERE\s+\w+\s*=\s*:?\w+\s+AND\s+', ' WHERE ', sql, flags=re.IGNORECASE)
+                sql = re.sub(r'\s+WHERE\s+\w+\s*=\s*<\w+>\s+AND\s+', ' WHERE ', sql, flags=re.IGNORECASE)
+                sql = re.sub(r'\s+WHERE\s+\w+\s*=\s*:?\w+', '', sql, flags=re.IGNORECASE)
+                sql = re.sub(r'\s+WHERE\s+\w+\s*=\s*<\w+>', '', sql, flags=re.IGNORECASE)
+                logging.info(f"移除占位符后的SQL: {sql}")
+
+            logging.info(f"从步骤中提取到SQL: {sql}")
+            return sql
+
+        logging.info("步骤中未找到完整SQL语句，将使用LLM生成")
+        return None
+
+    def execute_step(self, plan_step: str, incident_context: Dict[str, Any], chat_history: List, step_number: int = 0) -> Dict[str, Any]:
         """
         【关键方法】只执行一个步骤。
         由外部的 'Orchestrator' 调用。
         """
-        logging.info(f"Agent 开始执行步骤: {plan_step}")
-        
+        logging.info(f"Agent 开始执行步骤 {step_number + 1}: {plan_step}")
+
+        # 【关键修复】先尝试直接提取并执行SQL，绕过LLM的"创造性"
+        extracted_sql = self._extract_sql_from_step(plan_step)
+        if extracted_sql:
+            logging.info(f"直接执行提取的SQL（绕过LLM）: {extracted_sql}")
+            try:
+                # 判断是读还是写操作
+                sql_upper = extracted_sql.upper().strip()
+                if sql_upper.startswith('SELECT') or sql_upper.startswith('SHOW') or sql_upper.startswith('DESCRIBE'):
+                    # 只读查询 - 使用invoke()方法
+                    result = tools.execute_sql_read_query.invoke({"query": extracted_sql})
+                    output = f"查询成功执行。结果: {result}"
+                else:
+                    # 写操作（需要审批）- 使用invoke()方法
+                    result = tools.execute_sql_write_query.invoke({
+                        "query": extracted_sql,
+                        "approval_granted": False
+                    })
+                    # 直接返回工具的JSON输出，不要包装成字符串
+                    output = result
+
+                logging.info(f"SQL直接执行结果: {output}")
+                return {
+                    'output': output,
+                    'agent_thoughts': f"从步骤中提取到SQL并直接执行: {extracted_sql}",
+                    'tool_calls': f"执行工具: execute_sql_{'read' if sql_upper.startswith('SELECT') else 'write'}_query\n输入: {extracted_sql}\n输出: {output}",
+                    'original_response': {'output': output}
+                }
+            except Exception as e:
+                logging.error(f"SQL直接执行失败: {e}")
+                # 如果直接执行失败，继续使用LLM
+                pass
+
+        # 如果没有提取到SQL或直接执行失败，使用原来的LLM方式
         input_prompt = (
             f"### 事件上下文:\n{json.dumps(incident_context, indent=2)}\n\n"
             f"### 当前计划步骤:\n{plan_step}\n\n"
@@ -103,9 +182,11 @@ class SOPExecutorAgent:
             f"3. 如果步骤中包含SQL语句，请直接执行该SQL语句\n"
             f"4. 不要使用步骤中未提到的表名\n"
             f"5. 不要查询information_schema，直接查询指定的表\n"
-            f"6. 立即执行，不要询问更多信息"
+            f"6. 对于验证步骤，请执行相应的SELECT查询来确认结果\n"
+            f"7. 必须返回具体的执行结果，不能返回通用回复\n"
+            f"8. 立即执行，不要询问更多信息"
         )
-        
+
         try:
             response = self.agent_executor.invoke({
                 "input": input_prompt,

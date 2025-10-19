@@ -15,6 +15,9 @@ class ExecutionResponse(BaseModel):
     tool_output: Optional[str] = Field(None, description="工具输出结果")
     state_token: Optional[str] = Field(None, description="状态令牌，用于恢复执行")
     message: Optional[str] = Field(None, description="状态消息")
+    agent_thoughts: Optional[str] = Field(None, description="Agent思考过程")
+    tool_calls: Optional[str] = Field(None, description="Agent工具调用详情")
+    completed_steps: Optional[List[Dict[str, Any]]] = Field(default=[], description="已完成的步骤历史")
 
 class ApprovalRequest(BaseModel):
     """人工批准请求"""

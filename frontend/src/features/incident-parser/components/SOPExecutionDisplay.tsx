@@ -26,6 +26,14 @@ interface SOPExecutionDisplayProps {
     message?: string;
     agent_thoughts?: string;
     tool_calls?: string;
+    completed_steps?: Array<{
+      step: number;
+      step_description: string;
+      tool_output: string;
+      agent_thoughts?: string;
+      tool_calls?: string;
+      status: string;
+    }>;
   };
 }
 
@@ -97,7 +105,7 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
               </Badge>
             </HStack>
             <Text fontSize="sm" color="gray.600">
-              步骤 {executionData.step}
+              步骤 {executionData.step + 1}
             </Text>
           </HStack>
         </Box>
@@ -193,13 +201,64 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
           </Alert>
         )}
 
-        {/* 工具输出 */}
+        {/* 已完成的步骤历史 */}
+        {executionData.completed_steps && executionData.completed_steps.length > 0 && (
+          <>
+            <Divider />
+            <Box>
+              <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={3}>
+                已完成步骤:
+              </Text>
+              <VStack align="stretch" spacing={3}>
+                {executionData.completed_steps.map((completedStep, index) => (
+                  <Box
+                    key={index}
+                    p={3}
+                    bg="green.50"
+                    borderRadius="md"
+                    border="1px"
+                    borderColor="green.200"
+                  >
+                    <HStack justify="space-between" mb={2}>
+                      <Text fontSize="sm" fontWeight="semibold" color="green.700">
+                        步骤 {completedStep.step + 1}
+                      </Text>
+                      <Badge colorScheme="green" size="sm">
+                        ✓ 已完成
+                      </Badge>
+                    </HStack>
+                    <Text fontSize="sm" color="gray.700" mb={2}>
+                      {completedStep.step_description}
+                    </Text>
+                    {completedStep.tool_output && (
+                      <Code
+                        display="block"
+                        whiteSpace="pre-wrap"
+                        p={2}
+                        borderRadius="sm"
+                        bg="white"
+                        color="gray.800"
+                        fontSize="xs"
+                        maxH="100px"
+                        overflowY="auto"
+                      >
+                        {completedStep.tool_output}
+                      </Code>
+                    )}
+                  </Box>
+                ))}
+              </VStack>
+            </Box>
+          </>
+        )}
+
+        {/* 当前步骤的工具输出 */}
         {executionData.tool_output && (
           <>
             <Divider />
             <Box>
               <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={2}>
-                执行结果:
+                当前步骤执行结果:
               </Text>
               <Code
                 display="block"
