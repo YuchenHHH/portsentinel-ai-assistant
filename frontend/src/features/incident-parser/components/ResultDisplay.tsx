@@ -199,41 +199,6 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result }) => {
             </Box>
           )}
 
-          {/* 提取的实体 */}
-          {result.entities && result.entities.length > 0 && (
-            <Box>
-              <Divider mb={3} />
-              <HStack mb={3}>
-                <Icon as={CheckCircleIcon} color="purple.500" />
-                <Text fontSize="sm" fontWeight="medium" color="gray.700">
-                  提取的实体 ({result.entities.length})
-                </Text>
-              </HStack>
-              <Wrap spacing={2}>
-                {result.entities.map((entity, index) => (
-                  <WrapItem key={index}>
-                    <Tag 
-                      size="md" 
-                      colorScheme="purple" 
-                      variant="subtle"
-                      cursor="pointer"
-                      _hover={{ transform: 'scale(1.05)' }}
-                      transition="all 0.2s"
-                    >
-                      <TagLabel>
-                        <Text as="span" fontWeight="medium" mr={1}>
-                          {entity.type}:
-                        </Text>
-                        <Text as="span" fontFamily="mono">
-                          {entity.value}
-                        </Text>
-                      </TagLabel>
-                    </Tag>
-                  </WrapItem>
-                ))}
-              </Wrap>
-            </Box>
-          )}
 
           {/* 原始文本（可折叠） */}
           <Box>
