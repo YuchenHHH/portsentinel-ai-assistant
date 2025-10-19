@@ -53,6 +53,7 @@ export const LandingPage: React.FC = () => {
 
   // 如果用户已登录,自动跳转到聊天页面
   useEffect(() => {
+    console.log('LandingPage useEffect - isAuthenticated:', isAuthenticated, 'isLoading:', isLoading);
     if (isAuthenticated && !isLoading) {
       console.log('User is authenticated, redirecting to dashboard...');
       navigate('/dashboard', { replace: true });

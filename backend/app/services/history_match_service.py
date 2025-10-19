@@ -72,7 +72,8 @@ class HistoryMatchService:
                 self.gpt_client = AzureOpenAI(
                     api_key=api_key,
                     azure_endpoint=api_base,
-                    api_version=api_version
+                    api_version=api_version,
+                    timeout=120.0  # 设置120秒超时
                 )
                 self.gpt_deployment = deployment_name
                 logger.info("Azure OpenAI client initialized")

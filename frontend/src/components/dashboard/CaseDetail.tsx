@@ -85,13 +85,43 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseId, onBack }) => {
     // 这里会触发AI处理流程
   };
 
+  // 如果是新案例（caseId为null），直接显示聊天界面
   if (!caseId) {
     return (
-      <Box textAlign="center" py={20}>
-        <Text fontSize="lg" color={textColor}>
-          No case selected
-        </Text>
-      </Box>
+      <VStack spacing={6} align="stretch">
+        {/* 新案例头部 */}
+        <Card bg={cardBg} border="1px" borderColor={borderColor}>
+          <CardBody>
+            <VStack spacing={4} align="stretch">
+              <Flex align="center">
+                <Button
+                  leftIcon={<ArrowBackIcon />}
+                  variant="ghost"
+                  size="sm"
+                  onClick={onBack}
+                >
+                  Back to Dashboard
+                </Button>
+                <Spacer />
+              </Flex>
+
+              <VStack spacing={3} align="stretch">
+                <Text fontSize="2xl" fontWeight="bold">
+                  New Case
+                </Text>
+                <Text color={textColor}>
+                  Create a new case and use AI to analyze the incident
+                </Text>
+              </VStack>
+            </VStack>
+          </CardBody>
+        </Card>
+
+        {/* 聊天界面 */}
+        <Box>
+          <IncidentParserPage />
+        </Box>
+      </VStack>
     );
   }
 

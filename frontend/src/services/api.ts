@@ -31,7 +31,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || ''
 // 创建 axios 实例
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000,
+  timeout: 120000, // 延长到120秒（2分钟）
   headers: {
     'Content-Type': 'application/json',
   },

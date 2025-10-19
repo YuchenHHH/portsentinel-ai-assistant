@@ -31,12 +31,14 @@ import {
 interface SidebarProps {
   currentView: string;
   onViewChange: (view: string) => void;
+  onNewCase: () => void;
   isMobile?: boolean;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
   currentView, 
   onViewChange, 
+  onNewCase,
   isMobile = false 
 }) => {
   const { isOpen: isProjectsOpen, onToggle: onProjectsToggle } = useDisclosure();
@@ -127,6 +129,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           variant="solid"
           size="sm"
           mb={2}
+          onClick={() => {
+            console.log('New Case button clicked');
+            onNewCase();
+          }}
         >
           New Case
         </Button>

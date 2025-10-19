@@ -61,6 +61,13 @@ export const Dashboard: React.FC = () => {
     setCurrentView('case-detail');
   };
 
+  const handleNewCase = () => {
+    console.log('handleNewCase called');
+    setSelectedCaseId(null); // 新案例不需要特定的ID
+    setCurrentView('case-detail');
+    console.log('Current view set to case-detail');
+  };
+
   const handleBackToOverview = () => {
     setCurrentView('overview');
     setSelectedCaseId(null);
@@ -165,6 +172,7 @@ export const Dashboard: React.FC = () => {
         <Sidebar
           currentView={currentView}
           onViewChange={(view) => setCurrentView(view as DashboardView)}
+          onNewCase={handleNewCase}
           isMobile={isMobile}
         />
 
@@ -184,6 +192,7 @@ export const Dashboard: React.FC = () => {
                   setCurrentView(view as DashboardView);
                   onClose();
                 }}
+                onNewCase={handleNewCase}
                 isMobile={true}
               />
             </DrawerBody>

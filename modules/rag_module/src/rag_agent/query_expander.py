@@ -61,7 +61,8 @@ class QueryExpander:
                 azure_endpoint=self.azure_endpoint,
                 azure_deployment=self.deployment,
                 api_version=self.api_version,
-                temperature=0.3
+                temperature=0.3,
+                timeout=120  # 设置120秒超时
             )
 
         self.prompt = ChatPromptTemplate.from_messages([

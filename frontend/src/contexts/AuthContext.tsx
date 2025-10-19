@@ -109,6 +109,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(response.user));
       dispatch({ type: 'AUTH_SUCCESS', payload: response });
       console.log('Login successful, redirecting to dashboard...');
+      console.log('Auth state after login:', { isAuthenticated: true, user: response.user });
       // 登录成功后会自动触发 ProtectedRoute 的重定向
     } catch (error) {
       console.error('Login failed:', error);
