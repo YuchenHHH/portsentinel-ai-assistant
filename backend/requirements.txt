@@ -11,6 +11,11 @@ httpx>=0.25.2
 # 数据处理
 python-multipart>=0.0.6
 
+# 认证相关
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+email-validator>=2.1.0
+
 # AI 模块核心依赖
 langchain>=0.1.0
 langchain-openai>=0.0.5

@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
-import { Box, Container, Heading, VStack, HStack, Button, Badge } from '@chakra-ui/react'
+import { Box, Container, Heading, VStack, HStack, Button, Badge, Text, useColorModeValue } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
 import { ChatInput } from './components/ChatInput'
 import { ChatWindow } from './components/ChatWindow'
 import DatabaseConnectionModal from './components/DatabaseConnectionModal'
+import { useAuth } from '../../contexts/AuthContext'
 import { parseIncidentReport, matchHistoryCases, enrichIncident, fetchExecutionPlan, executeSOPPlan, approveSOPExecution, getDatabaseStatus } from '../../services/api'
 import { IncidentReportResponse, HistoryMatchRequest, EnrichmentRequest, PlanRequest, ParsedIncident, SOPResponse } from '../../types/api'
 import { 
@@ -26,6 +27,11 @@ export const IncidentParserPage: React.FC = () => {
   const [isProcessingApproval, setIsProcessingApproval] = useState(false)
   const [isDatabaseModalOpen, setIsDatabaseModalOpen] = useState(false)
   const [databaseStatus, setDatabaseStatus] = useState<any>({ success: false, message: '检查连接状态...' })
+  
+  const { user, logout } = useAuth()
+  const bgColor = useColorModeValue('gray.50', 'gray.900')
+  const headerBg = useColorModeValue('white', 'gray.800')
+  const borderColor = useColorModeValue('gray.200', 'gray.600')
 
   const handleSubmit = async (text: string, sourceType: 'Email' | 'SMS' | 'Call') => {
     setIsLoading(true)
@@ -393,39 +399,79 @@ export const IncidentParserPage: React.FC = () => {
   }, [])
 
   return (
-    <Container maxW="container.xl" py={4} height="100vh" display="flex" flexDirection="column">
-      <VStack spacing={4} align="stretch" flex={1}>
-        {/* 页面标题 */}
-        <MotionBox
-          textAlign="center"
-          pt={4}
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <VStack spacing={3} mb={4}>
-            <Heading as="h1" size="xl" color="gray.700">
-              PortSentinel AI 智能助手
-            </Heading>
-            <HStack spacing={2}>
-              <Badge 
-                colorScheme={databaseStatus?.success ? 'green' : 'red'} 
-                variant="solid"
-                fontSize="xs"
-              >
-                {databaseStatus?.success ? '数据库已连接' : '数据库未连接'}
+    <Box bg={bgColor} minH="100vh">
+      {/* 导航栏 */}
+      <Box
+        bg={headerBg}
+        borderBottom="1px"
+        borderColor={borderColor}
+        px={4}
+        py={3}
+        position="sticky"
+        top={0}
+        zIndex={1000}
+        backdropFilter="blur(10px)"
+      >
+        <Container maxW="container.xl">
+          <HStack justify="space-between">
+            <HStack spacing={4}>
+              <Heading size="md" color="blue.600">
+                PortSentinel AI
+              </Heading>
+              <Badge colorScheme="blue" variant="subtle">
+                AI Assistant
               </Badge>
+            </HStack>
+            <HStack spacing={4}>
+              <Text fontSize="sm" color="gray.600">
+                欢迎，{user?.name || user?.email}
+              </Text>
               <Button
                 size="sm"
-                colorScheme={databaseStatus?.success ? 'green' : 'orange'}
                 variant="outline"
-                onClick={() => setIsDatabaseModalOpen(true)}
+                onClick={logout}
+                colorScheme="red"
               >
-                🗄️ 数据库设置
+                登出
               </Button>
             </HStack>
-          </VStack>
-        </MotionBox>
+          </HStack>
+        </Container>
+      </Box>
+
+      <Container maxW="container.xl" py={4} height="calc(100vh - 60px)" display="flex" flexDirection="column">
+        <VStack spacing={4} align="stretch" flex={1}>
+          {/* 页面标题 */}
+          <MotionBox
+            textAlign="center"
+            pt={4}
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <VStack spacing={3} mb={4}>
+              <Heading as="h1" size="xl" color="gray.700">
+                PortSentinel AI 智能助手
+              </Heading>
+              <HStack spacing={2}>
+                <Badge 
+                  colorScheme={databaseStatus?.success ? 'green' : 'red'} 
+                  variant="solid"
+                  fontSize="xs"
+                >
+                  {databaseStatus?.success ? '数据库已连接' : '数据库未连接'}
+                </Badge>
+                <Button
+                  size="sm"
+                  colorScheme={databaseStatus?.success ? 'green' : 'orange'}
+                  variant="outline"
+                  onClick={() => setIsDatabaseModalOpen(true)}
+                >
+                  🗄️ 数据库设置
+                </Button>
+              </HStack>
+            </VStack>
+          </MotionBox>
 
         {/* 聊天窗口 */}
         <ChatWindow 
@@ -445,6 +491,7 @@ export const IncidentParserPage: React.FC = () => {
         onClose={() => setIsDatabaseModalOpen(false)}
         onConnectionSuccess={handleDatabaseConnectionSuccess}
       />
-    </Container>
+      </Container>
+    </Box>
   )
 }

@@ -2,17 +2,37 @@ import React from 'react'
 import { ChakraProvider } from '@chakra-ui/react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { theme } from './theme/theme'
+import { AuthProvider } from './contexts/AuthContext'
+import { ProtectedRoute } from './components/ProtectedRoute'
 import { IncidentParserPage } from './features/incident-parser/IncidentParserPage'
+import { LandingPage } from './pages/LandingPage'
 
 function App() {
   return (
     <ChakraProvider theme={theme}>
-      <Router>
-        <Routes>
-          <Route path="/" element={<IncidentParserPage />} />
-          <Route path="/incident-parser" element={<IncidentParserPage />} />
-        </Routes>
-      </Router>
+      <AuthProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <IncidentParserPage />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/incident-parser" 
+              element={
+                <ProtectedRoute>
+                  <IncidentParserPage />
+                </ProtectedRoute>
+              } 
+            />
+          </Routes>
+        </Router>
+      </AuthProvider>
     </ChakraProvider>
   )
 }

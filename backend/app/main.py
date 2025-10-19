@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.core.config import settings
-from app.api.v1.endpoints import incident_parser, rag, orchestrator, sop_execution, database, history_match
+from app.api.v1.endpoints import incident_parser, rag, orchestrator, sop_execution, database, history_match, auth
 
 # 配置日志
 logging.basicConfig(
@@ -67,6 +67,12 @@ app.include_router(
     history_match.router,
     prefix=f"{settings.api_v1_prefix}",
     tags=["历史案例匹配"]
+)
+
+app.include_router(
+    auth.router,
+    prefix=f"{settings.api_v1_prefix}/auth",
+    tags=["用户认证"]
 )
 
 
