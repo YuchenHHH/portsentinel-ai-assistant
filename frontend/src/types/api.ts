@@ -219,6 +219,14 @@ export interface ExecutionResponse {
   message?: string;
   agent_thoughts?: string;
   tool_calls?: string;
+  completed_steps?: Array<{
+    step: number;
+    step_description: string;
+    tool_output: string;
+    agent_thoughts?: string;
+    tool_calls?: string;
+    status: string;
+  }>;
 }
 
 // 批准请求接口

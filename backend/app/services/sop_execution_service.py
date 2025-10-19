@@ -38,6 +38,7 @@ class ExecutionState(BaseModel):
     current_step_index: int
     incident_context: Dict[str, Any]
     chat_history_tuples: List[tuple] # Pydantic 不能直接存 AIMessage, 转为 tuple
+    completed_steps: List[Dict[str, Any]] = [] # 已完成的步骤历史
 
 class ExecutionStepResult(BaseModel):
     status: str # "in_progress", "needs_approval", "failed", "completed"
@@ -49,6 +50,7 @@ class ExecutionStepResult(BaseModel):
     message: str = None
     agent_thoughts: Optional[str] = None # Agent思考过程
     tool_calls: Optional[str] = None # Agent工具调用详情
+    completed_steps: List[Dict[str, Any]] = [] # 已完成的步骤历史
 
 # --- 服务本身 ---
 
@@ -158,11 +160,25 @@ class SOPExecutionService:
             chat_history.append(AIMessage(content=f"执行成功: {result}"))
             state.chat_history_tuples = self._convert_messages_to_tuples(chat_history)
 
+            # 将批准的步骤添加到历史中（在增加索引之前）
+            completed_step = {
+                "step": state.current_step_index,
+                "step_description": state.plan[state.current_step_index] if state.current_step_index < len(state.plan) else "N/A",
+                "tool_output": str(result),
+                "agent_thoughts": "人工批准执行",
+                "tool_calls": f"批准执行SQL: {approved_query}",
+                "status": "completed"
+            }
+            state.completed_steps.append(completed_step)
+            
             # 步骤完成，进入下一步
             state.current_step_index += 1
 
             # 继续执行后续步骤
-            return await self._run_next_step(state)
+            next_result = await self._run_next_step(state)
+            # 确保返回的结果包含当前的 completed_steps
+            next_result.completed_steps = state.completed_steps
+            return next_result
 
         except Exception as e:
             logging.error(f"批准后执行失败: {e}", exc_info=True)
@@ -171,7 +187,8 @@ class SOPExecutionService:
                 step=state.current_step_index,
                 step_description=state.plan[state.current_step_index] if state.current_step_index < len(state.plan) else "N/A",
                 message=f"批准后执行失败: {str(e)}",
-                tool_output=str(e)
+                tool_output=str(e),
+                completed_steps=state.completed_steps
             )
 
 
@@ -180,11 +197,13 @@ class SOPExecutionService:
         【核心编排逻辑】执行当前步骤，并处理结果。
         """
         if state.current_step_index >= len(state.plan):
+            logging.info(f"计划执行完成，返回completed状态。completed_steps数量: {len(state.completed_steps)}")
             return ExecutionStepResult(
                 status="completed",
-                step=state.current_step_index,
+                step=state.current_step_index - 1,  # 返回最后一个执行的步骤编号
                 step_description="N/A",
-                message="计划已成功执行完毕。"
+                message="计划已成功执行完毕。",
+                completed_steps=state.completed_steps
             )
         
         current_step_desc = state.plan[state.current_step_index]
@@ -194,7 +213,8 @@ class SOPExecutionService:
         agent_response = self.agent.execute_step(
             plan_step=current_step_desc,
             incident_context=state.incident_context,
-            chat_history=chat_history
+            chat_history=chat_history,
+            step_number=state.current_step_index
         )
         
         agent_output = agent_response.get("output", "Agent 没有返回 output。")
@@ -212,7 +232,7 @@ class SOPExecutionService:
             
             # A. 检查是否需要人工批准 (HITL)
             if isinstance(tool_output_json, dict) and tool_output_json.get("status") == "needs_approval":
-                logging.warning(f"步骤 {state.current_step_index} 需要人工批准。暂停执行。")
+                logging.warning(f"步骤 {state.current_step_index + 1} 需要人工批准。暂停执行。")
                 
                 # 保存状态并返回令牌
                 state_token = f"exec_token_{hash(tuple(state.plan))}_{state.current_step_index}"
@@ -226,7 +246,8 @@ class SOPExecutionService:
                     state_token=state_token,
                     message="高危操作，等待人工批准。",
                     agent_thoughts=agent_response.get("agent_thoughts"),
-                    tool_calls=agent_response.get("tool_calls")
+                    tool_calls=agent_response.get("tool_calls"),
+                    completed_steps=state.completed_steps
                 )
 
             # B. 检查是否是工具的成功写入
@@ -248,12 +269,30 @@ class SOPExecutionService:
                 tool_output=agent_output,
                 message=f"步骤执行失败: {e}",
                 agent_thoughts=agent_response.get("agent_thoughts"),
-                tool_calls=agent_response.get("tool_calls")
+                tool_calls=agent_response.get("tool_calls"),
+                completed_steps=state.completed_steps
             )
 
         # --- 4. 成功，进入下一步 ---
-        logging.info(f"步骤 {state.current_step_index} ('{current_step_desc}') 执行成功。")
+        logging.info(f"步骤 {state.current_step_index + 1} ('{current_step_desc}') 执行成功。")
+        
+        # 将完成的步骤添加到历史中（在增加索引之前）
+        completed_step = {
+            "step": state.current_step_index,
+            "step_description": current_step_desc,
+            "tool_output": agent_output,
+            "agent_thoughts": agent_response.get("agent_thoughts"),
+            "tool_calls": agent_response.get("tool_calls"),
+            "status": "completed"
+        }
+        state.completed_steps.append(completed_step)
+        logging.info(f"步骤 {state.current_step_index + 1} 已添加到completed_steps，当前completed_steps数量: {len(state.completed_steps)}")
+        
+        # 增加步骤索引
         state.current_step_index += 1
 
         # 自动执行所有步骤（递归调用）
-        return await self._run_next_step(state)
+        next_result = await self._run_next_step(state)
+        # 确保返回的结果包含当前的 completed_steps
+        next_result.completed_steps = state.completed_steps
+        return next_result

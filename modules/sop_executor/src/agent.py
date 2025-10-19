@@ -106,17 +106,21 @@ class SOPExecutorAgent:
             if not sql.endswith(';'):
                 sql += ';'
 
-            # 【关键修复】移除占位符（:VESSEL_ID, :ETA_TS等）
+            # 【关键修复】移除占位符（:VESSEL_ID, :ETA_TS, <VESSEL_ID>, <ETA_TS>等）
             # 如果SQL包含占位符，说明Planner期望这些值从前面的步骤获取
             # 但由于我们直接执行SQL，需要移除这些条件或让LLM处理
-            if ':' in sql and re.search(r':\w+', sql):
+            if ((':' in sql and re.search(r':\w+', sql)) or ('<' in sql and re.search(r'<\w+>', sql))):
                 logging.warning(f"检测到SQL包含占位符，将使用LLM生成完整SQL")
                 logging.warning(f"原始SQL: {sql}")
                 # 移除包含占位符的WHERE条件
                 # 例如: "WHERE cntr_no = 'X' AND vessel_id = :VESSEL_ID" -> "WHERE cntr_no = 'X'"
-                sql = re.sub(r'\s+AND\s+\w+\s*=\s*:\w+', '', sql, flags=re.IGNORECASE)
-                sql = re.sub(r'\s+WHERE\s+\w+\s*=\s*:\w+\s+AND\s+', ' WHERE ', sql, flags=re.IGNORECASE)
-                sql = re.sub(r'\s+WHERE\s+\w+\s*=\s*:\w+', '', sql, flags=re.IGNORECASE)
+                # 例如: "WHERE cntr_no = 'X' AND vessel_id = '<VESSEL_ID>'" -> "WHERE cntr_no = 'X'"
+                sql = re.sub(r'\s+AND\s+\w+\s*=\s*:?\w+', '', sql, flags=re.IGNORECASE)
+                sql = re.sub(r'\s+AND\s+\w+\s*=\s*<\w+>', '', sql, flags=re.IGNORECASE)
+                sql = re.sub(r'\s+WHERE\s+\w+\s*=\s*:?\w+\s+AND\s+', ' WHERE ', sql, flags=re.IGNORECASE)
+                sql = re.sub(r'\s+WHERE\s+\w+\s*=\s*<\w+>\s+AND\s+', ' WHERE ', sql, flags=re.IGNORECASE)
+                sql = re.sub(r'\s+WHERE\s+\w+\s*=\s*:?\w+', '', sql, flags=re.IGNORECASE)
+                sql = re.sub(r'\s+WHERE\s+\w+\s*=\s*<\w+>', '', sql, flags=re.IGNORECASE)
                 logging.info(f"移除占位符后的SQL: {sql}")
 
             logging.info(f"从步骤中提取到SQL: {sql}")
@@ -125,12 +129,12 @@ class SOPExecutorAgent:
         logging.info("步骤中未找到完整SQL语句，将使用LLM生成")
         return None
 
-    def execute_step(self, plan_step: str, incident_context: Dict[str, Any], chat_history: List) -> Dict[str, Any]:
+    def execute_step(self, plan_step: str, incident_context: Dict[str, Any], chat_history: List, step_number: int = 0) -> Dict[str, Any]:
         """
         【关键方法】只执行一个步骤。
         由外部的 'Orchestrator' 调用。
         """
-        logging.info(f"Agent 开始执行步骤: {plan_step}")
+        logging.info(f"Agent 开始执行步骤 {step_number + 1}: {plan_step}")
 
         # 【关键修复】先尝试直接提取并执行SQL，绕过LLM的"创造性"
         extracted_sql = self._extract_sql_from_step(plan_step)
@@ -178,7 +182,9 @@ class SOPExecutorAgent:
             f"3. 如果步骤中包含SQL语句，请直接执行该SQL语句\n"
             f"4. 不要使用步骤中未提到的表名\n"
             f"5. 不要查询information_schema，直接查询指定的表\n"
-            f"6. 立即执行，不要询问更多信息"
+            f"6. 对于验证步骤，请执行相应的SELECT查询来确认结果\n"
+            f"7. 必须返回具体的执行结果，不能返回通用回复\n"
+            f"8. 立即执行，不要询问更多信息"
         )
 
         try:

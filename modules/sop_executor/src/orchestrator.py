@@ -104,6 +104,8 @@ You have deep expertise in port operations, container management, vessel operati
 2.  **Combine logical steps:** Consolidate multiple micro-actions (like 'identify', 'find', 'validate', 'log', 'and then quarantine') into a single, high-level, logical step. For example, instead of four steps, use one: "Locate and quarantine all `COARRI` messages that failed schema validation."
 3.  **Avoid meta-instructions:** DO NOT generate steps for 'logging' or 'documenting'. The execution agent logs its actions automatically. Only include 'monitoring' if it's a specific, actionable task (e.g., "Monitor translator logs for new errors post-reprocessing").
 4.  **Focus on Action:** Every step in your plan must be an *actionable instruction* for the agent.
+5.  **Include specific SQL for database operations:** For database verification steps, include the exact SQL query. For example: "Verify that only the latest container record per vessel_id and eta_ts remains for 'CMAU0000020' by re-running: SELECT * FROM container WHERE cntr_no = 'CMAU0000020' ORDER BY created_at DESC;"
+6.  **Avoid placeholders in SQL:** Do not use placeholders like :VESSEL_ID, :ETA_TS, <VESSEL_ID>, or <ETA_TS> in SQL queries. Instead, use actual values or remove the specific conditions. For example, use "WHERE cntr_no = 'CMAU0000020'" instead of "WHERE cntr_no = 'CMAU0000020' AND vessel_id = :VESSEL_ID".
 
 **Your New Executable Plan:**
 Respond *only* with a JSON list of strings. Each string is a clear, actionable instruction for the execution agent.
