@@ -4,7 +4,8 @@
 
 import { LoginRequest, RegisterRequest, AuthResponse } from '../types/auth';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+// 在开发模式下使用代理,所以使用空字符串
+const API_BASE_URL = process.env.REACT_APP_API_URL || '';
 
 class AuthService {
   private baseUrl: string;
@@ -18,6 +19,8 @@ class AuthService {
    */
   async login(credentials: LoginRequest): Promise<AuthResponse> {
     try {
+      console.log('Attempting login with:', credentials.email);
+      
       const response = await fetch(`${this.baseUrl}/api/v1/auth/login`, {
         method: 'POST',
         headers: {
@@ -26,12 +29,16 @@ class AuthService {
         body: JSON.stringify(credentials),
       });
 
+      console.log('Login response status:', response.status);
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Login failed:', errorData);
         throw new Error(errorData.detail || '登录失败');
       }
 
       const data = await response.json();
+      console.log('Login successful:', data.user.email);
       return data;
     } catch (error) {
       console.error('Login error:', error);
@@ -44,6 +51,8 @@ class AuthService {
    */
   async register(userData: RegisterRequest): Promise<AuthResponse> {
     try {
+      console.log('Attempting registration with:', userData.email);
+      
       const response = await fetch(`${this.baseUrl}/api/v1/auth/register`, {
         method: 'POST',
         headers: {
@@ -52,12 +61,16 @@ class AuthService {
         body: JSON.stringify(userData),
       });
 
+      console.log('Registration response status:', response.status);
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Registration failed:', errorData);
         throw new Error(errorData.detail || '注册失败');
       }
 
       const data = await response.json();
+      console.log('Registration successful:', data.user.email);
       return data;
     } catch (error) {
       console.error('Register error:', error);
@@ -93,6 +106,8 @@ class AuthService {
    */
   async verifyToken(token: string): Promise<boolean> {
     try {
+      console.log('Verifying token...');
+      
       const response = await fetch(`${this.baseUrl}/api/v1/auth/verify`, {
         method: 'GET',
         headers: {
@@ -100,6 +115,7 @@ class AuthService {
         },
       });
 
+      console.log('Token verification status:', response.status);
       return response.ok;
     } catch (error) {
       console.error('Token verification error:', error);

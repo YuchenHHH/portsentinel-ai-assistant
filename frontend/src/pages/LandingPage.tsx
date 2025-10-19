@@ -2,7 +2,8 @@
  * Landing Page - Inspired by Claude AI agents page design
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -30,10 +31,13 @@ import {
 } from '@chakra-ui/icons';
 import { LoginForm } from '../components/auth/LoginForm';
 import { RegisterForm } from '../components/auth/RegisterForm';
+import { useAuth } from '../contexts/AuthContext';
 
 export const LandingPage: React.FC = () => {
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [showAuth, setShowAuth] = useState(false);
+  const navigate = useNavigate();
+  const { isAuthenticated, isLoading } = useAuth();
 
   const bgGradient = useColorModeValue(
     'linear(to-br, blue.50, purple.50, pink.50)',
@@ -42,8 +46,31 @@ export const LandingPage: React.FC = () => {
   const textColor = useColorModeValue('gray.800', 'white');
   const cardBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const headerBg = useColorModeValue('white', 'gray.800');
+  const heroTextColor = useColorModeValue('gray.600', 'gray.300');
 
   const isMobile = useBreakpointValue({ base: true, md: false });
+
+  // 如果用户已登录,自动跳转到聊天页面
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      console.log('User is authenticated, redirecting to dashboard...');
+      navigate('/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  // 如果正在加载,显示加载状态
+  if (isLoading) {
+    return (
+      <Box minH="100vh" bgGradient={bgGradient} display="flex" alignItems="center" justifyContent="center">
+        <VStack spacing={4}>
+          <Text fontSize="xl" fontWeight="bold" color="blue.600">
+            Loading...
+          </Text>
+        </VStack>
+      </Box>
+    );
+  }
 
   const features = [
     {
@@ -94,7 +121,7 @@ export const LandingPage: React.FC = () => {
         left={0}
         right={0}
         zIndex={1000}
-        bg={useColorModeValue('white', 'gray.800')}
+        bg={headerBg}
         borderBottom="1px"
         borderColor={borderColor}
         backdropFilter="blur(10px)"
@@ -152,7 +179,7 @@ export const LandingPage: React.FC = () => {
                 </Heading>
                 <Text
                   fontSize={{ base: 'lg', md: 'xl' }}
-                  color={useColorModeValue('gray.600', 'gray.300')}
+                  color={heroTextColor}
                   maxW="2xl"
                 >
                   PortSentinel AI Assistant provides powerful intelligent support through AI agents for planning, action, and collaboration,

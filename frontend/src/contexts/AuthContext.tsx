@@ -72,13 +72,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const token = localStorage.getItem('token');
       const userStr = localStorage.getItem('user');
 
+      console.log('Initializing auth, token exists:', !!token);
+
       if (token && userStr) {
         try {
           const isValid = await authService.verifyToken(token);
           if (isValid) {
             const user = JSON.parse(userStr);
+            console.log('Auth initialized successfully for user:', user.email);
             dispatch({ type: 'AUTH_SUCCESS', payload: { user, token } });
           } else {
+            console.log('Token invalid, clearing storage');
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             dispatch({ type: 'AUTH_FAILURE' });
@@ -88,6 +92,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           dispatch({ type: 'AUTH_FAILURE' });
         }
       } else {
+        console.log('No token found, user not authenticated');
         dispatch({ type: 'AUTH_FAILURE' });
       }
     };
@@ -98,11 +103,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (credentials: LoginRequest) => {
     dispatch({ type: 'AUTH_START' });
     try {
+      console.log('Logging in user:', credentials.email);
       const response = await authService.login(credentials);
       localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
       dispatch({ type: 'AUTH_SUCCESS', payload: response });
+      console.log('Login successful, redirecting to dashboard...');
+      // 登录成功后会自动触发 ProtectedRoute 的重定向
     } catch (error) {
+      console.error('Login failed:', error);
       dispatch({ type: 'AUTH_FAILURE' });
       throw error;
     }
@@ -111,11 +120,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (userData: RegisterRequest) => {
     dispatch({ type: 'AUTH_START' });
     try {
+      console.log('Registering user:', userData.email);
       const response = await authService.register(userData);
       localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
       dispatch({ type: 'AUTH_SUCCESS', payload: response });
+      console.log('Registration successful, redirecting to dashboard...');
+      // 注册成功后会自动触发 ProtectedRoute 的重定向
     } catch (error) {
+      console.error('Registration failed:', error);
       dispatch({ type: 'AUTH_FAILURE' });
       throw error;
     }
@@ -123,11 +136,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
+      console.log('Logging out user...');
       await authService.logout();
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       dispatch({ type: 'LOGOUT' });
+      console.log('Logout successful');
     }
   };
 
