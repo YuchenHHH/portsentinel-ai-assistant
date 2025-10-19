@@ -36,7 +36,7 @@ class QueryExpander:
         """
         self.api_key = api_key or os.getenv("AZURE_OPENAI_API_KEY")
         self.azure_endpoint = azure_endpoint or os.getenv("AZURE_OPENAI_ENDPOINT")
-        self.deployment = deployment or os.getenv("AZURE_OPENAI_DEPLOYMENT", "gpt-4")
+        self.deployment = deployment or os.getenv("AZURE_OPENAI_DEPLOYMENT", "gpt-4.1-mini")
         self.api_version = api_version or os.getenv(
             "AZURE_OPENAI_API_VERSION",
             "2024-02-15-preview"

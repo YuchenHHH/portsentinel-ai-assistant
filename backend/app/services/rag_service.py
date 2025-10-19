@@ -364,10 +364,19 @@ class RAGService:
                     # Create content from title and overview
                     content = f"{sop_title}\n\n{sop_dict.get('Overview', '')}"
                     
+                    # Use the real rerank score from RAG Agent if available
+                    score = sop_dict.get('_rerank_score', 1.0)
+                    logger.info(f"RAG Service - SOP: {sop_title}, Raw score: {score}")
+                    logger.info(f"RAG Service - SOP dict keys: {list(sop_dict.keys())}")
+                    # The score from RAG Agent is already in 0-1 range, no need to normalize
+                    # Just ensure it's within bounds
+                    score = max(0.0, min(1.0, score))
+                    logger.info(f"RAG Service - SOP: {sop_title}, Final score: {score}")
+                    
                     snippet = SopSnippet(
                         content=content,
                         metadata=metadata,
-                        score=1.0  # Default score for new format
+                        score=score
                     )
                     sop_snippets.append(snippet)
             else:

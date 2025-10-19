@@ -82,7 +82,7 @@ class HybridRagAgent:
                     "QueryExpander requires LLM support. "
                     "Provide a custom query_expander when use_llm=False."
                 )
-            self.query_expander = QueryExpander()
+            self.query_expander = QueryExpander(deployment="gpt-4.1-mini")
         else:
             self.query_expander = query_expander
         
@@ -90,7 +90,7 @@ class HybridRagAgent:
         if reranker is None:
             if use_llm:
                 try:
-                    self.reranker = SemanticReranker()
+                    self.reranker = SemanticReranker(deployment="gpt-4.1-mini")
                 except Exception as e:
                     print(f"Warning: LLM Reranker failed, using simple reranker: {e}")
                     self.reranker = SimpleReranker()
@@ -238,9 +238,10 @@ class HybridRagAgent:
         multi_query_results: List[List[Tuple[Dict, float, str, float, float]]],
         k: int = 60
     ) -> List[Tuple[Dict[str, Any], float]]:
-        """RRF 融合（更新参数类型）"""
+        """RRF 融合（保留原始混合相似度分数）"""
         rrf_scores = defaultdict(float)
         sop_dict = {}
+        score_counts = defaultdict(int)
         
         for query_results in multi_query_results:
             # ✅ 解包 5 个元素
@@ -249,15 +250,18 @@ class HybridRagAgent:
                 if not sop_id:
                     continue
                 
-                rrf_scores[sop_id] += 1.0 / (k + rank + 1)
+                # 使用原始混合相似度分数，而不是RRF公式
+                rrf_scores[sop_id] += hybrid_score
+                score_counts[sop_id] += 1
                 
                 if sop_id not in sop_dict:
                     sop_dict[sop_id] = sop
         
-        fused_results = [
-            (sop_dict[sop_id], rrf_score)
-            for sop_id, rrf_score in rrf_scores.items()
-        ]
+        # 计算平均分数
+        fused_results = []
+        for sop_id, total_score in rrf_scores.items():
+            avg_score = total_score / score_counts[sop_id]
+            fused_results.append((sop_dict[sop_id], avg_score))
         
         fused_results.sort(key=lambda x: x[1], reverse=True)
         
@@ -339,24 +343,45 @@ class HybridRagAgent:
         print(f"\n[RRF Fusion] Top {len(rrf_top_k)} candidates after RRF")
         
         # ===== Step 4: 语义 Rerank =====
-        candidate_sops = [sop for sop, _ in rrf_top_k]
+        # 创建包含原始分数的候选列表
+        candidate_sops_with_scores = [(sop, score) for sop, score in rrf_top_k]
         
         try:
-            reranked_results = self.reranker.rerank(
+            # 只传递SOP字典给Reranker进行排序
+            candidate_sops = [sop for sop, _ in rrf_top_k]
+            reranked_sops = self.reranker.rerank(
                 query=original_query,
                 candidates=candidate_sops,
                 top_k=final_top_k
             )
+            
+            # 重新组合：使用Reranker的排序，但保持原始的混合相似度分数
+            reranked_results = []
+            for reranked_sop, _ in reranked_sops:
+                # 找到原始分数
+                for original_sop, original_score in rrf_top_k:
+                    if original_sop.get('Title') == reranked_sop.get('Title'):
+                        reranked_results.append((reranked_sop, original_score))
+                        break
+            
         except Exception as e:
             print(f"Warning: Reranking failed: {e}")
+            # 使用RRF分数而不是重新计算
             reranked_results = rrf_top_k[:final_top_k]
         
         print(f"\n[Rerank] Final Top {len(reranked_results)} SOPs:")
         for i, (sop, score) in enumerate(reranked_results, 1):
             print(f"  {i}. {sop.get('Title', 'Unknown')[:60]}... (score: {score:.4f})")
         
-        # ===== Step 5: 提取完整 SOP =====
-        final_sops = self._extract_full_sops(reranked_results)
+        # ===== Step 5: 提取完整 SOP 并保留分数 =====
+        final_sops = []
+        for i, (sop, score) in enumerate(reranked_results):
+            # 添加分数信息到SOP字典中
+            sop_with_score = sop.copy()
+            sop_with_score['_rerank_score'] = score
+            sop_with_score['_rank'] = i + 1
+            print(f"RAG Agent - Adding score {score} to SOP: {sop.get('Title', 'Unknown')}")
+            final_sops.append(sop_with_score)
         
         # ===== Step 6: 生成摘要 =====
         retrieval_summary = self._generate_summary(
