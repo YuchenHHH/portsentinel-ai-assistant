@@ -158,24 +158,23 @@ export const isEnrichmentResponse = (data: any): data is EnrichmentResponse => {
 
 // 解析后的事件数据结构
 export interface ParsedIncident {
-  incident_id: string;
+  incident_id: string | null;
   problem_summary: string;
   affected_module: string;
   error_code: string | null;
   urgency: string;
-  entities: Record<string, any>;
+  entities: Entity[];
   raw_text: string | null;
 }
 
-// SOP 响应数据结构
+// SOP 响应数据结构 - 匹配后端新的schema
 export interface SOPResponse {
-  title: string;
-  module: string;
-  resolution: string;
-  overview: string | null;
-  preconditions: string | null;
-  verification: string | null;
-  sop_snippets: SopSnippet[];
+  incident_id: string | null;
+  problem_summary: string;
+  affected_module: string | null;
+  error_code: string | null;
+  urgency: string;
+  retrieved_sops: SopSnippet[];
 }
 
 // 执行计划请求接口
@@ -199,5 +198,107 @@ export const isPlanResponse = (data: any): data is PlanResponse => {
     Array.isArray(data.plan) &&
     typeof data.success === 'boolean' &&
     (data.message === null || typeof data.message === 'string')
+  );
+};
+
+// SOP 执行相关接口
+
+// 执行请求接口
+export interface ExecutionRequest {
+  plan: string[];
+  incident_context: Record<string, any>;
+}
+
+// 执行响应接口
+export interface ExecutionResponse {
+  status: 'in_progress' | 'needs_approval' | 'failed' | 'completed';
+  step: number;
+  step_description: string;
+  tool_output?: string;
+  state_token?: string;
+  message?: string;
+  agent_thoughts?: string;
+  tool_calls?: string;
+}
+
+// 批准请求接口
+export interface ApprovalRequest {
+  state_token: string;
+  approved_query: string;
+  approved: boolean;
+}
+
+// 批准响应接口
+export interface ApprovalResponse {
+  success: boolean;
+  message: string;
+  execution_result?: ExecutionResponse;
+}
+
+// 执行状态接口
+export interface ExecutionStatus {
+  state_token: string;
+  status: string;
+  step: number;
+  total_steps: number;
+  created_at: string;
+  last_updated: string;
+}
+
+// 类型守卫函数
+export const isExecutionResponse = (data: any): data is ExecutionResponse => {
+  return (
+    data &&
+    typeof data === 'object' &&
+    typeof data.status === 'string' &&
+    typeof data.step === 'number' &&
+    typeof data.step_description === 'string' &&
+    (data.tool_output === undefined || typeof data.tool_output === 'string') &&
+    (data.state_token === undefined || typeof data.state_token === 'string') &&
+    (data.message === undefined || typeof data.message === 'string')
+  );
+};
+
+export const isApprovalResponse = (data: any): data is ApprovalResponse => {
+  return (
+    data &&
+    typeof data === 'object' &&
+    typeof data.success === 'boolean' &&
+    typeof data.message === 'string' &&
+    (data.execution_result === undefined || isExecutionResponse(data.execution_result))
+  );
+};
+
+// 数据库配置相关接口
+
+// 数据库配置请求接口
+export interface DatabaseConfigRequest {
+  host: string;
+  user: string;
+  password: string;
+  database: string;
+  port: number;
+}
+
+// 数据库配置响应接口
+export interface DatabaseConfigResponse {
+  success: boolean;
+  message: string;
+  database_info?: {
+    current_database?: string;
+    current_user?: string;
+    mysql_version?: string;
+    tables?: string[];
+  };
+}
+
+// 类型守卫函数
+export const isDatabaseConfigResponse = (data: any): data is DatabaseConfigResponse => {
+  return (
+    data &&
+    typeof data === 'object' &&
+    typeof data.success === 'boolean' &&
+    typeof data.message === 'string' &&
+    (data.database_info === undefined || typeof data.database_info === 'object')
   );
 };

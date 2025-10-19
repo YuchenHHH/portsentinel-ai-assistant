@@ -1,325 +1,227 @@
-# PortSentinel AI Assistant
+# PortSentinel AI 智能助手
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python](https://img.shields.io/badge/Python-3.12+-blue.svg)](https://python.org)
-[![React](https://img.shields.io/badge/React-18+-61dafb.svg)](https://reactjs.org)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688.svg)](https://fastapi.tiangolo.com)
-
-> 🚀 **智能港口事件报告解析与知识检索系统** - 基于混合检索技术的 RAG 增强 AI 助手
-
-## 📋 项目概述
-
-PortSentinel AI Assistant 是一个先进的智能事件报告解析系统，专门为港口运营场景设计。系统结合了自然语言处理、混合检索技术和知识库增强生成（RAG），能够自动解析事件报告并提供相关的标准操作程序（SOP）建议。
-
-### 🎯 核心功能
-
-- **📝 智能事件解析**: 自动提取事件关键信息（紧急程度、影响模块、实体等）
-- **🔍 混合检索技术**: BM25 + 向量检索 + Multi-Query + RRF + 重排序
-- **📚 知识库增强**: 基于 77 个结构化 SOP 文档的智能检索
-- **💬 对话式界面**: 现代化的聊天机器人交互体验
-- **📊 检索指标可视化**: 详细的检索过程指标展示
-- **🎨 响应式设计**: 基于 Chakra UI 的美观界面
-
-## 🏗️ 系统架构
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   前端 (React)   │    │   后端 (FastAPI) │    │   AI 模块      │
-│                 │    │                 │    │                 │
-│ • TypeScript    │◄──►│ • Python 3.12+ │◄──►│ • LangChain     │
-│ • Chakra UI     │    │ • Pydantic      │    │ • Azure OpenAI  │
-│ • Axios         │    │ • Uvicorn       │    │ • Chroma DB     │
-│ • Framer Motion │    │ • CORS          │    │ • Hybrid RAG    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-```
+PortSentinel AI 智能助手是一个基于AI技术的港口运营事件处理和SOP执行系统。它能够智能解析事件报告，自动检索相关SOP建议，并生成可执行的解决方案。
 
 ## 🚀 快速开始
 
-### 环境要求
+### 系统要求
 
-- **Node.js**: 18.0+
-- **Python**: 3.12+
-- **Git**: 2.0+
+- Python 3.8+
+- Node.js 16+
+- MySQL 8.0+
+- Git
 
-### 安装步骤
+### 一键启动（推荐）
 
-1. **克隆项目**
 ```bash
-git clone https://github.com/YuchenHHH/portsentinel-ai-assistant.git
-cd portsentinel-ai-assistant
+# 1. 克隆项目
+git clone <repository-url>
+cd workspace
+
+# 2. 运行配置脚本
+./setup.sh
+
+# 3. 启动服务
+./start.sh
 ```
 
-2. **安装依赖**
-```bash
-# 安装前端依赖
-cd frontend
-npm install
+### 手动安装步骤
 
-# 安装后端依赖
-cd ../backend
+### 2. 环境配置
+
+#### 2.1 设置环境变量
+
+创建 `.env` 文件（如果不存在）：
+
+```bash
+# Azure OpenAI 配置
+AZURE_OPENAI_API_KEY=your_azure_openai_api_key
+AZURE_OPENAI_ENDPOINT=https://psacodesprint2025.azure-api.net/gpt-4-1-mini/openai/deployments/gpt-4.1-mini
+AZURE_OPENAI_API_VERSION=2025-01-01-preview
+```
+
+#### 2.2 数据库配置
+
+确保MySQL服务正在运行，并创建数据库：
+
+```bash
+# 连接到MySQL
+mysql -u root -p
+
+# 创建数据库
+CREATE DATABASE appdb;
+```
+
+### 3. 安装依赖
+
+#### 3.1 后端依赖
+
+```bash
+cd backend
 pip install -r requirements.txt
 ```
 
-3. **配置环境变量**
-```bash
-# 复制环境变量模板
-cp backend/.env.example backend/.env
+#### 3.2 前端依赖
 
-# 编辑环境变量文件
-# 添加你的 Azure OpenAI API 配置
+```bash
+cd frontend
+npm install
 ```
 
-4. **构建知识库**
+#### 3.3 模块依赖
+
 ```bash
-# 运行向量化脚本
+# RAG模块
 cd modules/rag_module
-python vectorize_knowledge_base.py
+pip install -r requirements.txt
+
+# SOP执行器模块
+cd ../sop_executor
+pip install -r requirements.txt
 ```
 
-5. **启动服务**
-```bash
-# 启动后端服务 (端口 8000)
-cd backend
-python -m uvicorn app.main:app --reload --port 8000
+### 4. 启动服务
 
-# 启动前端服务 (端口 3000)
+#### 4.1 启动后端服务
+
+```bash
+cd backend
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+后端服务将在 http://localhost:8000 启动
+
+#### 4.2 启动前端服务
+
+```bash
 cd frontend
 npm start
 ```
 
-6. **访问应用**
-- 前端界面: http://localhost:3000
-- 后端 API 文档: http://localhost:8000/docs
+前端服务将在 http://localhost:3000 启动
 
-## 🎮 使用指南
+### 5. 配置数据库连接
 
-### 基本使用流程
+访问前端界面 http://localhost:3000，点击"连接数据库"按钮，输入以下信息：
 
-1. **输入事件报告**: 在聊天界面输入事件描述
-2. **自动解析**: 系统自动提取关键信息
-3. **知识检索**: 基于混合检索技术找到相关 SOP
-4. **查看结果**: 浏览解析结果和推荐的解决方案
+- **主机**: localhost
+- **端口**: 3306
+- **用户名**: root
+- **密码**: x1uktrew
+- **数据库名**: appdb
 
-### 支持的事件类型
+## 📖 使用指南
 
-- **📧 Email 报告**: 邮件形式的事件报告
-- **📱 SMS 消息**: 短信形式的事件通知
-- **☎️ 电话记录**: 电话沟通的事件记录
+### 基本工作流程
 
-### 支持的模块
+1. **输入事件报告**: 在前端界面输入事件描述
+2. **AI解析**: 系统自动解析事件并提取关键信息
+3. **SOP检索**: 基于解析结果检索相关SOP建议
+4. **生成执行计划**: AI生成详细的执行步骤
+5. **执行SOP**: 逐步执行SOP计划，支持人工审批
 
-- **📦 Container**: 集装箱相关事件
-- **🚢 Vessel**: 船舶相关事件
-- **🔄 EDI/API**: 数据交换和 API 相关事件
+### 功能特性
 
-## 🔧 技术栈
+- 🤖 **智能事件解析**: 自动提取容器号、船舶信息等关键实体
+- 📚 **SOP知识库**: 基于RAG技术的智能SOP检索
+- 📋 **执行计划生成**: AI生成结构化的执行步骤
+- 🔧 **SOP执行器**: 支持数据库操作的自动化执行
+- 👥 **人工审批**: 高危操作需要人工确认
+- 📊 **实时监控**: 显示Agent的思考过程和执行状态
 
-### 前端技术
-
-| 技术 | 版本 | 用途 |
-|------|------|------|
-| React | 18.2.0 | 用户界面框架 |
-| TypeScript | 5.0+ | 类型安全 |
-| Chakra UI | 2.8+ | UI 组件库 |
-| Axios | 1.6+ | HTTP 客户端 |
-| Framer Motion | 10.16+ | 动画效果 |
-
-### 后端技术
-
-| 技术 | 版本 | 用途 |
-|------|------|------|
-| FastAPI | 0.104+ | Web 框架 |
-| Python | 3.12+ | 编程语言 |
-| Pydantic | 2.5+ | 数据验证 |
-| Uvicorn | 0.24+ | ASGI 服务器 |
-| LangChain | 0.1+ | LLM 框架 |
-
-### AI 技术
-
-| 技术 | 版本 | 用途 |
-|------|------|------|
-| Azure OpenAI | Latest | 大语言模型 |
-| Chroma DB | 0.4+ | 向量数据库 |
-| Rank-BM25 | 0.2+ | 关键词检索 |
-| Scikit-learn | 1.3+ | 机器学习 |
-
-## 📁 项目结构
+## 🏗️ 项目结构
 
 ```
-portsentinel-ai-assistant/
-├── frontend/                    # React 前端应用
-│   ├── src/
-│   │   ├── features/           # 功能模块
-│   │   ├── services/           # API 服务
-│   │   ├── types/              # TypeScript 类型
-│   │   └── theme/              # UI 主题
-│   └── package.json
-├── backend/                     # FastAPI 后端应用
+workspace/
+├── backend/                    # 后端服务
 │   ├── app/
-│   │   ├── api/               # API 路由
-│   │   ├── core/              # 核心配置
-│   │   ├── services/          # 业务逻辑
-│   │   └── main.py            # 应用入口
+│   │   ├── api/v1/endpoints/   # API端点
+│   │   ├── services/           # 业务逻辑服务
+│   │   └── main.py            # FastAPI应用入口
 │   └── requirements.txt
-├── modules/                     # AI 模块
-│   ├── incident_parser/        # 事件解析模块
-│   └── rag_module/            # 混合检索 RAG 模块
-├── data/                       # 数据文件
-│   ├── Knowledge Base.docx    # 原始知识库
+├── frontend/                   # 前端应用
+│   ├── src/
+│   │   ├── features/          # 功能模块
+│   │   ├── services/          # API服务
+│   │   └── types/             # 类型定义
+│   └── package.json
+├── modules/                    # AI模块
+│   ├── incident_parser/        # 事件解析器
+│   ├── rag_module/            # RAG检索模块
+│   └── sop_executor/          # SOP执行器
+├── data/                      # 数据文件
 │   └── knowledge_base_structured.json
 └── README.md
 ```
 
-## 🔍 核心特性
+## 🔧 API文档
 
-### 混合检索技术
+启动后端服务后，访问 http://localhost:8000/docs 查看完整的API文档。
 
-系统采用先进的混合检索架构，结合多种检索方法：
+### 主要API端点
 
-- **🔤 BM25 检索**: 基于关键词的精确匹配
-- **🧠 向量检索**: 基于语义的相似性匹配
-- **🔄 Multi-Query**: 多查询变体生成
-- **⚖️ RRF 融合**: 倒数排名融合算法
-- **📊 重排序**: 语义重排序优化
+- `POST /api/v1/incidents/parse` - 事件解析
+- `POST /api/v1/rag/enrich` - SOP检索增强
+- `POST /api/v1/orchestrator/plan` - 生成执行计划
+- `POST /api/v1/sop-execution/execute` - 执行SOP计划
+- `POST /api/v1/database/configure` - 配置数据库连接
 
-### 智能事件解析
+## 🛠️ 开发指南
 
-- **自动实体提取**: 识别容器号、船舶名、错误代码等
-- **紧急程度评估**: 自动判断事件紧急程度
-- **模块分类**: 智能识别影响模块
-- **原因分析**: 提供潜在原因提示
+### 添加新的SOP
 
-### 知识库增强
+1. 更新 `data/knowledge_base_structured.json` 文件
+2. 重新向量化知识库（如果需要）
+3. 测试SOP检索功能
 
-- **77 个结构化 SOP**: 涵盖港口运营各个方面
-- **完整解决方案**: 包含概述、前置条件、解决步骤、验证方法
-- **检索指标**: 详细的检索过程指标展示
-- **相关性评分**: 多维度评分系统
+### 调试技巧
 
-## 📊 API 文档
+- 查看后端日志了解AI Agent的执行过程
+- 使用前端界面的"Agent思考过程"功能查看详细执行信息
+- 通过API文档测试各个端点
 
-### 事件解析 API
+## 🐛 故障排除
 
-```http
-POST /api/v1/incidents/parse
-Content-Type: application/json
+### 常见问题
 
-{
-  "source_type": "Email",
-  "raw_text": "事件描述文本"
-}
-```
+1. **数据库连接失败**
+   - 检查MySQL服务是否运行
+   - 确认数据库密码是否正确
+   - 验证数据库是否存在
 
-### RAG 增强 API
+2. **前端无法连接后端**
+   - 确认后端服务在8000端口运行
+   - 检查CORS配置
 
-```http
-POST /api/v1/rag/enrich
-Content-Type: application/json
+3. **AI解析失败**
+   - 检查Azure OpenAI API密钥配置
+   - 确认网络连接正常
 
-{
-  "incident_id": "ALR-861600",
-  "problem_summary": "问题摘要",
-  "affected_module": "Container",
-  "urgency": "High",
-  "entities": [...]
-}
-```
-
-完整的 API 文档请访问: http://localhost:8000/docs
-
-## 🧪 测试
-
-### 运行测试
+### 日志查看
 
 ```bash
-# 后端测试
-cd backend
-python -m pytest
+# 查看后端日志
+tail -f backend/logs/app.log
 
-# 前端测试
-cd frontend
-npm test
+# 查看实时日志
+ps aux | grep uvicorn
 ```
 
-### 集成测试
+## 📝 许可证
 
-```bash
-# 运行完整集成测试
-python test_integration.py
-```
+本项目采用 MIT 许可证。
 
-## 🚀 部署
+## 🤝 贡献
 
-### Docker 部署
+欢迎提交Issue和Pull Request来改进项目。
 
-```bash
-# 构建镜像
-docker-compose build
+## 📞 支持
 
-# 启动服务
-docker-compose up -d
-```
+如有问题，请通过以下方式联系：
 
-### 生产环境
-
-```bash
-# 构建前端
-cd frontend
-npm run build
-
-# 启动后端
-cd backend
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000
-```
-
-## 🤝 贡献指南
-
-我们欢迎所有形式的贡献！请遵循以下步骤：
-
-1. Fork 项目
-2. 创建功能分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 打开 Pull Request
-
-### 开发规范
-
-- 遵循 PEP 8 Python 代码规范
-- 使用 TypeScript 严格模式
-- 编写单元测试
-- 更新文档
-
-## 📝 更新日志
-
-### v1.0.0 (2025-01-18)
-
-- ✨ 初始版本发布
-- 🚀 混合检索 RAG 系统
-- 💬 对话式用户界面
-- 📚 77 个结构化 SOP 知识库
-- 🔍 多维度检索指标
-- 🎨 响应式 UI 设计
-
-## 📄 许可证
-
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
-
-## 👥 团队
-
-- **黄宇辰** - 项目负责人 & 全栈开发
-
-## 🙏 致谢
-
-- [LangChain](https://langchain.com/) - LLM 应用框架
-- [Chakra UI](https://chakra-ui.com/) - React UI 库
-- [FastAPI](https://fastapi.tiangolo.com/) - 现代 Web 框架
-- [Azure OpenAI](https://azure.microsoft.com/en-us/products/ai-services/openai-service) - AI 服务
-
-## 📞 联系方式
-
-- **项目链接**: [https://github.com/YuchenHHH/portsentinel-ai-assistant](https://github.com/YuchenHHH/portsentinel-ai-assistant)
-- **问题反馈**: [Issues](https://github.com/YuchenHHH/portsentinel-ai-assistant/issues)
+- 提交GitHub Issue
+- 发送邮件至项目维护者
 
 ---
 
-⭐ **如果这个项目对你有帮助，请给它一个星标！**
+**注意**: 请确保在生产环境中使用前，正确配置所有环境变量和安全设置。

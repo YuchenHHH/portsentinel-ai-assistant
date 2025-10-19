@@ -13,13 +13,21 @@ import { ChatMessage } from '../../../types/chat'
 const MotionBox = motion(Box)
 
 interface ChatWindowProps {
-  messages: ChatMessage[]
+  messages: ChatMessage[];
+  onApprovalApprove?: (stateToken: string, approvedQuery: string) => Promise<void>;
+  onApprovalReject?: (stateToken: string) => Promise<void>;
+  onPlanConfirm?: (plan: string[], incidentContext: Record<string, any>) => Promise<void>;
 }
 
 /**
  * 聊天窗口组件 - 可滚动的消息容器
  */
-export const ChatWindow: React.FC<ChatWindowProps> = ({ messages }) => {
+export const ChatWindow: React.FC<ChatWindowProps> = ({ 
+  messages, 
+  onApprovalApprove, 
+  onApprovalReject,
+  onPlanConfirm
+}) => {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const bgColor = useColorModeValue('gray.50', 'gray.900')
   const borderColor = useColorModeValue('gray.200', 'gray.700')
@@ -81,7 +89,12 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ messages }) => {
               ease: "easeOut"
             }}
           >
-            <MessageBubble message={message} />
+            <MessageBubble 
+              message={message}
+              onApprovalApprove={onApprovalApprove}
+              onApprovalReject={onApprovalReject}
+              onPlanConfirm={onPlanConfirm}
+            />
           </MotionBox>
         ))}
 

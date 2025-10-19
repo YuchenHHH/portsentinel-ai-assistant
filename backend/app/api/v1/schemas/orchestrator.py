@@ -12,12 +12,12 @@ from .rag import EnrichmentResponse
 
 class ParsedIncident(BaseModel):
     """解析后的事件数据结构"""
-    incident_id: str = Field(..., description="事件ID")
+    incident_id: Optional[str] = Field(None, description="事件ID")
     problem_summary: str = Field(..., description="问题摘要")
     affected_module: str = Field(..., description="受影响的模块")
     error_code: Optional[str] = Field(None, description="错误代码")
     urgency: str = Field(..., description="紧急程度")
-    entities: Dict[str, Any] = Field(default_factory=dict, description="实体信息")
+    entities: List[Dict[str, Any]] = Field(default_factory=list, description="实体信息")
     raw_text: Optional[str] = Field(None, description="原始文本")
     
     class Config:
@@ -29,15 +29,12 @@ class ParsedIncident(BaseModel):
 
 class SOPResponse(BaseModel):
     """SOP 响应数据结构"""
-    title: str = Field(..., description="SOP 标题")
-    module: str = Field(..., description="SOP 所属模块")
-    resolution: str = Field(..., description="SOP 解决方案文本")
-    overview: Optional[str] = Field(None, description="SOP 概述")
-    preconditions: Optional[str] = Field(None, description="SOP 前置条件")
-    verification: Optional[str] = Field(None, description="SOP 验证步骤")
-    
-    # 从 EnrichmentResponse 中提取的元数据
-    sop_snippets: List[Dict[str, Any]] = Field(default_factory=list, description="SOP 片段列表")
+    incident_id: Optional[str] = Field(None, description="事件ID")
+    problem_summary: str = Field(..., description="问题摘要")
+    affected_module: Optional[str] = Field(None, description="受影响的模块")
+    error_code: Optional[str] = Field(None, description="错误代码")
+    urgency: str = Field(..., description="紧急程度")
+    retrieved_sops: List[Dict[str, Any]] = Field(default_factory=list, description="检索到的SOP列表")
     
     class Config:
         """Pydantic 配置"""

@@ -81,20 +81,18 @@ class OrchestratorService:
             "entities": incident_context.get("entities", {}),
             "raw_text": incident_context.get("raw_text"),
             
-            # SOP 相关信息
-            "sop_title": sop_response.get("title"),
-            "sop_overview": sop_response.get("overview"),
-            "sop_preconditions": sop_response.get("preconditions"),
-            "sop_verification": sop_response.get("verification"),
-            "sop_module": sop_response.get("module"),
+            # SOP 相关信息 - 从第一个检索到的SOP中提取
+            "retrieved_sops": sop_response.get("retrieved_sops", []),
+            "sop_title": sop_response.get("retrieved_sops", [{}])[0].get("metadata", {}).get("sop_title") if sop_response.get("retrieved_sops") else None,
+            "sop_overview": sop_response.get("retrieved_sops", [{}])[0].get("metadata", {}).get("overview") if sop_response.get("retrieved_sops") else None,
+            "sop_preconditions": sop_response.get("retrieved_sops", [{}])[0].get("metadata", {}).get("preconditions") if sop_response.get("retrieved_sops") else None,
+            "sop_verification": sop_response.get("retrieved_sops", [{}])[0].get("metadata", {}).get("verification") if sop_response.get("retrieved_sops") else None,
+            "sop_module": sop_response.get("retrieved_sops", [{}])[0].get("metadata", {}).get("module") if sop_response.get("retrieved_sops") else None,
             
             # 额外的上下文信息
             "timestamp": "2025-01-19T10:00:00Z",
             "environment": "production",
-            "priority": incident_context.get("urgency", "Medium").lower(),
-            
-            # SOP 片段信息（如果有）
-            "sop_snippets": sop_response.get("sop_snippets", [])
+            "priority": incident_context.get("urgency", "Medium").lower()
         }
         
         return combined_context
@@ -126,8 +124,11 @@ class OrchestratorService:
                 sop_response_dict
             )
             
-            # 准备解决方案文本
-            vague_resolution_text = sop_response_dict.get("resolution", "")
+            # 准备解决方案文本 - 从第一个检索到的SOP中提取
+            retrieved_sops = sop_response_dict.get("retrieved_sops", [])
+            vague_resolution_text = ""
+            if retrieved_sops and retrieved_sops[0].get("metadata", {}).get("resolution"):
+                vague_resolution_text = retrieved_sops[0]["metadata"]["resolution"]
             
             if not vague_resolution_text.strip():
                 logger.warning("Empty resolution text provided")

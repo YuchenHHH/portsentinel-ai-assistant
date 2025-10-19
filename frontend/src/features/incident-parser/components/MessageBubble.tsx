@@ -13,25 +13,39 @@ import { motion } from 'framer-motion'
 import { TypingIndicator } from './TypingIndicator'
 import { ResultDisplay } from './ResultDisplay'
 import { EnrichmentDisplay } from './EnrichmentDisplay'
+import SOPExecutionDisplay from './SOPExecutionDisplay'
+import ApprovalRequest from './ApprovalRequest'
+import PlanConfirmation from './PlanConfirmation'
 import { 
   ChatMessage, 
   isUserMessage, 
   isAssistantMessage, 
   isEnrichmentMessage, 
   isLoadingMessage,
+  isSOPExecutionMessage,
+  isApprovalRequestMessage,
+  isPlanConfirmationMessage,
   isSystemMessage 
 } from '../../../types/chat'
 
 const MotionBox = motion(Box)
 
 interface MessageBubbleProps {
-  message: ChatMessage
+  message: ChatMessage;
+  onApprovalApprove?: (stateToken: string, approvedQuery: string) => Promise<void>;
+  onApprovalReject?: (stateToken: string) => Promise<void>;
+  onPlanConfirm?: (plan: string[], incidentContext: Record<string, any>) => Promise<void>;
 }
 
 /**
  * 消息气泡组件 - 显示单条消息，支持动画效果
  */
-export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
+export const MessageBubble: React.FC<MessageBubbleProps> = ({ 
+  message, 
+  onApprovalApprove, 
+  onApprovalReject,
+  onPlanConfirm
+}) => {
   const userBgColor = useColorModeValue('blue.50', 'blue.900')
   const assistantBgColor = useColorModeValue('gray.50', 'gray.700')
   const systemBgColor = useColorModeValue('yellow.50', 'yellow.900')
@@ -167,6 +181,40 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                     {message.content}
                   </Text>
                   <EnrichmentDisplay enrichmentData={message.enrichmentData} />
+                </VStack>
+              ) : isSOPExecutionMessage(message) ? (
+                // SOP 执行结果显示
+                <VStack align="stretch" spacing={3}>
+                  <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                    {message.content}
+                  </Text>
+                  <SOPExecutionDisplay executionData={message.executionData} />
+                </VStack>
+              ) : isApprovalRequestMessage(message) ? (
+                // 批准请求显示
+                <VStack align="stretch" spacing={3}>
+                  <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                    {message.content}
+                  </Text>
+                  <ApprovalRequest
+                    stateToken={message.approvalData.state_token}
+                    query={message.approvalData.query}
+                    stepDescription={message.approvalData.step_description}
+                    onApprove={onApprovalApprove || (async () => {})}
+                    onReject={onApprovalReject || (async () => {})}
+                  />
+                </VStack>
+              ) : isPlanConfirmationMessage(message) ? (
+                // 计划确认显示
+                <VStack align="stretch" spacing={3}>
+                  <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                    {message.content}
+                  </Text>
+                  <PlanConfirmation
+                    plan={message.planData.plan}
+                    incidentContext={message.planData.incident_context}
+                    onConfirm={onPlanConfirm || (async () => {})}
+                  />
                 </VStack>
               ) : isAssistantMessage(message) ? (
                 // 普通助手消息（解析结果、错误或执行计划步骤）

@@ -83,17 +83,18 @@ async def create_execution_plan(
     try:
         logger.info(f"Received plan request for incident: {request.incident_context.incident_id}")
         
-        # 验证请求数据
+        # 验证请求数据，如果incident_id为空则自动生成一个
         if not request.incident_context.incident_id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="incident_id is required"
-            )
+            import uuid
+            from datetime import datetime
+            request.incident_context.incident_id = f"ALR-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:8].upper()}"
+            logger.info(f"Generated incident_id: {request.incident_context.incident_id}")
         
-        if not request.sop_response.resolution:
+        # 检查是否有检索到的SOP
+        if not request.sop_response.retrieved_sops:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="SOP resolution is required"
+                detail="SOP retrieved_sops is required"
             )
         
         # 调用服务层生成计划

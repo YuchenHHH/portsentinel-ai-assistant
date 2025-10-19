@@ -47,6 +47,44 @@ export interface LoadingMessage extends BaseMessage {
   isLoading: true;
 }
 
+// SOP 执行消息
+export interface SOPExecutionMessage extends BaseMessage {
+  type: 'assistant';
+  content: string;
+  executionData: {
+    status: 'in_progress' | 'needs_approval' | 'failed' | 'completed';
+    step: number;
+    step_description: string;
+    tool_output?: string;
+    state_token?: string;
+    message?: string;
+  };
+  isSOPExecution: true;
+}
+
+// 批准请求消息
+export interface ApprovalRequestMessage extends BaseMessage {
+  type: 'assistant';
+  content: string;
+  approvalData: {
+    state_token: string;
+    query: string;
+    step_description: string;
+  };
+  isApprovalRequest: true;
+}
+
+// 执行计划确认消息
+export interface PlanConfirmationMessage extends BaseMessage {
+  type: 'assistant';
+  content: string;
+  planData: {
+    plan: string[];
+    incident_context: Record<string, any>;
+  };
+  isPlanConfirmation: true;
+}
+
 // 系统消息
 export interface SystemMessage extends BaseMessage {
   type: 'system';
@@ -54,7 +92,7 @@ export interface SystemMessage extends BaseMessage {
 }
 
 // 联合消息类型
-export type ChatMessage = UserMessage | AssistantMessage | EnrichmentMessage | LoadingMessage | SystemMessage;
+export type ChatMessage = UserMessage | AssistantMessage | EnrichmentMessage | LoadingMessage | SOPExecutionMessage | ApprovalRequestMessage | PlanConfirmationMessage | SystemMessage;
 
 // 聊天状态
 export interface ChatState {
@@ -117,6 +155,45 @@ export const createLoadingMessage = (content: string): LoadingMessage => ({
   status: 'sending'
 });
 
+export const createSOPExecutionMessage = (
+  content: string,
+  executionData: SOPExecutionMessage['executionData']
+): SOPExecutionMessage => ({
+  id: `sop_execution_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+  type: 'assistant',
+  content,
+  executionData,
+  isSOPExecution: true,
+  timestamp: new Date(),
+  status: 'sent'
+});
+
+export const createApprovalRequestMessage = (
+  content: string,
+  approvalData: ApprovalRequestMessage['approvalData']
+): ApprovalRequestMessage => ({
+  id: `approval_request_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+  type: 'assistant',
+  content,
+  approvalData,
+  isApprovalRequest: true,
+  timestamp: new Date(),
+  status: 'sent'
+});
+
+export const createPlanConfirmationMessage = (
+  content: string,
+  planData: PlanConfirmationMessage['planData']
+): PlanConfirmationMessage => ({
+  id: `plan_confirmation_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+  type: 'assistant',
+  content,
+  planData,
+  isPlanConfirmation: true,
+  timestamp: new Date(),
+  status: 'sent'
+});
+
 export const createSystemMessage = (content: string): SystemMessage => ({
   id: `system_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
   type: 'system',
@@ -140,6 +217,18 @@ export const isEnrichmentMessage = (message: ChatMessage): message is Enrichment
 
 export const isLoadingMessage = (message: ChatMessage): message is LoadingMessage => {
   return message.type === 'assistant' && 'isLoading' in message && message.isLoading === true;
+};
+
+export const isSOPExecutionMessage = (message: ChatMessage): message is SOPExecutionMessage => {
+  return message.type === 'assistant' && 'isSOPExecution' in message && message.isSOPExecution === true;
+};
+
+export const isApprovalRequestMessage = (message: ChatMessage): message is ApprovalRequestMessage => {
+  return message.type === 'assistant' && 'isApprovalRequest' in message && message.isApprovalRequest === true;
+};
+
+export const isPlanConfirmationMessage = (message: ChatMessage): message is PlanConfirmationMessage => {
+  return message.type === 'assistant' && 'isPlanConfirmation' in message && message.isPlanConfirmation === true;
 };
 
 export const isSystemMessage = (message: ChatMessage): message is SystemMessage => {
