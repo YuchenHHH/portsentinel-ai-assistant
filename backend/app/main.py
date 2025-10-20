@@ -6,7 +6,6 @@ from fastapi.responses import JSONResponse
 from app.core.config import settings
 from app.api.v1.endpoints import incident_parser, rag, orchestrator, sop_execution, database, history_match, auth, execution_summary
 
-# 配置日志
 logging.basicConfig(
     level=getattr(logging, settings.log_level.upper()),
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -14,16 +13,13 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-# 创建FastAPI应用
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
-    description="PortSentinel AI Assistant - 智能事件报告解析系统",
+    description="PortSentinel AI Assistant - Intelligent Incident Report Parsing System",
     docs_url="/docs",
     redoc_url="/redoc",
 )
-
-# 配置CORS中间件
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -32,17 +28,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 注册API路由
 app.include_router(
     incident_parser.router,
     prefix=f"{settings.api_v1_prefix}/incidents",
-    tags=["事件解析"]
+    tags=["Incident Parsing"]
 )
 
 app.include_router(
     rag.router,
     prefix=f"{settings.api_v1_prefix}",
-    tags=["RAG知识检索"]
+    tags=["RAG Knowledge Retrieval"]
 )
 
 app.include_router(

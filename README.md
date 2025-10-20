@@ -1,227 +1,227 @@
-# PortSentinel AI 智能助手
+# PortSentinel AI Assistant
 
-PortSentinel AI 智能助手是一个基于AI技术的港口运营事件处理和SOP执行系统。它能够智能解析事件报告，自动检索相关SOP建议，并生成可执行的解决方案。
+PortSentinel AI Assistant is an AI-powered port operations incident handling and SOP execution system. It intelligently parses incident reports, automatically retrieves relevant SOP recommendations, and generates executable solutions.
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-### 系统要求
+### System Requirements
 
 - Python 3.8+
 - Node.js 16+
 - MySQL 8.0+
 - Git
 
-### 一键启动（推荐）
+### One-Click Launch (Recommended)
 
 ```bash
-# 1. 克隆项目
+# 1. Clone project
 git clone <repository-url>
 cd workspace
 
-# 2. 运行配置脚本
+# 2. Run configuration script
 ./setup.sh
 
-# 3. 启动服务
+# 3. Start services
 ./start.sh
 ```
 
-### 手动安装步骤
+### Manual Installation Steps
 
-### 2. 环境配置
+### 2. Environment Configuration
 
-#### 2.1 设置环境变量
+#### 2.1 Set Environment Variables
 
-创建 `.env` 文件（如果不存在）：
+Create `.env` file (if not exists):
 
 ```bash
-# Azure OpenAI 配置
+# Azure OpenAI Configuration
 AZURE_OPENAI_API_KEY=your_azure_openai_api_key
 AZURE_OPENAI_ENDPOINT=https://psacodesprint2025.azure-api.net/gpt-4-1-mini/openai/deployments/gpt-4.1-mini
 AZURE_OPENAI_API_VERSION=2025-01-01-preview
 ```
 
-#### 2.2 数据库配置
+#### 2.2 Database Configuration
 
-确保MySQL服务正在运行，并创建数据库：
+Ensure MySQL service is running and create database:
 
 ```bash
-# 连接到MySQL
+# Connect to MySQL
 mysql -u root -p
 
-# 创建数据库
+# Create database
 CREATE DATABASE appdb;
 ```
 
-### 3. 安装依赖
+### 3. Install Dependencies
 
-#### 3.1 后端依赖
+#### 3.1 Backend Dependencies
 
 ```bash
 cd backend
 pip install -r requirements.txt
 ```
 
-#### 3.2 前端依赖
+#### 3.2 Frontend Dependencies
 
 ```bash
 cd frontend
 npm install
 ```
 
-#### 3.3 模块依赖
+#### 3.3 Module Dependencies
 
 ```bash
-# RAG模块
+# RAG Module
 cd modules/rag_module
 pip install -r requirements.txt
 
-# SOP执行器模块
+# SOP Executor Module
 cd ../sop_executor
 pip install -r requirements.txt
 ```
 
-### 4. 启动服务
+### 4. Start Services
 
-#### 4.1 启动后端服务
+#### 4.1 Start Backend Service
 
 ```bash
 cd backend
 python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-后端服务将在 http://localhost:8000 启动
+Backend service will start at http://localhost:8000
 
-#### 4.2 启动前端服务
+#### 4.2 Start Frontend Service
 
 ```bash
 cd frontend
 npm start
 ```
 
-前端服务将在 http://localhost:3000 启动
+Frontend service will start at http://localhost:3000
 
-### 5. 配置数据库连接
+### 5. Configure Database Connection
 
-访问前端界面 http://localhost:3000，点击"连接数据库"按钮，输入以下信息：
+Visit frontend interface http://localhost:3000, click "Connect Database" button, enter the following information:
 
-- **主机**: localhost
-- **端口**: 3306
-- **用户名**: root
-- **密码**: x1uktrew
-- **数据库名**: appdb
+- **Host**: localhost
+- **Port**: 3306
+- **Username**: root
+- **Password**: x1uktrew
+- **Database**: appdb
 
-## 📖 使用指南
+## 📖 User Guide
 
-### 基本工作流程
+### Basic Workflow
 
-1. **输入事件报告**: 在前端界面输入事件描述
-2. **AI解析**: 系统自动解析事件并提取关键信息
-3. **SOP检索**: 基于解析结果检索相关SOP建议
-4. **生成执行计划**: AI生成详细的执行步骤
-5. **执行SOP**: 逐步执行SOP计划，支持人工审批
+1. **Input Incident Report**: Enter incident description in frontend interface
+2. **AI Parsing**: System automatically parses incident and extracts key information
+3. **SOP Retrieval**: Retrieve relevant SOP recommendations based on parsing results
+4. **Generate Execution Plan**: AI generates detailed execution steps
+5. **Execute SOP**: Step-by-step SOP execution with human approval support
 
-### 功能特性
+### Features
 
-- 🤖 **智能事件解析**: 自动提取容器号、船舶信息等关键实体
-- 📚 **SOP知识库**: 基于RAG技术的智能SOP检索
-- 📋 **执行计划生成**: AI生成结构化的执行步骤
-- 🔧 **SOP执行器**: 支持数据库操作的自动化执行
-- 👥 **人工审批**: 高危操作需要人工确认
-- 📊 **实时监控**: 显示Agent的思考过程和执行状态
+- 🤖 **Intelligent Incident Parsing**: Automatically extracts container numbers, vessel information and other key entities
+- 📚 **SOP Knowledge Base**: Intelligent SOP retrieval based on RAG technology
+- 📋 **Execution Plan Generation**: AI generates structured execution steps
+- 🔧 **SOP Executor**: Supports automated database operations
+- 👥 **Human Approval**: High-risk operations require human confirmation
+- 📊 **Real-time Monitoring**: Shows Agent's thinking process and execution status
 
-## 🏗️ 项目结构
+## 🏗️ Project Structure
 
 ```
 workspace/
-├── backend/                    # 后端服务
+├── backend/                    # Backend service
 │   ├── app/
-│   │   ├── api/v1/endpoints/   # API端点
-│   │   ├── services/           # 业务逻辑服务
-│   │   └── main.py            # FastAPI应用入口
+│   │   ├── api/v1/endpoints/   # API endpoints
+│   │   ├── services/           # Business logic services
+│   │   └── main.py            # FastAPI application entry
 │   └── requirements.txt
-├── frontend/                   # 前端应用
+├── frontend/                   # Frontend application
 │   ├── src/
-│   │   ├── features/          # 功能模块
-│   │   ├── services/          # API服务
-│   │   └── types/             # 类型定义
+│   │   ├── features/          # Feature modules
+│   │   ├── services/          # API services
+│   │   └── types/             # Type definitions
 │   └── package.json
-├── modules/                    # AI模块
-│   ├── incident_parser/        # 事件解析器
-│   ├── rag_module/            # RAG检索模块
-│   └── sop_executor/          # SOP执行器
-├── data/                      # 数据文件
+├── modules/                    # AI modules
+│   ├── incident_parser/        # Incident parser
+│   ├── rag_module/            # RAG retrieval module
+│   └── sop_executor/          # SOP executor
+├── data/                      # Data files
 │   └── knowledge_base_structured.json
 └── README.md
 ```
 
-## 🔧 API文档
+## 🔧 API Documentation
 
-启动后端服务后，访问 http://localhost:8000/docs 查看完整的API文档。
+After starting the backend service, visit http://localhost:8000/docs to view the complete API documentation.
 
-### 主要API端点
+### Main API Endpoints
 
-- `POST /api/v1/incidents/parse` - 事件解析
-- `POST /api/v1/rag/enrich` - SOP检索增强
-- `POST /api/v1/orchestrator/plan` - 生成执行计划
-- `POST /api/v1/sop-execution/execute` - 执行SOP计划
-- `POST /api/v1/database/configure` - 配置数据库连接
+- `POST /api/v1/incidents/parse` - Incident parsing
+- `POST /api/v1/rag/enrich` - SOP retrieval enhancement
+- `POST /api/v1/orchestrator/plan` - Generate execution plan
+- `POST /api/v1/sop-execution/execute` - Execute SOP plan
+- `POST /api/v1/database/configure` - Configure database connection
 
-## 🛠️ 开发指南
+## 🛠️ Development Guide
 
-### 添加新的SOP
+### Adding New SOPs
 
-1. 更新 `data/knowledge_base_structured.json` 文件
-2. 重新向量化知识库（如果需要）
-3. 测试SOP检索功能
+1. Update `data/knowledge_base_structured.json` file
+2. Re-vectorize knowledge base (if needed)
+3. Test SOP retrieval functionality
 
-### 调试技巧
+### Debugging Tips
 
-- 查看后端日志了解AI Agent的执行过程
-- 使用前端界面的"Agent思考过程"功能查看详细执行信息
-- 通过API文档测试各个端点
+- Check backend logs to understand AI Agent execution process
+- Use frontend interface's "Agent Thinking Process" feature to view detailed execution information
+- Test various endpoints through API documentation
 
-## 🐛 故障排除
+## 🐛 Troubleshooting
 
-### 常见问题
+### Common Issues
 
-1. **数据库连接失败**
-   - 检查MySQL服务是否运行
-   - 确认数据库密码是否正确
-   - 验证数据库是否存在
+1. **Database Connection Failed**
+   - Check if MySQL service is running
+   - Verify database password is correct
+   - Confirm database exists
 
-2. **前端无法连接后端**
-   - 确认后端服务在8000端口运行
-   - 检查CORS配置
+2. **Frontend Cannot Connect to Backend**
+   - Ensure backend service is running on port 8000
+   - Check CORS configuration
 
-3. **AI解析失败**
-   - 检查Azure OpenAI API密钥配置
-   - 确认网络连接正常
+3. **AI Parsing Failed**
+   - Check Azure OpenAI API key configuration
+   - Verify network connection
 
-### 日志查看
+### Log Viewing
 
 ```bash
-# 查看后端日志
+# View backend logs
 tail -f backend/logs/app.log
 
-# 查看实时日志
+# View real-time logs
 ps aux | grep uvicorn
 ```
 
-## 📝 许可证
+## 📝 License
 
-本项目采用 MIT 许可证。
+This project is licensed under the MIT License.
 
-## 🤝 贡献
+## 🤝 Contributing
 
-欢迎提交Issue和Pull Request来改进项目。
+Welcome to submit Issues and Pull Requests to improve the project.
 
-## 📞 支持
+## 📞 Support
 
-如有问题，请通过以下方式联系：
+If you have questions, please contact through:
 
-- 提交GitHub Issue
-- 发送邮件至项目维护者
+- Submit GitHub Issue
+- Send email to project maintainers
 
 ---
 
-**注意**: 请确保在生产环境中使用前，正确配置所有环境变量和安全设置。
+**Note**: Please ensure all environment variables and security settings are properly configured before using in production environment.

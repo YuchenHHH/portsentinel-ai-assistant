@@ -21,7 +21,7 @@ interface ChatWindowProps {
 }
 
 /**
- * 聊天窗口组件 - 固定高度，可滚动，自动滚动到底部
+ * Chat window component - fixed height, scrollable, auto-scroll to bottom
  */
 export const ChatWindow: React.FC<ChatWindowProps> = ({ 
   messages, 
@@ -36,28 +36,22 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const bgColor = useColorModeValue('gray.50', 'gray.900')
   const borderColor = useColorModeValue('gray.200', 'gray.700')
 
-  // 自动滚动到底部
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
     }
   }
 
-  // 当有新消息时自动滚动到底部
   useEffect(() => {
-    // 只有在消息数量增加时才滚动（新消息）
     if (messages.length > previousMessageCount.current && messages.length > 0) {
-      // 使用 setTimeout 确保 DOM 更新完成后再滚动
       const timer = setTimeout(() => {
         scrollToBottom()
       }, 100)
       
-      // 更新消息计数
       previousMessageCount.current = messages.length
       
       return () => clearTimeout(timer)
     } else {
-      // 更新消息计数（即使不滚动）
       previousMessageCount.current = messages.length
     }
   }, [messages])
@@ -73,7 +67,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       p={4}
     >
       <VStack spacing={4} align="stretch" pb={4}>
-        {/* 欢迎消息 */}
         {messages.length === 0 && (
           <Center flex={1} minH="200px">
             <MotionBox
@@ -85,17 +78,15 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
             >
               <VStack spacing={2}>
                 <Text fontSize="lg" fontWeight="semibold">
-                  欢迎使用 PortSentinel AI 智能助手
+                  Welcome to PortSentinel AI Assistant
                 </Text>
                 <Text fontSize="sm" maxW="md">
-                  请在下方输入框中输入事件报告内容，AI 将为您智能解析并检索相关建议。
+                  Enter incident report content in the input box below, and AI will intelligently parse and retrieve relevant recommendations.
                 </Text>
               </VStack>
             </MotionBox>
           </Center>
         )}
-
-        {/* 消息列表 */}
         {messages.map((message, index) => (
           <MotionBox
             key={message.id}
@@ -117,7 +108,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           </MotionBox>
         ))}
 
-        {/* 滚动锚点 */}
         <div ref={messagesEndRef} />
       </VStack>
     </Box>

@@ -1,7 +1,7 @@
 """
-历史案例匹配服务
+Historical Case Matching Service
 
-实现历史案例匹配功能的核心服务。
+Core service implementing historical case matching functionality.
 """
 
 import os
@@ -29,10 +29,10 @@ logger = logging.getLogger(__name__)
 
 
 class HistoryMatchService:
-    """历史案例匹配服务"""
+    """Historical case matching service"""
     
     def __init__(self):
-        """初始化历史案例匹配服务"""
+        """Initialize historical case matching service"""
         self.encoder = None
         self.client = None
         self.collection = None
@@ -42,9 +42,9 @@ class HistoryMatchService:
         self._initialize()
     
     def _initialize(self):
-        """初始化各个组件"""
+        """Initialize components"""
         try:
-            # 初始化句子嵌入模型
+            # Initialize sentence embedding model
             self.encoder = SentenceTransformer("all-MiniLM-L6-v2")
             logger.info("Sentence transformer initialized")
             

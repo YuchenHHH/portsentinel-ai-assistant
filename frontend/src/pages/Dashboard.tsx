@@ -1,5 +1,5 @@
 /**
- * Dashboard - 主仪表板页面
+ * Dashboard - Main dashboard page
  */
 
 import React, { useState } from 'react';
@@ -96,7 +96,7 @@ export const Dashboard: React.FC = () => {
   };
 
   return (
-    <Box bg={bgColor} minH="100vh">
+    <Box bg={bgColor} h="100vh" maxH="100vh" overflow="hidden">
       {/* Header */}
       <Box
         bg={headerBg}
@@ -200,7 +200,7 @@ export const Dashboard: React.FC = () => {
         </Drawer>
 
         {/* Main Content */}
-        <Box flex={1} p={6}>
+        <Box flex={1} overflow="hidden" display="flex" flexDirection="column">
           {renderContent()}
         </Box>
       </Flex>

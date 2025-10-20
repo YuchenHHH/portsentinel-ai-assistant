@@ -1,5 +1,5 @@
 /**
- * 认证上下文
+ * Authentication Context
  */
 
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';

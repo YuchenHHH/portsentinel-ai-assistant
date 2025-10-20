@@ -41,7 +41,7 @@ interface ResultDisplayProps {
 }
 
 /**
- * 结果展示组件 - 美观的信息卡片
+ * Result display component - beautiful information cards
  */
 export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result }) => {
   const borderColor = useColorModeValue('gray.200', 'gray.600')

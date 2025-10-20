@@ -41,7 +41,7 @@ interface MessageBubbleProps {
 }
 
 /**
- * 消息气泡组件 - 显示单条消息，支持动画效果
+ * Message bubble component - displays single message with animation effects
  */
 export const MessageBubble: React.FC<MessageBubbleProps> = ({ 
   message, 
@@ -57,13 +57,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   const systemBorderColor = useColorModeValue('yellow.200', 'yellow.700')
 
   const formatTime = (timestamp: Date) => {
-    return timestamp.toLocaleTimeString('zh-CN', {
+    return timestamp.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit'
     })
   }
-
-  // 动画配置
   const animationVariants = {
     initial: { 
       opacity: 0, 
@@ -81,7 +79,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     }
   }
 
-  // 用户消息
   if (isUserMessage(message)) {
     return (
       <Flex justify="flex-end" mb={4}>
@@ -112,7 +109,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     )
   }
 
-  // 系统消息
   if (isSystemMessage(message)) {
     return (
       <Flex justify="center" mb={4}>
@@ -128,7 +124,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         >
           <HStack>
             <Text fontSize="sm" color="yellow.700">
-              系统消息:
+              System Message:
             </Text>
             <Text fontSize="xs" color="yellow.600">
               {message.content}
@@ -139,7 +135,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     )
   }
 
-  // 助手消息（包括解析结果、RAG增强、加载状态）
   if (message.type === 'assistant') {
     return (
       <Flex justify="flex-start" mb={4}>
@@ -151,18 +146,15 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           animate="animate"
         >
           <VStack align="stretch" spacing={3}>
-            {/* 助手消息头部 */}
             <HStack>
               <Avatar size="sm" name="AI Assistant" bg="blue.500" />
               <Text fontWeight="medium" color="blue.600">
-                AI 助手
+                AI Assistant
               </Text>
               <Text fontSize="xs" color="gray.500">
                 {formatTime(message.timestamp)}
               </Text>
             </HStack>
-
-            {/* 消息内容 */}
             <Box
               bg={assistantBgColor}
               p={4}
@@ -170,7 +162,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               border="1px"
               borderColor={borderColor}
             >
-              {/* 加载状态 */}
               {isLoadingMessage(message) ? (
                 <HStack spacing={3}>
                   <Text fontSize="sm" color="gray.600">
@@ -179,7 +170,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   <TypingIndicator />
                 </HStack>
               ) : isEnrichmentMessage(message) ? (
-                // RAG 增强结果显示
                 <VStack align="stretch" spacing={3}>
                   <Text fontSize="sm" fontWeight="medium" color="gray.700">
                     {message.content}
@@ -187,7 +177,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   <EnrichmentDisplay enrichmentData={message.enrichmentData} />
                 </VStack>
               ) : isHistoryMatchMessage(message) ? (
-                // 历史案例匹配结果显示
                 <VStack align="stretch" spacing={3}>
                   <Text fontSize="sm" fontWeight="medium" color="gray.700">
                     {message.content}
@@ -195,7 +184,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   <HistoryMatchDisplay historyData={message.historyData} />
                 </VStack>
               ) : isSOPExecutionMessage(message) ? (
-                // SOP 执行结果显示
                 <VStack align="stretch" spacing={3}>
                   <Text fontSize="sm" fontWeight="medium" color="gray.700">
                     {message.content}
@@ -203,7 +191,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   <SOPExecutionDisplay executionData={message.executionData} incidentId={incidentId} />
                 </VStack>
               ) : isApprovalRequestMessage(message) ? (
-                // 批准请求显示
                 <VStack align="stretch" spacing={3}>
                   <Text fontSize="sm" fontWeight="medium" color="gray.700">
                     {message.content}
@@ -217,7 +204,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   />
                 </VStack>
               ) : isPlanConfirmationMessage(message) ? (
-                // 计划确认显示
                 <VStack align="stretch" spacing={3}>
                   <Text fontSize="sm" fontWeight="medium" color="gray.700">
                     {message.content}
@@ -229,12 +215,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   />
                 </VStack>
               ) : isAssistantMessage(message) ? (
-                // 普通助手消息（解析结果、错误或执行计划步骤）
                 <VStack align="stretch" spacing={3}>
                   <Text fontSize="sm" fontWeight="medium" color="gray.700">
                     {message.content}
                   </Text>
-                  {/* 执行计划步骤显示 - 多个步骤在同一个对话框中 */}
                   {message.incidentReport && (message.incidentReport as any).plan_steps ? (
                     <Box
                       bg="blue.50"
@@ -245,8 +229,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                       boxShadow="sm"
                     >
                       <VStack align="stretch" spacing={4}>
-                        
-                        {/* 显示所有执行步骤 */}
                         <VStack align="stretch" spacing={3}>
                           {(message.incidentReport as any).plan_steps.map((step: string, index: number) => (
                             <Box
@@ -285,16 +267,14 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                       </VStack>
                     </Box>
                   ) : (
-                    // 普通解析结果显示
                     message.incidentReport && (
                       <ResultDisplay result={message.incidentReport} />
                     )
                   )}
                 </VStack>
               ) : (
-                // 默认文本消息
                 <Text fontSize="sm" color="gray.600">
-                  未知消息类型
+                  Unknown message type
                 </Text>
               )}
             </Box>

@@ -1,5 +1,5 @@
 """
-混合检索 RAG Agent：BM25 + Vector + Multi-Query + RRF + Rerank
+Hybrid Retrieval RAG Agent: BM25 + Vector + Multi-Query + RRF + Rerank
 """
 
 import json
@@ -22,14 +22,14 @@ from data_sources.reranker import SemanticReranker, SimpleReranker
 
 class HybridRagAgent:
     """
-    混合检索 RAG Agent
+    Hybrid Retrieval RAG Agent
     
-    工作流：
-    1. Multi-Query 生成查询变体
-    2. 对每个查询执行 BM25 + Vector 混合检索
-    3. RRF (Reciprocal Rank Fusion) 融合多查询结果
-    4. 语义 Rerank 重排序
-    5. 返回 Top-K 完整 SOP (原始 JSON 格式)
+    Workflow:
+    1. Multi-Query generates query variants
+    2. Execute BM25 + Vector hybrid retrieval for each query
+    3. RRF (Reciprocal Rank Fusion) fuses multi-query results
+    4. Semantic Rerank reorders results
+    5. Returns Top-K complete SOPs (original JSON format)
     """
     
     def __init__(
@@ -45,18 +45,18 @@ class HybridRagAgent:
         verbose: bool = True
     ):
         """
-        初始化混合 RAG Agent
+        Initialize Hybrid RAG Agent
         
         Args:
-            vector_store_interface: 向量存储接口
-            bm25_retriever: BM25 检索器（可选，自动创建）
-            query_expander: 查询扩展器（可选）
-            reranker: 语义 Reranker（可选）
-            bm25_weight: BM25 权重
-            vector_weight: 向量检索权重
-            rrf_k: RRF 参数
-            use_llm: 是否使用 LLM（Query Expansion 和 Rerank）
-            verbose: 是否显示详细日志
+            vector_store_interface: Vector store interface
+            bm25_retriever: BM25 retriever (optional, auto-created)
+            query_expander: Query expander (optional)
+            reranker: Semantic reranker (optional)
+            bm25_weight: BM25 weight
+            vector_weight: Vector retrieval weight
+            rrf_k: RRF parameter
+            use_llm: Whether to use LLM (Query Expansion and Rerank)
+            verbose: Whether to show detailed logs
         """
         self.vector_store = vector_store_interface
         self.bm25_weight = bm25_weight
@@ -65,7 +65,7 @@ class HybridRagAgent:
         self.use_llm = use_llm
         self.verbose = verbose
         
-        # 初始化 BM25
+        # Initialize BM25
         if bm25_retriever is None:
             try:
                 self.bm25_retriever = BM25Retriever()
