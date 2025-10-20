@@ -533,6 +533,7 @@ export const IncidentParserPage: React.FC = () => {
     <Box 
       bg={bgColor} 
       h="93%"
+      maxH="93%"
       display="flex" 
       flexDirection="column" 
       overflow="hidden"
@@ -558,7 +559,7 @@ export const IncidentParserPage: React.FC = () => {
         </HStack>
       </Box>
   
-      {/* Chat Messages Area */}
+      {/* Chat Messages Area - 单一可滚动容器，占据剩余空间 */}
       <Box 
         flex={1} 
         overflowY="auto" 
@@ -578,15 +579,17 @@ export const IncidentParserPage: React.FC = () => {
         />
       </Box>
   
-      {/* Chat Input - Fixed at bottom */}
-      <Box 
-        flexShrink={0}
-        borderTop="1px" 
-        borderColor={borderColor}
-        bg={bgColor}
-      >
-        <ChatInput onSubmit={handleSubmit} isLoading={isLoading} disabled={isLoading} />
-      </Box>
+      {/* Chat Input - 仅在没有消息时显示，避免首屏过低 */}
+      {messages.length === 0 && (
+        <Box 
+          flexShrink={0}
+          borderTop="1px" 
+          borderColor={borderColor}
+          bg={bgColor}
+        >
+          <ChatInput onSubmit={handleSubmit} isLoading={isLoading} disabled={isLoading} />
+        </Box>
+      )}
   
       {/* Database Connection Modal */}
       <DatabaseConnectionModal
