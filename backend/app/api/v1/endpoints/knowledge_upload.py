@@ -46,7 +46,7 @@ async def upload_knowledge_file(file: UploadFile = File(...)):
             shutil.copyfileobj(file.file, buffer)
 
         # Define output paths - use absolute path to avoid confusion
-        project_root = Path("/Users/jackwang/Desktop/portsentinel-ai-assistant")
+        project_root = Path(__file__).parent.parent.parent.parent.parent.parent
         data_dir = project_root / "data"
         data_dir.mkdir(exist_ok=True)
         
@@ -134,7 +134,7 @@ async def get_knowledge_status():
     Get the current status of the knowledge base.
     """
     try:
-        project_root = Path(__file__).parent.parent.parent.parent.parent
+        project_root = Path(__file__).parent.parent.parent.parent.parent.parent
         json_path = project_root / "data" / "knowledge_base_structured.json"
         
         if json_path.exists():
