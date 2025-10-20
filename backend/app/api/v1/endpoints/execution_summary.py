@@ -109,8 +109,9 @@ async def get_summary_markdown(
         import os
         from pathlib import Path
         
-        # 使用绝对路径
-        summaries_dir = Path("/backend/execution_summaries")
+        # 定位到 backend 目录，然后拼接 execution_summaries
+        backend_dir = Path(__file__).resolve().parents[4]
+        summaries_dir = backend_dir / "execution_summaries"
         
         if incident_id == "latest":
             # 获取最新的摘要文件
@@ -138,10 +139,12 @@ async def get_summary_markdown(
         with open(latest_file, 'r', encoding='utf-8') as f:
             markdown_content = f.read()
         
+        # 返回相对路径（相对项目根目录）
+        relative_path = Path("backend") / "execution_summaries" / latest_file.name
         return {
             "success": True,
             "incident_id": incident_id,
-            "file_path": str(latest_file),
+            "file_path": str(relative_path),
             "markdown_content": markdown_content,
             "file_name": latest_file.name
         }
@@ -161,8 +164,9 @@ async def get_local_latest_summary():
     获取本地文件系统中最新的执行摘要 Markdown 文件
     """
     try:
-        # 使用绝对路径
-        summaries_dir = Path("/Users/huangyuchen/Desktop/workspace/backend/execution_summaries")
+        # 定位到 backend 目录，然后拼接 execution_summaries
+        backend_dir = Path(__file__).resolve().parents[4]
+        summaries_dir = backend_dir / "execution_summaries"
         
         if not summaries_dir.exists():
             raise HTTPException(
@@ -193,10 +197,12 @@ async def get_local_latest_summary():
             if len(parts) >= 1:
                 incident_id = parts[0]
         
+        # 返回相对路径（相对项目根目录）
+        relative_path = Path("backend") / "execution_summaries" / file_name
         return {
             "success": True,
             "incident_id": incident_id,
-            "file_path": str(latest_file),
+            "file_path": str(relative_path),
             "markdown_content": markdown_content,
             "file_name": file_name,
             "file_size": latest_file.stat().st_size,

@@ -126,10 +126,18 @@ class SOPExecutionSummaryService:
             result = self.agent.process_followup(execution_result, l2_status)
             
             # 生成摘要文件
-            summary_path = self.agent.save_summary_to_file(
-                result.resolution_summary, 
-                output_dir=str(Path(__file__).parent.parent.parent.parent / "backend" / "execution_summaries")
+            output_dir = Path(__file__).parent.parent.parent.parent / "backend" / "execution_summaries"
+            summary_path_abs = self.agent.save_summary_to_file(
+                result.resolution_summary,
+                output_dir=str(output_dir)
             )
+            # 转换为相对路径（相对项目根目录）
+            try:
+                project_root = Path(__file__).resolve().parents[3]
+                summary_path_rel = str(Path(summary_path_abs).resolve().relative_to(project_root))
+            except Exception:
+                # 兜底：直接返回 backend/execution_summaries/<file>
+                summary_path_rel = str(Path("backend") / "execution_summaries" / Path(summary_path_abs).name)
             
             # 返回结构化结果
             return {
@@ -138,7 +146,7 @@ class SOPExecutionSummaryService:
                 "execution_status": execution_status,
                 "escalation_required": result.escalation_required,
                 "resolution_outcome": result.resolution_summary.resolution_outcome,
-                "summary_path": summary_path,
+                "summary_path": summary_path_rel,
                 "escalation_contact": result.escalation_contact.__dict__ if result.escalation_contact else None,
                 "escalation_email": result.escalation_email.__dict__ if result.escalation_email else None,
                 "resolution_summary": result.resolution_summary.__dict__,
