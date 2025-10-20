@@ -129,7 +129,7 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
       boxShadow="sm"
     >
       <VStack align="stretch" spacing={4}>
-        {/* 状态头部 */}
+        {/* Header */}
         <Box bg={headerBg} p={3} borderRadius="md">
           <HStack justify="space-between" align="center">
             <HStack spacing={2}>
@@ -146,12 +146,12 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
               </Badge>
             </HStack>
             <Text fontSize="sm" color="gray.600">
-              步骤 {executionData.step + 1}
+              Step {executionData.step + 1}
             </Text>
           </HStack>
         </Box>
 
-        {/* 步骤描述 */}
+        {/* Step Description */}
         <Box>
           <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={1}>
             Current State:
@@ -161,7 +161,7 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
           </Text>
         </Box>
 
-        {/* Agent思考过程 */}
+        {/* Agent Thoughts */}
         {executionData.agent_thoughts && (
           <Box>
             <Text fontSize="sm" fontWeight="medium" color="blue.600" mb={2}>
@@ -183,7 +183,7 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
           </Box>
         )}
 
-        {/* Agent工具调用 */}
+        {/* Agent Tool Calls */}
         {executionData.tool_calls && (
           <Box>
             <Text fontSize="sm" fontWeight="medium" color="green.600" mb={2}>
@@ -205,7 +205,7 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
           </Box>
         )}
 
-        {/* 进度条 (仅在执行中时显示) */}
+        {/* Progress (only during in_progress) */}
         {executionData.status === 'in_progress' && (
           <Box>
             <HStack justify="space-between" mb={2}>
@@ -221,7 +221,7 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
           </Box>
         )}
 
-        {/* 状态消息 */}
+        {/* Status Message */}
         {executionData.message && (
           <Alert status={
             executionData.status === 'needs_approval' ? 'warning' :
@@ -231,7 +231,7 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
             <AlertIcon />
             <Box>
               <AlertTitle fontSize="sm">
-                {executionData.status === 'needs_approval' ? 'needs_approval' : 
+                {executionData.status === 'needs_approval' ? 'Needs Approval' : 
                  executionData.status === 'completed' ? 'Completed' :
                  executionData.status === 'failed' ? 'Failed' : 'Executing'}
               </AlertTitle>
@@ -242,7 +242,7 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
           </Alert>
         )}
 
-        {/* 已完成的步骤历史 */}
+        {/* Finished Steps */}
         {executionData.completed_steps && executionData.completed_steps.length > 0 && (
           <>
             <Divider />
@@ -293,7 +293,7 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
           </>
         )}
 
-        {/* 当前步骤的工具输出 */}
+        {/* Current Step Tool Output */}
         {executionData.tool_output && (
           <>
             <Divider />
@@ -318,7 +318,7 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
           </>
         )}
 
-        {/* 状态令牌 (调试用) */}
+        {/* State Token (dev only) */}
         {executionData.state_token && process.env.NODE_ENV === 'development' && (
           <>
             <Divider />
@@ -332,22 +332,22 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
           </>
         )}
 
-        {/* 执行摘要生成按钮已移除 */}
+        {/* Generate Summary button removed */}
 
-        {/* 执行摘要显示 */}
+        {/* Execution Summary */}
         {showSummary && summaryData && (
           <>
             <Divider />
             <Box>
               <Text fontSize="md" fontWeight="semibold" mb={3} color="purple.700">
-                📋 执行摘要
+                📋 Execution Summary
               </Text>
               <Box p={4} bg="purple.50" borderRadius="md" border="1px" borderColor="purple.200">
                 <VStack align="stretch" spacing={3}>
-                  {/* 基本信息 */}
+                  {/* Basic Info */}
                   <HStack justify="space-between">
                     <Text fontSize="sm" fontWeight="medium" color="gray.600">
-                      解析结果:
+                      Outcome:
                     </Text>
                     <Badge colorScheme={summaryData.resolution_outcome === 'SUCCESS' ? 'green' : 'orange'}>
                       {summaryData.resolution_outcome}
@@ -356,18 +356,18 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
                   
                   <HStack justify="space-between">
                     <Text fontSize="sm" fontWeight="medium" color="gray.600">
-                      升级状态:
+                      Escalation:
                     </Text>
                     <Badge colorScheme={summaryData.escalation_required ? 'orange' : 'green'}>
-                      {summaryData.escalation_required ? '需要升级' : '无需升级'}
+                      {summaryData.escalation_required ? 'Required' : 'Not Required'}
                     </Badge>
                   </HStack>
 
-                  {/* 错误详情 */}
+                  {/* Error Details */}
                   {summaryData.error_identified && (
                     <Box>
                       <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={1}>
-                        识别的错误:
+                        Identified Error:
                       </Text>
                       <Text fontSize="sm" color="gray.700" p={2} bg="white" borderRadius="md">
                         {summaryData.error_identified}
@@ -378,7 +378,7 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
                   {summaryData.root_cause && (
                     <Box>
                       <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={1}>
-                        根本原因:
+                        Root Cause:
                       </Text>
                       <Text fontSize="sm" color="gray.700" p={2} bg="white" borderRadius="md">
                         {summaryData.root_cause}
@@ -386,11 +386,11 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
                     </Box>
                   )}
 
-                  {/* L2 团队备注 */}
+                  {/* L2 Team Notes */}
                   {summaryData.l2_team_notes && (
                     <Box>
                       <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={1}>
-                        L2 团队备注:
+                        L2 Team Notes:
                       </Text>
                       <Text fontSize="sm" color="gray.700" p={2} bg="white" borderRadius="md">
                         {summaryData.l2_team_notes}
@@ -398,11 +398,11 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
                     </Box>
                   )}
 
-                  {/* 摘要文件路径 */}
+                  {/* Summary File */}
                   {summaryData.summary_path && (
                     <Box>
                       <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={1}>
-                        摘要文件:
+                        Summary File:
                       </Text>
                       <Code fontSize="xs" colorScheme="gray" p={2} display="block">
                         {summaryData.summary_path.split('/').pop()}
@@ -410,11 +410,11 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
                     </Box>
                   )}
 
-                  {/* Markdown 内容显示 */}
+                  {/* Markdown Content */}
                   {markdownContent && (
                     <Box>
                       <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={3}>
-                        📄 详细摘要内容:
+                        📄 Detailed Summary:
                       </Text>
                       <MarkdownRenderer 
                         content={markdownContent}
