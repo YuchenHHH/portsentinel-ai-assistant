@@ -116,6 +116,18 @@ export interface NextStepConfirmMessage extends BaseMessage {
   isNextStepConfirm: true;
 }
 
+// 摘要生成消息
+export interface SummaryGenerationMessage extends BaseMessage {
+  type: 'assistant';
+  content: string;
+  summaryData: {
+    incident_id: string;
+    completed_steps_count: number;
+    execution_status: string;
+  };
+  isSummaryGeneration: true;
+}
+
 // 执行计划确认消息
 export interface PlanConfirmationMessage extends BaseMessage {
   type: 'assistant';
@@ -134,7 +146,7 @@ export interface SystemMessage extends BaseMessage {
 }
 
 // 联合消息类型
-export type ChatMessage = UserMessage | AssistantMessage | EnrichmentMessage | HistoryMatchMessage | LoadingMessage | SOPExecutionMessage | ApprovalRequestMessage | ContinueExecutionMessage | NextStepConfirmMessage | PlanConfirmationMessage | SystemMessage;
+export type ChatMessage = UserMessage | AssistantMessage | EnrichmentMessage | HistoryMatchMessage | LoadingMessage | SOPExecutionMessage | ApprovalRequestMessage | ContinueExecutionMessage | NextStepConfirmMessage | SummaryGenerationMessage | PlanConfirmationMessage | SystemMessage;
 
 // 聊天状态
 export interface ChatState {
@@ -262,6 +274,19 @@ export const createNextStepConfirmMessage = (
   status: 'sent'
 });
 
+export const createSummaryGenerationMessage = (
+  content: string,
+  summaryData: SummaryGenerationMessage['summaryData']
+): SummaryGenerationMessage => ({
+  id: `summary_generation_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+  type: 'assistant',
+  content,
+  summaryData,
+  isSummaryGeneration: true,
+  timestamp: new Date(),
+  status: 'sent'
+});
+
 export const createPlanConfirmationMessage = (
   content: string,
   planData: PlanConfirmationMessage['planData']
@@ -318,6 +343,10 @@ export const isContinueExecutionMessage = (message: ChatMessage): message is Con
 
 export const isNextStepConfirmMessage = (message: ChatMessage): message is NextStepConfirmMessage => {
   return message.type === 'assistant' && 'isNextStepConfirm' in message && message.isNextStepConfirm === true;
+};
+
+export const isSummaryGenerationMessage = (message: ChatMessage): message is SummaryGenerationMessage => {
+  return message.type === 'assistant' && 'isSummaryGeneration' in message && message.isSummaryGeneration === true;
 };
 
 export const isPlanConfirmationMessage = (message: ChatMessage): message is PlanConfirmationMessage => {

@@ -18,6 +18,7 @@ import SOPExecutionDisplay from './SOPExecutionDisplay'
 import ApprovalRequest from './ApprovalRequest'
 import ContinueExecution from './ContinueExecution'
 import NextStepConfirm from './NextStepConfirm'
+import SummaryGeneration from './SummaryGeneration'
 import PlanConfirmation from './PlanConfirmation'
 import { 
   ChatMessage, 
@@ -30,6 +31,7 @@ import {
   isApprovalRequestMessage,
   isContinueExecutionMessage,
   isNextStepConfirmMessage,
+  isSummaryGenerationMessage,
   isPlanConfirmationMessage,
   isSystemMessage 
 } from '../../../types/chat'
@@ -43,6 +45,7 @@ interface MessageBubbleProps {
   onPlanConfirm?: (plan: string[], incidentContext: Record<string, any>) => Promise<void>;
   onContinueExecution?: (stateToken: string) => Promise<void>;
   onNextStepConfirm?: (parsedResult: any) => Promise<void>;
+  onGenerateSummary?: () => Promise<void>;
   incidentId?: string;
 }
 
@@ -56,6 +59,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   onPlanConfirm,
   onContinueExecution,
   onNextStepConfirm,
+  onGenerateSummary,
   incidentId
 }) => {
   const userBgColor = useColorModeValue('blue.50', 'blue.900')
@@ -237,6 +241,18 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     stepDescription={message.nextStepData.step_description}
                     parsedResult={message.nextStepData.parsed_result}
                     onConfirm={() => onNextStepConfirm?.(message.nextStepData.parsed_result) || Promise.resolve()}
+                  />
+                </VStack>
+              ) : isSummaryGenerationMessage(message) ? (
+                <VStack align="stretch" spacing={3}>
+                  <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                    {message.content}
+                  </Text>
+                  <SummaryGeneration
+                    incidentId={message.summaryData.incident_id}
+                    completedStepsCount={message.summaryData.completed_steps_count}
+                    executionStatus={message.summaryData.execution_status}
+                    onGenerateSummary={onGenerateSummary || (async () => {})}
                   />
                 </VStack>
               ) : isPlanConfirmationMessage(message) ? (

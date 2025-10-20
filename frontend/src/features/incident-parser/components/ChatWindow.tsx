@@ -19,6 +19,7 @@ interface ChatWindowProps {
   onPlanConfirm?: (plan: string[], incidentContext: Record<string, any>) => Promise<void>;
   onContinueExecution?: (stateToken: string) => Promise<void>;
   onNextStepConfirm?: (parsedResult: any) => Promise<void>;
+  onGenerateSummary?: () => Promise<void>;
   incidentId?: string;
 }
 
@@ -32,6 +33,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   onPlanConfirm,
   onContinueExecution,
   onNextStepConfirm,
+  onGenerateSummary,
   incidentId
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -109,6 +111,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               onPlanConfirm={onPlanConfirm}
               onContinueExecution={onContinueExecution}
               onNextStepConfirm={onNextStepConfirm}
+              onGenerateSummary={onGenerateSummary}
               incidentId={incidentId}
             />
           </MotionBox>
