@@ -20,6 +20,7 @@ import ContinueExecution from './ContinueExecution'
 import NextStepConfirm from './NextStepConfirm'
 import SummaryGeneration from './SummaryGeneration'
 import PlanConfirmation from './PlanConfirmation'
+import MarkdownRenderer from '../../../components/MarkdownRenderer'
 import { 
   ChatMessage, 
   isUserMessage, 
@@ -33,6 +34,7 @@ import {
   isNextStepConfirmMessage,
   isSummaryGenerationMessage,
   isPlanConfirmationMessage,
+  isMarkdownMessage,
   isSystemMessage 
 } from '../../../types/chat'
 
@@ -264,6 +266,16 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     plan={message.planData.plan}
                     incidentContext={message.planData.incident_context}
                     onConfirm={onPlanConfirm || (async () => {})}
+                  />
+                </VStack>
+              ) : isMarkdownMessage(message) ? (
+                <VStack align="stretch" spacing={3}>
+                  <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                    {message.content}
+                  </Text>
+                  <MarkdownRenderer 
+                    content={message.markdownData.markdown_content}
+                    maxHeight="600px"
                   />
                 </VStack>
               ) : isAssistantMessage(message) ? (

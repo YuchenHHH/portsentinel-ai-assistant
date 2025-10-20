@@ -19,7 +19,7 @@
 ### 2. SOP 执行显示增强
 - **文件**: `frontend/src/features/incident-parser/components/SOPExecutionDisplay.tsx`
 - **新增功能**:
-  - 在 SOP 执行完成后显示"生成执行摘要"按钮
+  - 在 SOP 执行完成后显示"Generate Summary"按钮
   - 点击按钮调用 Agent 4 API 生成摘要
   - 实时显示生成的摘要内容
   - 加载状态和错误处理
@@ -44,7 +44,7 @@
 2. **生成 SOP 计划** → 显示执行计划
 3. **开始执行 SOP** → 逐步执行，显示进度
 4. **需要批准时** → 显示批准请求界面
-5. **执行完成** → 显示"生成执行摘要"按钮
+5. **执行完成** → 显示"Generate Summary"按钮
 6. **点击按钮** → 调用 Agent 4 生成摘要
 7. **显示摘要** → 展示完整的执行历史总结
 
@@ -151,7 +151,7 @@ backend/execution_summaries/
 ## 🚀 使用说明
 
 ### 自动触发
-当 SOP 执行状态为 `completed` 时，会自动显示"生成执行摘要"按钮。
+当 SOP 执行状态为 `completed` 时，会自动显示"Generate Summary"按钮。
 
 ### 手动生成
 ```typescript

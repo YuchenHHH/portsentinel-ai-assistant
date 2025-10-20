@@ -54,7 +54,7 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
   const [showSummary, setShowSummary] = useState(false);
   const [markdownContent, setMarkdownContent] = useState<string>('');
 
-  // 生成执行摘要
+  // Generate Summary
   const handleGenerateSummary = async () => {
     if (!incidentId || !executionData.completed_steps) return;
     

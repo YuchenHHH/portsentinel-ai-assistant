@@ -64,7 +64,7 @@ export interface SummaryServiceStatus {
 }
 
 /**
- * 生成执行摘要
+ * Generate Summary
  */
 export const generateExecutionSummary = async (
   incidentId: string,

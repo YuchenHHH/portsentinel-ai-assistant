@@ -155,7 +155,7 @@ class SOPExecutionSummaryService:
             }
     
     def _generate_execution_summary_text(self, completed_steps: list, execution_status: str) -> str:
-        """生成执行摘要文本"""
+        """Generate Summary文本"""
         summary_parts = []
         
         if execution_status == "completed":

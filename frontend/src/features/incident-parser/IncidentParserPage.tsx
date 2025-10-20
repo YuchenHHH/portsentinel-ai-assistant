@@ -7,12 +7,13 @@ import { ChatWindow } from './components/ChatWindow'
 import DatabaseConnectionModal from './components/DatabaseConnectionModal'
 import { useAuth } from '../../contexts/AuthContext'
 import { parseIncidentReport, matchHistoryCases, enrichIncident, fetchExecutionPlan, executeSOPPlan, approveSOPExecution, continueSOPExecution, getDatabaseStatus } from '../../services/api'
+import { getLatestSummaryMarkdown } from '../../services/executionSummaryApi'
 import { IncidentReportResponse, HistoryMatchRequest, EnrichmentRequest, PlanRequest } from '../../types/api'
 import { 
   createUserMessage, 
   createAssistantMessage, 
   createHistoryMatchMessage,
-  createEnrichmentMessage, 
+  createEnrichmentMessage,
   createLoadingMessage,
   createSOPExecutionMessage,
   createApprovalRequestMessage,
@@ -20,6 +21,7 @@ import {
   createNextStepConfirmMessage,
   createSummaryGenerationMessage,
   createPlanConfirmationMessage,
+  createMarkdownMessage,
   ChatMessage 
 } from '../../types/chat'
 
@@ -500,13 +502,27 @@ export const IncidentParserPage: React.FC<IncidentParserPageProps> = ({ onBack }
   const handleGenerateSummary = async () => {
     setIsLoading(true)
     try {
-      // 这里可以调用后端 API 来生成摘要
-      // 目前先显示一个简单的成功消息
-      const summaryMessage = createAssistantMessage(
-        '📋 Execution summary generated successfully! Summary has been saved to the backend.',
-        {} as IncidentReportResponse
-      )
-      setMessages(prev => [...prev, summaryMessage])
+      // 获取最新的摘要Markdown内容
+      const markdownResult = await getLatestSummaryMarkdown()
+      
+      if (markdownResult.success) {
+        // 创建Markdown消息
+        const markdownMessage = createMarkdownMessage(
+          '📋 Execution summary generated successfully!',
+          {
+            file_name: markdownResult.file_name,
+            incident_id: markdownResult.incident_id,
+            markdown_content: markdownResult.markdown_content
+          }
+        )
+        setMessages(prev => [...prev, markdownMessage])
+      } else {
+        const errorMessage = createAssistantMessage(
+          '❌ Failed to retrieve execution summary content.',
+          {} as IncidentReportResponse
+        )
+        setMessages(prev => [...prev, errorMessage])
+      }
     } catch (error: any) {
       console.error('Summary generation failed:', error)
       const errorMessage = createAssistantMessage(

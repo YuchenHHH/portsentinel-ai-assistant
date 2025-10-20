@@ -20,7 +20,7 @@ async def generate_execution_summary(
     completed_steps: Optional[list] = None
 ):
     """
-    为指定事件生成执行摘要
+    为指定事件Generate Summary
     
     Args:
         incident_id: 事件ID
@@ -33,7 +33,7 @@ async def generate_execution_summary(
         执行摘要结果
     """
     try:
-        logging.info(f"收到生成执行摘要请求 - 事件ID: {incident_id}")
+        logging.info(f"收到Generate Summary请求 - 事件ID: {incident_id}")
         
         summary_service = get_sop_summary_service()
         
@@ -64,10 +64,10 @@ async def generate_execution_summary(
             )
             
     except Exception as e:
-        logging.error(f"生成执行摘要时发生错误: {e}")
+        logging.error(f"Generate Summary时发生错误: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"生成执行摘要时发生错误: {str(e)}"
+            detail=f"Generate Summary时发生错误: {str(e)}"
         )
 
 @router.get("/status")

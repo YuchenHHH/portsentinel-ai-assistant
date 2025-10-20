@@ -158,7 +158,7 @@ PortSentinel AI Assistant`,
 
         <Box p={4} bg="gray.50" borderRadius="md">
           <Text fontSize="sm" color="gray.600">
-            💡 提示: 在实际使用中，当 SOP 执行完成后，系统会自动显示"生成执行摘要"按钮。
+            💡 提示: 在实际使用中，当 SOP 执行完成后，系统会自动显示"Generate Summary"按钮。
             点击按钮后，Agent 4 会根据执行结果生成相应的摘要内容。
           </Text>
         </Box>

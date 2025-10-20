@@ -219,7 +219,7 @@ class SOPExecutionService:
         if state.current_step_index >= len(state.plan):
             logging.info(f"计划执行完成，返回completed状态。completed_steps数量: {len(state.completed_steps)}")
             
-            # 调用 Agent 4 生成执行摘要
+            # 调用 Agent 4 Generate Summary
             try:
                 from .agent_4_integration import get_sop_summary_service
                 summary_service = get_sop_summary_service()
@@ -341,7 +341,7 @@ class SOPExecutionService:
             # 所有步骤已完成，返回 completed 状态
             logging.info(f"计划执行完成，返回completed状态。completed_steps数量: {len(state.completed_steps)}")
             
-            # 调用 Agent 4 生成执行摘要
+            # 调用 Agent 4 Generate Summary
             try:
                 from .agent_4_integration import get_sop_summary_service
                 summary_service = get_sop_summary_service()

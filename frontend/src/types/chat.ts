@@ -145,8 +145,20 @@ export interface SystemMessage extends BaseMessage {
   content: string;
 }
 
+// Markdown 内容消息
+export interface MarkdownMessage extends BaseMessage {
+  type: 'assistant';
+  content: string;
+  markdownData: {
+    file_name: string;
+    incident_id: string;
+    markdown_content: string;
+  };
+  isMarkdown: true;
+}
+
 // 联合消息类型
-export type ChatMessage = UserMessage | AssistantMessage | EnrichmentMessage | HistoryMatchMessage | LoadingMessage | SOPExecutionMessage | ApprovalRequestMessage | ContinueExecutionMessage | NextStepConfirmMessage | SummaryGenerationMessage | PlanConfirmationMessage | SystemMessage;
+export type ChatMessage = UserMessage | AssistantMessage | EnrichmentMessage | HistoryMatchMessage | LoadingMessage | SOPExecutionMessage | ApprovalRequestMessage | ContinueExecutionMessage | NextStepConfirmMessage | SummaryGenerationMessage | PlanConfirmationMessage | MarkdownMessage | SystemMessage;
 
 // 聊天状态
 export interface ChatState {
@@ -300,6 +312,19 @@ export const createPlanConfirmationMessage = (
   status: 'sent'
 });
 
+export const createMarkdownMessage = (
+  content: string,
+  markdownData: MarkdownMessage['markdownData']
+): MarkdownMessage => ({
+  id: `markdown_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+  type: 'assistant',
+  content,
+  markdownData,
+  isMarkdown: true,
+  timestamp: new Date(),
+  status: 'sent'
+});
+
 export const createSystemMessage = (content: string): SystemMessage => ({
   id: `system_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
   type: 'system',
@@ -351,6 +376,10 @@ export const isSummaryGenerationMessage = (message: ChatMessage): message is Sum
 
 export const isPlanConfirmationMessage = (message: ChatMessage): message is PlanConfirmationMessage => {
   return message.type === 'assistant' && 'isPlanConfirmation' in message && message.isPlanConfirmation === true;
+};
+
+export const isMarkdownMessage = (message: ChatMessage): message is MarkdownMessage => {
+  return message.type === 'assistant' && 'isMarkdown' in message && message.isMarkdown === true;
 };
 
 export const isSystemMessage = (message: ChatMessage): message is SystemMessage => {
