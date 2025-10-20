@@ -7,7 +7,7 @@ import { ChatWindow } from './components/ChatWindow'
 import DatabaseConnectionModal from './components/DatabaseConnectionModal'
 import { useAuth } from '../../contexts/AuthContext'
 import { parseIncidentReport, matchHistoryCases, enrichIncident, fetchExecutionPlan, executeSOPPlan, approveSOPExecution, continueSOPExecution, getDatabaseStatus } from '../../services/api'
-import { getLatestSummaryMarkdown } from '../../services/executionSummaryApi'
+import { getLocalLatestSummary } from '../../services/executionSummaryApi'
 import { IncidentReportResponse, HistoryMatchRequest, EnrichmentRequest, PlanRequest } from '../../types/api'
 import { 
   createUserMessage, 
@@ -502,13 +502,13 @@ export const IncidentParserPage: React.FC<IncidentParserPageProps> = ({ onBack }
   const handleGenerateSummary = async () => {
     setIsLoading(true)
     try {
-      // 获取最新的摘要Markdown内容
-      const markdownResult = await getLatestSummaryMarkdown()
+      // 获取本地文件系统中最新的摘要Markdown文件
+      const markdownResult = await getLocalLatestSummary()
       
       if (markdownResult.success) {
         // 创建Markdown消息
         const markdownMessage = createMarkdownMessage(
-          '📋 Execution summary generated successfully!',
+          '📋 Execution summary loaded from local file system!',
           {
             file_name: markdownResult.file_name,
             incident_id: markdownResult.incident_id,

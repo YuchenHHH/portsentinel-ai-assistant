@@ -6,6 +6,8 @@
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Dict, Any, Optional
 import logging
+import os
+from pathlib import Path
 
 from app.services.agent_4_integration import get_sop_summary_service
 
@@ -151,5 +153,62 @@ async def get_summary_markdown(
         raise HTTPException(
             status_code=500,
             detail=f"获取摘要内容失败: {str(e)}"
+        )
+
+@router.get("/local-latest")
+async def get_local_latest_summary():
+    """
+    获取本地文件系统中最新的执行摘要 Markdown 文件
+    """
+    try:
+        # 使用绝对路径
+        summaries_dir = Path("/Users/huangyuchen/Desktop/workspace/backend/execution_summaries")
+        
+        if not summaries_dir.exists():
+            raise HTTPException(
+                status_code=404,
+                detail="执行摘要目录不存在"
+            )
+        
+        # 获取所有 .md 文件
+        summary_files = list(summaries_dir.glob("*.md"))
+        if not summary_files:
+            raise HTTPException(
+                status_code=404,
+                detail="未找到任何摘要文件"
+            )
+        
+        # 按修改时间排序，获取最新的文件
+        latest_file = max(summary_files, key=os.path.getmtime)
+        
+        # 读取 Markdown 内容
+        with open(latest_file, 'r', encoding='utf-8') as f:
+            markdown_content = f.read()
+        
+        # 从文件名中提取事件ID
+        file_name = latest_file.name
+        incident_id = "UNKNOWN"
+        if "resolution_summary_" in file_name:
+            parts = file_name.replace("resolution_summary_", "").replace(".md", "").split("_")
+            if len(parts) >= 1:
+                incident_id = parts[0]
+        
+        return {
+            "success": True,
+            "incident_id": incident_id,
+            "file_path": str(latest_file),
+            "markdown_content": markdown_content,
+            "file_name": file_name,
+            "file_size": latest_file.stat().st_size,
+            "last_modified": os.path.getmtime(latest_file)
+        }
+        
+    except Exception as e:
+        logging.error(f"获取本地最新摘要文件时发生错误: {e}")
+        import traceback
+        logging.error(f"错误堆栈: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"获取本地摘要文件失败: {str(e)}"
         )
 

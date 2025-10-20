@@ -152,3 +152,25 @@ export const getLatestSummaryMarkdown = async (): Promise<{
     );
   }
 };
+
+export const getLocalLatestSummary = async (): Promise<{
+  success: boolean;
+  incident_id: string;
+  file_path: string;
+  markdown_content: string;
+  file_name: string;
+  file_size: number;
+  last_modified: number;
+}> => {
+  try {
+    const response = await apiClient.get('/api/v1/execution-summary/local-latest');
+    return response.data;
+  } catch (error: any) {
+    console.error('获取本地最新摘要文件失败:', error);
+    throw new Error(
+      error.response?.data?.detail || 
+      error.message || 
+      '获取本地最新摘要文件失败'
+    );
+  }
+};
