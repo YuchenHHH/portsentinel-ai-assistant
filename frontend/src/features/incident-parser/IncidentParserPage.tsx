@@ -338,7 +338,7 @@ export const IncidentParserPage: React.FC = () => {
         const summaryMessage = createSummaryGenerationMessage(
           '🎉 All SOP steps completed successfully! Ready to generate execution summary.',
           {
-            incident_id: result.executionData?.incident_id || 'UNKNOWN',
+            incident_id: 'UNKNOWN', // ExecutionResponse 中没有 incident_id，使用默认值
             completed_steps_count: result.completed_steps?.length || 0,
             execution_status: result.status
           }
