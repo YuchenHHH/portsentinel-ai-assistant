@@ -25,7 +25,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
       >
         <VStack spacing={4}>
           <Spinner size="xl" color="blue.500" />
-          <Text color="gray.600">加载中...</Text>
+          <Text color="gray.600">loading...</Text>
         </VStack>
       </Box>
     );

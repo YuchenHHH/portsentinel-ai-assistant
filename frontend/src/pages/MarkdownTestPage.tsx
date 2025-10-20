@@ -38,7 +38,7 @@ export const MarkdownTestPage: React.FC = () => {
             colorScheme="blue"
             onClick={handleLoadMarkdown}
             isLoading={isLoading}
-            loadingText="加载中..."
+            loadingText="loading..."
           >
             加载 ALR-861600 摘要内容
           </Button>
