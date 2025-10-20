@@ -262,10 +262,10 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
                   >
                     <HStack justify="space-between" mb={2}>
                       <Text fontSize="sm" fontWeight="semibold" color="green.700">
-                        步骤 {completedStep.step + 1}
+                        Step {completedStep.step + 1}
                       </Text>
                       <Badge colorScheme="green" size="sm">
-                        ✓ 已完成
+                        ✓ Completed
                       </Badge>
                     </HStack>
                     <Text fontSize="sm" color="gray.700" mb={2}>

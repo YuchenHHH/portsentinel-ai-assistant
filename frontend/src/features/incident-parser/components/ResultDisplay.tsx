@@ -70,28 +70,28 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result }) => {
         <HStack>
           <Icon as={CheckCircleIcon} color="green.500" />
           <Text fontSize="lg" fontWeight="bold" color="gray.700">
-            解析结果
+            Parsing Results
           </Text>
         </HStack>
       </CardHeader>
       
       <CardBody pt={0}>
         <VStack spacing={6} align="stretch">
-          {/* 关键信息网格 */}
+          {/* Key Information Grid */}
           <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
             <Stat textAlign="center" p={3} bg="gray.50" borderRadius="md">
-              <StatLabel fontSize="xs" color="gray.600">事件ID</StatLabel>
+              <StatLabel fontSize="xs" color="gray.600">Incident ID</StatLabel>
               <StatNumber fontSize="sm" color="blue.600">
-                {result.incident_id || '未识别'}
+                {result.incident_id || 'Not Identified'}
               </StatNumber>
               <StatHelpText fontSize="xs" m={0}>
                 <Icon as={InfoIcon} mr={1} />
-                自动生成
+                Auto Generated
               </StatHelpText>
             </Stat>
             
             <Stat textAlign="center" p={3} bg="gray.50" borderRadius="md">
-              <StatLabel fontSize="xs" color="gray.600">紧急程度</StatLabel>
+              <StatLabel fontSize="xs" color="gray.600">Urgency Level</StatLabel>
               <StatNumber fontSize="sm">
                 <Tag 
                   size="md" 
@@ -104,12 +104,12 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result }) => {
               </StatNumber>
               <StatHelpText fontSize="xs" m={0}>
                 <Icon as={TimeIcon} mr={1} />
-                优先级评估
+                Priority Assessment
               </StatHelpText>
             </Stat>
             
             <Stat textAlign="center" p={3} bg="gray.50" borderRadius="md">
-              <StatLabel fontSize="xs" color="gray.600">受影响模块</StatLabel>
+              <StatLabel fontSize="xs" color="gray.600">Affected Module</StatLabel>
               <StatNumber fontSize="sm">
                 {result.affected_module ? (
                   <Tag 
@@ -120,24 +120,24 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result }) => {
                     <TagLabel>{result.affected_module}</TagLabel>
                   </Tag>
                 ) : (
-                  <Text fontSize="sm" color="gray.500">未识别</Text>
+                  <Text fontSize="sm" color="gray.500">Not Identified</Text>
                 )}
               </StatNumber>
               <StatHelpText fontSize="xs" m={0}>
                 <Icon as={ExternalLinkIcon} mr={1} />
-                系统模块
+                System Module
               </StatHelpText>
             </Stat>
           </SimpleGrid>
 
-          {/* 错误代码 */}
+          {/* Error Code */}
           {result.error_code && (
             <Box>
               <Divider mb={3} />
               <HStack mb={2}>
                 <Icon as={WarningIcon} color="red.500" />
                 <Text fontSize="sm" fontWeight="medium" color="gray.700">
-                  错误代码
+                  Error Code
                 </Text>
               </HStack>
               <Code 
@@ -153,13 +153,13 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result }) => {
             </Box>
           )}
 
-          {/* 问题摘要 */}
+          {/* Problem Summary */}
           <Box>
             <Divider mb={3} />
             <HStack mb={3}>
               <Icon as={InfoIcon} color="blue.500" />
               <Text fontSize="sm" fontWeight="medium" color="gray.700">
-                问题摘要
+                Problem Summary
               </Text>
             </HStack>
             <Box 
@@ -175,14 +175,14 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result }) => {
             </Box>
           </Box>
 
-          {/* 潜在原因 */}
+          {/* Potential Cause */}
           {result.potential_cause_hint && (
             <Box>
               <Divider mb={3} />
               <HStack mb={3}>
                 <Icon as={WarningIcon} color="orange.500" />
                 <Text fontSize="sm" fontWeight="medium" color="gray.700">
-                  潜在原因分析
+                  Potential Cause Analysis
                 </Text>
               </HStack>
               <Box 
@@ -200,7 +200,7 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result }) => {
           )}
 
 
-          {/* 原始文本（可折叠） */}
+          {/* Raw Text (Collapsible) */}
           <Box>
             <Divider mb={3} />
             <Accordion allowToggle>
@@ -215,7 +215,7 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result }) => {
                       <HStack>
                         <Icon as={ExternalLinkIcon} color="gray.500" />
                         <Text fontSize="sm" fontWeight="medium" color="gray.600">
-                          查看原始文本
+                          View Raw Text
                         </Text>
                       </HStack>
                     </Box>
