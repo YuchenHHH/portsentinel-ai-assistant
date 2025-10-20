@@ -17,7 +17,6 @@ import {
   createApprovalRequestMessage,
   createContinueExecutionMessage,
   createNextStepConfirmMessage,
-  createSummaryGenerationMessage,
   createPlanConfirmationMessage,
   ChatMessage 
 } from '../../types/chat'
@@ -333,44 +332,10 @@ export const IncidentParserPage: React.FC = () => {
         )
         setMessages(prev => [...prev, continueMessage])
       }
-      else if (result.status === 'completed') {
-        // SOP execution completed, show summary generation button
-        const summaryMessage = createSummaryGenerationMessage(
-          '🎉 All SOP steps completed successfully! Ready to generate execution summary.',
-          {
-            incident_id: 'UNKNOWN', // ExecutionResponse 中没有 incident_id，使用默认值
-            completed_steps_count: result.completed_steps?.length || 0,
-            execution_status: result.status
-          }
-        )
-        setMessages(prev => [...prev, summaryMessage])
-      }
     } catch (error: any) {
       console.error('Continue execution failed:', error)
       const errorMessage = createAssistantMessage(
         `❌ Continue execution failed: ${error.message}`,
-        {} as IncidentReportResponse
-      )
-      setMessages(prev => [...prev, errorMessage])
-    }
-    setIsLoading(false)
-  }
-
-  // Handle summary generation
-  const handleGenerateSummary = async () => {
-    setIsLoading(true)
-    try {
-      // 这里可以调用后端 API 来生成摘要
-      // 目前先显示一个简单的成功消息
-      const summaryMessage = createAssistantMessage(
-        '📋 Execution summary generated successfully! Summary has been saved to the backend.',
-        {} as IncidentReportResponse
-      )
-      setMessages(prev => [...prev, summaryMessage])
-    } catch (error: any) {
-      console.error('Summary generation failed:', error)
-      const errorMessage = createAssistantMessage(
-        `❌ Summary generation failed: ${error.message}`,
         {} as IncidentReportResponse
       )
       setMessages(prev => [...prev, errorMessage])
@@ -563,8 +528,15 @@ export const IncidentParserPage: React.FC = () => {
     checkDatabaseStatus()
   }, [])
 
+  
   return (
-    <Box bg={bgColor} h="calc(100vh - 200px)" maxH="calc(100vh - 200px)" display="flex" flexDirection="column" overflow="hidden">
+    <Box 
+      bg={bgColor} 
+      h="93%"
+      display="flex" 
+      flexDirection="column" 
+      overflow="hidden"
+    >
       {/* Status Bar */}
       <Box px={4} py={2} bg="gray.50" borderBottom="1px" borderColor={borderColor} flexShrink={0}>
         <HStack spacing={2} justify="center">
@@ -585,8 +557,8 @@ export const IncidentParserPage: React.FC = () => {
           </Button>
         </HStack>
       </Box>
-
-      {/* Chat Messages Area - Takes remaining space and scrolls internally */}
+  
+      {/* Chat Messages Area */}
       <Box 
         flex={1} 
         overflowY="auto" 
@@ -602,12 +574,11 @@ export const IncidentParserPage: React.FC = () => {
           onPlanConfirm={handlePlanConfirm}
           onContinueExecution={handleContinueExecution}
           onNextStepConfirm={handleNextStepConfirm}
-          onGenerateSummary={handleGenerateSummary}
           incidentId={(messages.find(m => m.type === 'assistant' && (m as any).incidentReport?.incident_id) as any)?.incidentReport?.incident_id}
         />
       </Box>
-
-      {/* Chat Input - Fixed at bottom, aligned with sidebar */}
+  
+      {/* Chat Input - Fixed at bottom */}
       <Box 
         flexShrink={0}
         borderTop="1px" 
@@ -616,7 +587,7 @@ export const IncidentParserPage: React.FC = () => {
       >
         <ChatInput onSubmit={handleSubmit} isLoading={isLoading} disabled={isLoading} />
       </Box>
-
+  
       {/* Database Connection Modal */}
       <DatabaseConnectionModal
         isOpen={isDatabaseModalOpen}
