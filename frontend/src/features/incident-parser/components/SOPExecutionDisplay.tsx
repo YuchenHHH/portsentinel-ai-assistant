@@ -332,24 +332,7 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
           </>
         )}
 
-        {/* 执行摘要生成按钮 (仅在完成时显示) */}
-        {executionData.status === 'completed' && !showSummary && (
-          <>
-            <Divider />
-            <Box textAlign="center">
-              <Button
-                colorScheme="purple"
-                size="md"
-                onClick={handleGenerateSummary}
-                isLoading={isLoadingSummary}
-                loadingText="Generating Summary..."
-                leftIcon={<span>📋</span>}
-              >
-                Generate Execution Summary
-              </Button>
-            </Box>
-          </>
-        )}
+        {/* 执行摘要生成按钮已移除 */}
 
         {/* 执行摘要显示 */}
         {showSummary && summaryData && (
