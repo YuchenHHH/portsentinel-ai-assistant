@@ -228,7 +228,7 @@ class SOPExecutionService:
                 execution_time_hours = len(state.completed_steps) * 0.5  # 假设每个步骤平均0.5小时
                 
                 summary_result = summary_service.generate_execution_summary(
-                    incident_id=state.incident_context.get("incident_id", "UNKNOWN"),
+                    incident_id=state.incident_context.get("incident_id") or "UNKNOWN",
                     completed_steps=state.completed_steps,
                     execution_status="completed",
                     execution_notes="SOP execution completed successfully",
@@ -350,7 +350,7 @@ class SOPExecutionService:
                 execution_time_hours = len(state.completed_steps) * 0.5  # 假设每个步骤平均0.5小时
                 
                 summary_result = summary_service.generate_execution_summary(
-                    incident_id=state.incident_context.get("incident_id", "UNKNOWN"),
+                    incident_id=state.incident_context.get("incident_id") or "UNKNOWN",
                     completed_steps=state.completed_steps,
                     execution_status="completed",
                     execution_notes="SOP execution completed successfully",
