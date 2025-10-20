@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Box, Container, Heading, VStack, HStack, Button, Badge, Text, useColorModeValue } from '@chakra-ui/react'
 import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import { ChatInput } from './components/ChatInput'
 import { ChatWindow } from './components/ChatWindow'
 import DatabaseConnectionModal from './components/DatabaseConnectionModal'
@@ -23,7 +24,11 @@ import {
 
 const MotionBox = motion(Box)
 
-export const IncidentParserPage: React.FC = () => {
+interface IncidentParserPageProps {
+  onBack?: () => void
+}
+
+export const IncidentParserPage: React.FC<IncidentParserPageProps> = ({ onBack }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [isProcessingApproval, setIsProcessingApproval] = useState(false)
@@ -31,6 +36,7 @@ export const IncidentParserPage: React.FC = () => {
   const [databaseStatus, setDatabaseStatus] = useState<any>({ success: false, message: 'Checking connection status...' })
   
   const { user, logout } = useAuth()
+  const navigate = useNavigate()
   const bgColor = useColorModeValue('gray.50', 'gray.900')
   const headerBg = useColorModeValue('white', 'gray.800')
   const borderColor = useColorModeValue('gray.200', 'gray.600')
@@ -466,6 +472,14 @@ export const IncidentParserPage: React.FC = () => {
     checkDatabaseStatus()
   }
 
+  const handleBackToDashboard = () => {
+    if (onBack) {
+      onBack()
+      return
+    }
+    navigate('/dashboard')
+  }
+
   React.useEffect(() => {
     checkDatabaseStatus()
   }, [])
@@ -484,22 +498,34 @@ export const IncidentParserPage: React.FC = () => {
     >
       {/* Status Bar */}
       <Box px={4} py={2} bg="gray.50" borderBottom="1px" borderColor={borderColor} flexShrink={0}>
-        <HStack spacing={2} justify="center">
-          <Badge 
-            colorScheme={databaseStatus?.success ? 'green' : 'red'} 
-            variant="solid"
-            fontSize="xs"
-          >
-            {databaseStatus?.success ? 'Database Connected' : 'Database Not Connected'}
-          </Badge>
+        <HStack spacing={2} justify="space-between">
           <Button
             size="sm"
-            colorScheme={databaseStatus?.success ? 'green' : 'orange'}
-            variant="outline"
-            onClick={() => setIsDatabaseModalOpen(true)}
+            variant="ghost"
+            colorScheme="blue"
+            onClick={handleBackToDashboard}
+            leftIcon={<span>←</span>}
           >
-            🗄️ Database Settings
+            Back to Dashboard
           </Button>
+          
+          <HStack spacing={2}>
+            <Badge 
+              colorScheme={databaseStatus?.success ? 'green' : 'red'} 
+              variant="solid"
+              fontSize="xs"
+            >
+              {databaseStatus?.success ? 'Database Connected' : 'Database Not Connected'}
+            </Badge>
+            <Button
+              size="sm"
+              colorScheme={databaseStatus?.success ? 'green' : 'orange'}
+              variant="outline"
+              onClick={() => setIsDatabaseModalOpen(true)}
+            >
+              🗄️ Database Settings
+            </Button>
+          </HStack>
         </HStack>
       </Box>
   

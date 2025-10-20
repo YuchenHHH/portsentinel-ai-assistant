@@ -80,6 +80,20 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseId, onBack }) => {
     }
   };
 
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+    if (typeof window !== 'undefined') {
+      if (window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = '/';
+      }
+    }
+  };
+
   const handleProcessCase = () => {
     setIsProcessing(true);
     // 这里会触发AI处理流程
@@ -95,7 +109,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseId, onBack }) => {
             leftIcon={<ArrowBackIcon />}
             variant="ghost"
             size="sm"
-            onClick={onBack}
+            onClick={handleBack}
           >
             Back to Dashboard
           </Button>
@@ -103,7 +117,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseId, onBack }) => {
 
         {/* 聊天界面 */}
         <Box flex={1} minH="0" overflow="hidden">
-          <IncidentParserPage />
+          <IncidentParserPage onBack={onBack} />
         </Box>
       </Box>
     );
@@ -121,7 +135,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseId, onBack }) => {
                 leftIcon={<ArrowBackIcon />}
                 variant="ghost"
                 size="sm"
-                onClick={onBack}
+                onClick={handleBack}
               >
                 Back to Cases
               </Button>
@@ -268,7 +282,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseId, onBack }) => {
 
       {/* Chat Interface */}
       <Box>
-        <IncidentParserPage />
+        <IncidentParserPage onBack={onBack} />
       </Box>
     </VStack>
   );
