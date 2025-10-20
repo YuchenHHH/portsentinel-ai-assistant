@@ -231,9 +231,9 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
             <AlertIcon />
             <Box>
               <AlertTitle fontSize="sm">
-                {executionData.status === 'needs_approval' ? '需要人工批准' : 
-                 executionData.status === 'completed' ? '执行完成' :
-                 executionData.status === 'failed' ? '执行失败' : '执行中'}
+                {executionData.status === 'needs_approval' ? 'needs_approval' : 
+                 executionData.status === 'completed' ? 'Completed' :
+                 executionData.status === 'failed' ? 'Failed' : '执行中'}
               </AlertTitle>
               <AlertDescription fontSize="sm">
                 {executionData.message}
@@ -324,7 +324,6 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
             <Divider />
             <Box>
               <Text fontSize="xs" color="gray.500" mb={1}>
-                状态令牌 (调试):
               </Text>
               <Code fontSize="xs" colorScheme="gray">
                 {executionData.state_token}

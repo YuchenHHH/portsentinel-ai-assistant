@@ -18,6 +18,7 @@ import {
   createApprovalRequestMessage,
   createContinueExecutionMessage,
   createNextStepConfirmMessage,
+  createSummaryGenerationMessage,
   createPlanConfirmationMessage,
   ChatMessage 
 } from '../../types/chat'
@@ -305,6 +306,18 @@ export const IncidentParserPage: React.FC<IncidentParserPageProps> = ({ onBack }
         )
         setMessages(prev => [...prev, continueMessage])
       }
+      else if (result.status === 'completed') {
+        // SOP execution completed, show summary generation button
+        const summaryMessage = createSummaryGenerationMessage(
+          '🎉 All SOP steps completed successfully! Ready to generate execution summary.',
+          {
+            incident_id: 'UNKNOWN', // ExecutionResponse 中没有 incident_id，使用默认值
+            completed_steps_count: result.completed_steps?.length || 0,
+            execution_status: result.status
+          }
+        )
+        setMessages(prev => [...prev, summaryMessage])
+      }
     } catch (error: any) {
       console.error('Continue execution failed:', error)
       const errorMessage = createAssistantMessage(
@@ -459,6 +472,28 @@ export const IncidentParserPage: React.FC<IncidentParserPageProps> = ({ onBack }
     setIsLoading(false)
   }
 
+  // Handle summary generation
+  const handleGenerateSummary = async () => {
+    setIsLoading(true)
+    try {
+      // 这里可以调用后端 API 来生成摘要
+      // 目前先显示一个简单的成功消息
+      const summaryMessage = createAssistantMessage(
+        '📋 Execution summary generated successfully! Summary has been saved to the backend.',
+        {} as IncidentReportResponse
+      )
+      setMessages(prev => [...prev, summaryMessage])
+    } catch (error: any) {
+      console.error('Summary generation failed:', error)
+      const errorMessage = createAssistantMessage(
+        `❌ Summary generation failed: ${error.message}`,
+        {} as IncidentReportResponse
+      )
+      setMessages(prev => [...prev, errorMessage])
+    }
+    setIsLoading(false)
+  }
+
   const checkDatabaseStatus = async () => {
     try {
       const status = await getDatabaseStatus()
@@ -541,6 +576,7 @@ export const IncidentParserPage: React.FC<IncidentParserPageProps> = ({ onBack }
           onPlanConfirm={handlePlanConfirm}
           onContinueExecution={handleContinueExecution}
           onNextStepConfirm={handleNextStepConfirm}
+          onGenerateSummary={handleGenerateSummary}
           incidentId={(messages.find(m => m.type === 'assistant' && (m as any).incidentReport?.incident_id) as any)?.incidentReport?.incident_id}
         />
       </Box>

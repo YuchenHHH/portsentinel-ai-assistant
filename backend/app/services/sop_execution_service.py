@@ -247,7 +247,7 @@ class SOPExecutionService:
                 status="completed",
                 step=state.current_step_index - 1,  # 返回最后一个执行的步骤编号
                 step_description="N/A",
-                message="计划已成功执行完毕。",
+                message="Finish",
                 completed_steps=state.completed_steps
             )
         
@@ -369,7 +369,7 @@ class SOPExecutionService:
                 status="completed",
                 step=state.current_step_index - 1,  # 返回最后一个执行的步骤编号
                 step_description="N/A",
-                message="计划已成功执行完毕。",
+                message="Finish",
                 completed_steps=state.completed_steps
             )
         else:
