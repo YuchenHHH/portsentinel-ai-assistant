@@ -200,7 +200,7 @@ export const Dashboard: React.FC = () => {
         </Drawer>
 
         {/* Main Content */}
-        <Box flex={1} overflow="hidden" display="flex" flexDirection="column">
+        <Box flex={1} overflow="hidden" display="flex" flexDirection="column" p={6}>
           {renderContent()}
         </Box>
       </Flex>
