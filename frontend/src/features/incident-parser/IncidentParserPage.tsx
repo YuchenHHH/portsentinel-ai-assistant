@@ -399,92 +399,80 @@ export const IncidentParserPage: React.FC = () => {
   }, [])
 
   return (
-    <Box bg={bgColor} minH="100vh">
-      {/* Navigation Bar */}
+    <Box bg={bgColor} minH="100vh" display="flex" flexDirection="column">
+      {/* Top Header */}
       <Box
         bg={headerBg}
         borderBottom="1px"
         borderColor={borderColor}
         px={4}
         py={3}
-        position="sticky"
-        top={0}
-        zIndex={1000}
-        backdropFilter="blur(10px)"
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
       >
-        <Container maxW="container.xl">
-          <HStack justify="space-between">
-            <HStack spacing={4}>
-              <Heading size="md" color="blue.600">
-                PortSentinel AI
-              </Heading>
-              <Badge colorScheme="blue" variant="subtle">
-                AI Assistant
-              </Badge>
-            </HStack>
-            <HStack spacing={4}>
-              <Text fontSize="sm" color="gray.600">
-                Welcome, {user?.name || user?.email}
-              </Text>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={logout}
-                colorScheme="red"
-              >
-                Logout
-              </Button>
-            </HStack>
-          </HStack>
-        </Container>
+        <HStack spacing={4}>
+          <Heading size="md" color="blue.600">
+            PortSentinel AI
+          </Heading>
+          <Badge colorScheme="blue" variant="subtle">
+            AI Assistant
+          </Badge>
+        </HStack>
+        <HStack spacing={4}>
+          <Text fontSize="sm" color="gray.600">
+            Welcome, {user?.name || user?.email}
+          </Text>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={logout}
+            colorScheme="red"
+          >
+            Logout
+          </Button>
+        </HStack>
       </Box>
 
-      <Container maxW="container.xl" py={4} height="calc(100vh - 60px)" display="flex" flexDirection="column">
-        <VStack spacing={4} align="stretch" flex={1}>
-          {/* Page Title */}
-          <MotionBox
-            textAlign="center"
-            pt={4}
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <VStack spacing={3} mb={4}>
-              <Heading as="h1" size="xl" color="gray.700">
-                PortSentinel AI Assistant
-              </Heading>
-              <HStack spacing={2}>
-                <Badge 
-                  colorScheme={databaseStatus?.success ? 'green' : 'red'} 
-                  variant="solid"
-                  fontSize="xs"
-                >
-                  {databaseStatus?.success ? 'Database Connected' : 'Database Not Connected'}
-                </Badge>
-                <Button
-                  size="sm"
-                  colorScheme={databaseStatus?.success ? 'green' : 'orange'}
-                  variant="outline"
-                  onClick={() => setIsDatabaseModalOpen(true)}
-                >
-                  🗄️ Database Settings
-                </Button>
-              </HStack>
-            </VStack>
-          </MotionBox>
+      {/* Main Content Area */}
+      <Box flex={1} display="flex" flexDirection="column" position="relative">
+        {/* Status Bar */}
+        <Box px={4} py={2} bg="gray.50" borderBottom="1px" borderColor={borderColor}>
+          <HStack spacing={2} justify="center">
+            <Badge 
+              colorScheme={databaseStatus?.success ? 'green' : 'red'} 
+              variant="solid"
+              fontSize="xs"
+            >
+              {databaseStatus?.success ? 'Database Connected' : 'Database Not Connected'}
+            </Badge>
+            <Button
+              size="sm"
+              colorScheme={databaseStatus?.success ? 'green' : 'orange'}
+              variant="outline"
+              onClick={() => setIsDatabaseModalOpen(true)}
+            >
+              🗄️ Database Settings
+            </Button>
+          </HStack>
+        </Box>
 
         {/* Chat Window */}
-        <ChatWindow 
-          messages={messages} 
-          onApprovalApprove={handleApprovalApprove}
-          onApprovalReject={handleApprovalReject}
-          onPlanConfirm={handlePlanConfirm}
-          incidentId={(messages.find(m => m.type === 'assistant' && (m as any).incidentReport?.incident_id) as any)?.incidentReport?.incident_id}
-        />
-      </VStack>
+        <Box flex={1} overflow="hidden">
+          <ChatWindow 
+            messages={messages} 
+            onApprovalApprove={handleApprovalApprove}
+            onApprovalReject={handleApprovalReject}
+            onPlanConfirm={handlePlanConfirm}
+            incidentId={(messages.find(m => m.type === 'assistant' && (m as any).incidentReport?.incident_id) as any)?.incidentReport?.incident_id}
+          />
+        </Box>
 
-      {/* Chat Input */}
-      <ChatInput onSubmit={handleSubmit} isLoading={isLoading} disabled={isLoading} />
+        {/* Chat Input - positioned at bottom of right content area */}
+        <Box position="absolute" bottom={0} left={0} right={0}>
+          <ChatInput onSubmit={handleSubmit} isLoading={isLoading} disabled={isLoading} />
+        </Box>
+      </Box>
 
       {/* Database Connection Modal */}
       <DatabaseConnectionModal
@@ -492,7 +480,6 @@ export const IncidentParserPage: React.FC = () => {
         onClose={() => setIsDatabaseModalOpen(false)}
         onConnectionSuccess={handleDatabaseConnectionSuccess}
       />
-      </Container>
     </Box>
   )
 }

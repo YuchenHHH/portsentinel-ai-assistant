@@ -76,20 +76,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   return (
     <MotionBox
-      position="fixed"
-      bottom={0}
-      left={0}
-      right={0}
       bg={bgColor}
       borderTop="1px"
       borderColor={borderColor}
       boxShadow="lg"
-      zIndex={1000}
       initial={{ y: 100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
     >
-      <VStack spacing={3} p={4} maxW="container.xl" mx="auto">
+      <VStack spacing={3} p={4} maxW="container.md" mx="auto">
         {/* Source Type Selector */}
         <HStack width="100%" justify="flex-end">
           <Text fontSize="sm" color="gray.500">
@@ -149,10 +144,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           />
         </Flex>
 
-        {/* Hint Text */}
-        <Text fontSize="xs" color="gray.500" textAlign="center">
-          Supports multi-line text input, AI will intelligently parse incident reports and extract key information
-        </Text>
       </VStack>
     </MotionBox>
   )
