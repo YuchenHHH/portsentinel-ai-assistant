@@ -93,7 +93,7 @@ const ClickableSopCard: React.FC<{ sop: SopSnippet; index: number; getModuleColo
           </VStack>
           <HStack spacing={2}>
             <Text fontSize="xs" color="gray.500">
-              {isExpanded ? '点击折叠' : '点击展开'}
+              {isExpanded ? '' : ''}
             </Text>
             <Icon 
               as={CheckCircleIcon} 

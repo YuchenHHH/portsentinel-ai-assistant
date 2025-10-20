@@ -89,15 +89,15 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
   const getStatusText = (status: string) => {
     switch (status) {
       case 'in_progress':
-        return '执行中';
+        return 'in_progress';
       case 'needs_approval':
-        return '等待批准';
+        return 'needs_approval';
       case 'failed':
-        return '执行失败';
+        return 'failed';
       case 'completed':
-        return '执行完成';
+        return 'completed';
       default:
-        return '未知状态';
+        return 'unknown';
     }
   };
 
@@ -209,8 +209,8 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
         {executionData.status === 'in_progress' && (
           <Box>
             <HStack justify="space-between" mb={2}>
-              <Text fontSize="sm" color="gray.600">执行进度</Text>
-              <Text fontSize="sm" color="gray.600">进行中...</Text>
+              <Text fontSize="sm" color="gray.600"></Text>
+              <Text fontSize="sm" color="gray.600"></Text>
             </HStack>
             <Progress
               value={undefined}
@@ -248,7 +248,7 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
             <Divider />
             <Box>
               <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={3}>
-                已完成步骤:
+                Finished Steps:
               </Text>
               <VStack align="stretch" spacing={3}>
                 {executionData.completed_steps.map((completedStep, index) => (
@@ -299,7 +299,7 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
             <Divider />
             <Box>
               <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={2}>
-                当前步骤执行结果:
+                Current Output:
               </Text>
               <Code
                 display="block"

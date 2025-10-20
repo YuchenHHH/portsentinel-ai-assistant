@@ -94,9 +94,9 @@ const ApprovalRequest: React.FC<ApprovalRequestProps> = ({
           <Alert status="warning" variant="subtle">
             <WarningIcon boxSize="20px" />
             <Box ml={3}>
-              <AlertTitle>高危操作需要人工批准</AlertTitle>
+              <AlertTitle>High-risk operation detected, manual approval required</AlertTitle>
               <AlertDescription>
-                以下操作将修改数据库，请仔细审查后决定是否批准执行。
+              This operation will modify the database. Please review carefully and decide whether to approve.
               </AlertDescription>
             </Box>
           </Alert>
@@ -106,7 +106,7 @@ const ApprovalRequest: React.FC<ApprovalRequestProps> = ({
           {/* 步骤描述 */}
           <Box>
             <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={2}>
-              执行步骤:
+              
             </Text>
             <Text fontSize="md" fontWeight="semibold" color="gray.800">
               {stepDescription}
@@ -119,10 +119,9 @@ const ApprovalRequest: React.FC<ApprovalRequestProps> = ({
           <Box>
             <HStack mb={2}>
               <Text fontSize="sm" fontWeight="medium" color="gray.600">
-                SQL 查询语句:
               </Text>
               <Badge colorScheme="red" fontSize="xs">
-                高危操作
+              High-risk Operation
               </Badge>
             </HStack>
             <Code
@@ -151,7 +150,7 @@ const ApprovalRequest: React.FC<ApprovalRequestProps> = ({
               loadingText="处理中..."
               minW="120px"
             >
-              批准执行
+              Approve
             </Button>
             <Button
               leftIcon={<CloseIcon />}
@@ -163,7 +162,7 @@ const ApprovalRequest: React.FC<ApprovalRequestProps> = ({
               loadingText="拒绝中..."
               minW="120px"
             >
-              拒绝执行
+              Reject
             </Button>
           </HStack>
         </VStack>
@@ -173,23 +172,23 @@ const ApprovalRequest: React.FC<ApprovalRequestProps> = ({
       <Modal isOpen={isOpen} onClose={onClose} size="xl">
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>确认批准高危操作</ModalHeader>
+          <ModalHeader>Confirm High-Risk Operation Approval</ModalHeader>
           <ModalBody>
             <VStack align="stretch" spacing={4}>
               <Alert status="warning">
                 <AlertIcon />
                 <AlertDescription>
-                  您即将批准一个高危数据库操作。请确认您已仔细审查了以下内容：
+                You are about to approve a high-risk database operation. Please confirm that you have carefully reviewed the following:
                 </AlertDescription>
               </Alert>
 
               <Box>
-                <Text fontWeight="medium" mb={2}>执行步骤:</Text>
+                <Text fontWeight="medium" mb={2}>Execution Step:</Text>
                 <Text fontSize="sm" color="gray.600">{stepDescription}</Text>
               </Box>
 
               <Box>
-                <Text fontWeight="medium" mb={2}>SQL 查询:</Text>
+                <Text fontWeight="medium" mb={2}>SQL Query:</Text>
                 <Code
                   display="block"
                   whiteSpace="pre-wrap"
@@ -206,15 +205,15 @@ const ApprovalRequest: React.FC<ApprovalRequestProps> = ({
               </Box>
 
               <FormControl>
-                <FormLabel>批准说明 (可选)</FormLabel>
+                <FormLabel>Approval Notes (Optional)</FormLabel>
                 <Textarea
                   value={approvalComment}
                   onChange={(e) => setApprovalComment(e.target.value)}
-                  placeholder="请输入批准此操作的原因或说明..."
+                  placeholder=""
                   rows={3}
                 />
                 <FormHelperText>
-                  此说明将记录在操作日志中，用于审计追踪。
+                These notes will be recorded in the operation log for auditing purposes.
                 </FormHelperText>
               </FormControl>
             </VStack>
@@ -222,16 +221,16 @@ const ApprovalRequest: React.FC<ApprovalRequestProps> = ({
           <ModalFooter>
             <HStack spacing={3}>
               <Button variant="ghost" onClick={onClose}>
-                取消
+                Cancel
               </Button>
               <Button
                 colorScheme="green"
                 leftIcon={<CheckIcon />}
                 onClick={handleApprove}
                 isLoading={isProcessing}
-                loadingText="批准中..."
+                loadingText="..."
               >
-                确认批准
+                Approve
               </Button>
             </HStack>
           </ModalFooter>
