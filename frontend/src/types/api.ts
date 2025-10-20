@@ -263,7 +263,10 @@ export const isExecutionResponse = (data: any): data is ExecutionResponse => {
     typeof data.step_description === 'string' &&
     (data.tool_output === undefined || typeof data.tool_output === 'string') &&
     (data.state_token === undefined || typeof data.state_token === 'string') &&
-    (data.message === undefined || typeof data.message === 'string')
+    (data.message === undefined || typeof data.message === 'string') &&
+    (data.agent_thoughts === undefined || typeof data.agent_thoughts === 'string') &&
+    (data.tool_calls === undefined || typeof data.tool_calls === 'string') &&
+    (data.completed_steps === undefined || Array.isArray(data.completed_steps))
   );
 };
 

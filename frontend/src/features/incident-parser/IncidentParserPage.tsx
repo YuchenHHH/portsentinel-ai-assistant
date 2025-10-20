@@ -274,14 +274,14 @@ export const IncidentParserPage: React.FC = () => {
         )
         setMessages(prev => [...prev, executionMessage])
 
-        // If execution is completed, can proceed to next step
-        if (result.execution_result.status === 'completed') {
-          const completionMessage = createAssistantMessage(
-            '🎉 SOP execution plan completed successfully!',
-            {} as IncidentReportResponse
-          )
-          setMessages(prev => [...prev, completionMessage])
-        }
+        // If execution is completed, don't show completion message
+        // if (result.execution_result.status === 'completed') {
+        //   const completionMessage = createAssistantMessage(
+        //     '🎉 SOP execution plan completed successfully!',
+        //     {} as IncidentReportResponse
+        //   )
+        //   setMessages(prev => [...prev, completionMessage])
+        // }
       }
     } catch (error: any) {
       console.error('Approval execution failed:', error)
