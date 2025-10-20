@@ -535,8 +535,7 @@ export const IncidentParserPage: React.FC = () => {
       h="93%"
       maxH="93%"
       display="flex" 
-      flexDirection="column" 
-      overflow="hidden"
+      flexDirection="column"
     >
       {/* Status Bar */}
       <Box px={4} py={2} bg="gray.50" borderBottom="1px" borderColor={borderColor} flexShrink={0}>
@@ -559,14 +558,12 @@ export const IncidentParserPage: React.FC = () => {
         </HStack>
       </Box>
   
-      {/* Chat Messages Area - 单一可滚动容器，占据剩余空间 */}
+      {/* Chat Messages Area - 这里是滚动的关键 */}
       <Box 
-        flex={1} 
-        overflowY="auto" 
-        overflowX="hidden"
+        flex={1}
+        minH={0}
         display="flex"
         flexDirection="column"
-        minH={0}
       >
         <ChatWindow 
           messages={messages} 
@@ -579,7 +576,7 @@ export const IncidentParserPage: React.FC = () => {
         />
       </Box>
   
-      {/* Chat Input - 仅在没有消息时显示，避免首屏过低 */}
+      {/* Chat Input */}
       {messages.length === 0 && (
         <Box 
           flexShrink={0}
