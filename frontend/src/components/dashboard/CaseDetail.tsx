@@ -105,14 +105,6 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseId, onBack }) => {
                 <Spacer />
               </Flex>
 
-              <VStack spacing={3} align="stretch">
-                <Text fontSize="2xl" fontWeight="bold">
-                  New Case
-                </Text>
-                <Text color={textColor}>
-                  Create a new case and use AI to analyze the incident
-                </Text>
-              </VStack>
             </VStack>
           </CardBody>
         </Card>

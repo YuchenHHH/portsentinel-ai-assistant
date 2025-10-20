@@ -12,9 +12,6 @@ import {
   useToast,
 } from '@chakra-ui/react'
 import { ArrowForwardIcon } from '@chakra-ui/icons'
-import { motion } from 'framer-motion'
-
-const MotionBox = motion(Box)
 
 interface ChatInputProps {
   onSubmit: (text: string, sourceType: 'Email' | 'SMS' | 'Call') => void
@@ -75,16 +72,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const isDisabled = disabled || isLoading
 
   return (
-    <MotionBox
+    <Box
       bg={bgColor}
-      borderTop="1px"
-      borderColor={borderColor}
-      boxShadow="lg"
-      initial={{ y: 100, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
+      p={4}
     >
-      <VStack spacing={3} p={4} maxW="container.md" mx="auto">
+      <VStack spacing={3} maxW="container.md" mx="auto">
         {/* Source Type Selector */}
         <HStack width="100%" justify="flex-end">
           <Text fontSize="sm" color="gray.500">
@@ -145,6 +137,6 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         </Flex>
 
       </VStack>
-    </MotionBox>
+    </Box>
   )
 }

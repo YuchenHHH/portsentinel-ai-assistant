@@ -399,79 +399,54 @@ export const IncidentParserPage: React.FC = () => {
   }, [])
 
   return (
-    <Box bg={bgColor} minH="100vh" display="flex" flexDirection="column">
-      {/* Top Header */}
-      <Box
-        bg={headerBg}
-        borderBottom="1px"
-        borderColor={borderColor}
-        px={4}
-        py={3}
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-      >
-        <HStack spacing={4}>
-          <Heading size="md" color="blue.600">
-            PortSentinel AI
-          </Heading>
-          <Badge colorScheme="blue" variant="subtle">
-            AI Assistant
+    <Box bg={bgColor} h="calc(100vh - 200px)" maxH="calc(100vh - 200px)" display="flex" flexDirection="column" overflow="hidden">
+      {/* Status Bar */}
+      <Box px={4} py={2} bg="gray.50" borderBottom="1px" borderColor={borderColor} flexShrink={0}>
+        <HStack spacing={2} justify="center">
+          <Badge 
+            colorScheme={databaseStatus?.success ? 'green' : 'red'} 
+            variant="solid"
+            fontSize="xs"
+          >
+            {databaseStatus?.success ? 'Database Connected' : 'Database Not Connected'}
           </Badge>
-        </HStack>
-        <HStack spacing={4}>
-          <Text fontSize="sm" color="gray.600">
-            Welcome, {user?.name || user?.email}
-          </Text>
           <Button
             size="sm"
+            colorScheme={databaseStatus?.success ? 'green' : 'orange'}
             variant="outline"
-            onClick={logout}
-            colorScheme="red"
+            onClick={() => setIsDatabaseModalOpen(true)}
           >
-            Logout
+            🗄️ Database Settings
           </Button>
         </HStack>
       </Box>
 
-      {/* Main Content Area */}
-      <Box flex={1} display="flex" flexDirection="column" position="relative">
-        {/* Status Bar */}
-        <Box px={4} py={2} bg="gray.50" borderBottom="1px" borderColor={borderColor}>
-          <HStack spacing={2} justify="center">
-            <Badge 
-              colorScheme={databaseStatus?.success ? 'green' : 'red'} 
-              variant="solid"
-              fontSize="xs"
-            >
-              {databaseStatus?.success ? 'Database Connected' : 'Database Not Connected'}
-            </Badge>
-            <Button
-              size="sm"
-              colorScheme={databaseStatus?.success ? 'green' : 'orange'}
-              variant="outline"
-              onClick={() => setIsDatabaseModalOpen(true)}
-            >
-              🗄️ Database Settings
-            </Button>
-          </HStack>
-        </Box>
+      {/* Chat Messages Area - Takes remaining space and scrolls internally */}
+      <Box 
+        flex={1} 
+        overflowY="auto" 
+        overflowX="hidden"
+        display="flex"
+        flexDirection="column"
+        minH={0}
+      >
+        <ChatWindow 
+          messages={messages} 
+          onApprovalApprove={handleApprovalApprove}
+          onApprovalReject={handleApprovalReject}
+          onPlanConfirm={handlePlanConfirm}
+          incidentId={(messages.find(m => m.type === 'assistant' && (m as any).incidentReport?.incident_id) as any)?.incidentReport?.incident_id}
+        />
+      </Box>
 
-        {/* Chat Window */}
-        <Box flex={1} overflow="hidden">
-          <ChatWindow 
-            messages={messages} 
-            onApprovalApprove={handleApprovalApprove}
-            onApprovalReject={handleApprovalReject}
-            onPlanConfirm={handlePlanConfirm}
-            incidentId={(messages.find(m => m.type === 'assistant' && (m as any).incidentReport?.incident_id) as any)?.incidentReport?.incident_id}
-          />
-        </Box>
-
-        {/* Chat Input - positioned at bottom of right content area */}
-        <Box position="absolute" bottom={0} left={0} right={0}>
-          <ChatInput onSubmit={handleSubmit} isLoading={isLoading} disabled={isLoading} />
-        </Box>
+      {/* Chat Input - Fixed at bottom, aligned with sidebar */}
+      <Box 
+        flexShrink={0}
+        borderTop="1px" 
+        borderColor={borderColor}
+        bg={bgColor}
+      >
+        <ChatInput onSubmit={handleSubmit} isLoading={isLoading} disabled={isLoading} />
       </Box>
 
       {/* Database Connection Modal */}
