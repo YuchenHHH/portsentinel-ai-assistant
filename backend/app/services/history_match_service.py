@@ -405,32 +405,32 @@ class HistoryMatchService:
         """使用GPT验证案例相似性"""
         try:
             prompt = f"""
-请分析以下两个问题是否相似：
+Please analyze whether the following two problems are similar:
 
-【当前问题】
-- 问题摘要: {request.problem_summary}
-- 影响模块: {request.affected_module or '未指定'}
-- 错误代码: {request.error_code or '无'}
-- 紧急程度: {request.urgency}
-- 提取的实体: {', '.join([f"{e.get('type', '')}: {e.get('value', '')}" for e in request.entities])}
+【Current Problem】
+- Problem Summary: {request.problem_summary}
+- Affected Module: {request.affected_module or 'Not Specified'}
+- Error Code: {request.error_code or 'None'}
+- Urgency Level: {request.urgency}
+- Extracted Entities: {', '.join([f"{e.get('type', '')}: {e.get('value', '')}" for e in request.entities])}
 
-【历史案例】
-- 案例ID: {case.id}
-- 问题描述: {case.problem_statement}
-- 影响模块: {case.module}
-- 报告方式: {case.mode}
-- 解决方案: {case.solution[:200]}...
+【Historical Case】
+- Case ID: {case.id}
+- Problem Description: {case.problem_statement}
+- Affected Module: {case.module}
+- Report Method: {case.mode}
+- Solution: {case.solution[:200]}...
 
-请从以下角度分析相似性：
-1. 问题类型是否相同（如：都是数据重复、都是时间戳问题等）
-2. 影响模块是否相关
-3. 错误模式是否相似
-4. 解决方案是否可参考
+Please analyze similarity from the following perspectives:
+1. Whether the problem types are the same (e.g., both are data duplication, both are timestamp issues, etc.)
+2. Whether the affected modules are related
+3. Whether the error patterns are similar
+4. Whether the solutions are referenceable
 
-请回答：
-- 是否相似: [是/否]
-- 相似度评分: [1-10分]
-- 推理说明: [详细说明为什么相似或不相似]
+Please answer:
+- Are they similar: [Yes/No]
+- Similarity Score: [1-10 points]
+- Reasoning: [Detailed explanation of why they are similar or not similar]
 """
             
             response = self.gpt_client.chat.completions.create(
@@ -438,7 +438,7 @@ class HistoryMatchService:
                 messages=[
                     {
                         "role": "system",
-                        "content": "你是一个专业的IT支持分析师，负责判断两个问题是否相似。请仔细分析问题的核心内容、影响模块、错误类型等，判断它们是否属于同一类问题。"
+                        "content": "You are a professional IT support analyst responsible for determining whether two problems are similar. Please carefully analyze the core content, affected modules, error types, etc., to determine if they belong to the same category of problems."
                     },
                     {
                         "role": "user",
@@ -459,30 +459,32 @@ class HistoryMatchService:
             return False, f"GPT验证失败: {str(e)}"
     
     def _parse_gpt_response(self, response_text: str) -> Tuple[bool, str]:
-        """解析GPT响应"""
+        """Parse GPT response"""
         try:
             is_similar = False
-            if "是否相似: 是" in response_text or "相似: 是" in response_text:
+            # Check for English responses
+            if "Are they similar: Yes" in response_text or "similar: Yes" in response_text:
                 is_similar = True
-            elif "是否相似: 否" in response_text or "相似: 否" in response_text:
+            elif "Are they similar: No" in response_text or "similar: No" in response_text:
                 is_similar = False
             else:
-                if "相似" in response_text and "是" in response_text:
+                # Fallback to keyword detection
+                if "similar" in response_text.lower() and "yes" in response_text.lower():
                     is_similar = True
-                elif "不相似" in response_text or "不同" in response_text:
+                elif "not similar" in response_text.lower() or "different" in response_text.lower():
                     is_similar = False
             
             reasoning = response_text
-            if "推理说明:" in response_text:
-                reasoning = response_text.split("推理说明:")[-1].strip()
-            elif "说明:" in response_text:
+            if "Reasoning:" in response_text:
+                reasoning = response_text.split("Reasoning:")[-1].strip()
+            elif "说明:" in response_text:  # Keep Chinese fallback
                 reasoning = response_text.split("说明:")[-1].strip()
             
             return is_similar, reasoning
             
         except Exception as e:
             logger.error(f"Failed to parse GPT response: {e}")
-            return False, f"解析响应失败: {str(e)}"
+            return False, f"Failed to parse response: {str(e)}"
     
     def get_stats(self) -> Dict[str, Any]:
         """获取服务统计信息"""
