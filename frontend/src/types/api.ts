@@ -109,6 +109,56 @@ export interface EnrichmentResponse {
   retrieval_metrics?: RetrievalMetrics | null;
 }
 
+// 历史案例匹配相关类型定义
+export interface HistoricalCase {
+  id: string;
+  module: string;
+  mode: "Email" | "SMS" | "Call";
+  is_edi: string;
+  timestamp: string;
+  alert_email: string;
+  problem_statement: string;
+  solution: string;
+  sop: string;
+  full_text: string;
+}
+
+export interface SimilarityScore {
+  case_id: string;
+  similarity_score: number;
+  entity_overlap_score: number;
+  module_match_score: number;
+  final_score: number;
+}
+
+export interface MatchedCase {
+  case: HistoricalCase;
+  similarity_score: SimilarityScore;
+  gpt_validation: boolean;
+  gpt_reasoning: string;
+}
+
+export interface HistoryMatchRequest {
+  incident_id?: string | null;
+  source_type: "Email" | "SMS" | "Call";
+  problem_summary: string;
+  affected_module?: "Container" | "Vessel" | "EDI/API" | null;
+  entities: Entity[];
+  error_code?: string | null;
+  urgency: "High" | "Medium" | "Low";
+  raw_text: string;
+}
+
+export interface HistoryMatchResponse {
+  incident_id?: string | null;
+  matched_cases: MatchedCase[];
+  total_candidates: number;
+  module_filtered_count: number;
+  similarity_filtered_count: number;
+  gpt_validated_count: number;
+  processing_time_ms: number;
+}
+
 // API 错误响应接口
 export interface ApiErrorResponse {
   error: string;
@@ -151,6 +201,19 @@ export const isEnrichmentResponse = (data: any): data is EnrichmentResponse => {
     typeof data.retrieval_summary === 'string' &&
     typeof data.total_sops_found === 'number' &&
     Array.isArray(data.retrieved_sops)
+  );
+};
+
+export const isHistoryMatchResponse = (data: any): data is HistoryMatchResponse => {
+  return (
+    data &&
+    typeof data === 'object' &&
+    Array.isArray(data.matched_cases) &&
+    typeof data.total_candidates === 'number' &&
+    typeof data.module_filtered_count === 'number' &&
+    typeof data.similarity_filtered_count === 'number' &&
+    typeof data.gpt_validated_count === 'number' &&
+    typeof data.processing_time_ms === 'number'
   );
 };
 
@@ -317,44 +380,6 @@ export interface MatchedCase {
   gpt_validation: boolean;
   gpt_reasoning: string;
 }
-
-// 历史案例匹配请求接口
-export interface HistoryMatchRequest {
-  incident_id: string | null;
-  source_type: "Email" | "SMS" | "Call";
-  problem_summary: string;
-  affected_module: string | null;
-  entities: Entity[];
-  error_code: string | null;
-  urgency: "High" | "Medium" | "Low";
-  raw_text: string;
-}
-
-// 历史案例匹配响应接口
-export interface HistoryMatchResponse {
-  incident_id: string | null;
-  matched_cases: MatchedCase[];
-  total_candidates: number;
-  module_filtered_count: number;
-  similarity_filtered_count: number;
-  gpt_validated_count: number;
-  processing_time_ms: number;
-}
-
-// 类型守卫函数
-export const isHistoryMatchResponse = (data: any): data is HistoryMatchResponse => {
-  return (
-    data &&
-    typeof data === 'object' &&
-    typeof data.incident_id === 'string' &&
-    Array.isArray(data.matched_cases) &&
-    typeof data.total_candidates === 'number' &&
-    typeof data.module_filtered_count === 'number' &&
-    typeof data.similarity_filtered_count === 'number' &&
-    typeof data.gpt_validated_count === 'number' &&
-    typeof data.processing_time_ms === 'number'
-  );
-};
 
 // 数据库配置相关接口
 
