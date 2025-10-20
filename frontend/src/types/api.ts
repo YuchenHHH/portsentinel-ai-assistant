@@ -354,7 +354,7 @@ export const isApprovalResponse = (data: any): data is ApprovalResponse => {
 export interface HistoricalCase {
   id: string;
   module: string;
-  mode: string;
+  mode: "Email" | "SMS" | "Call";
   is_edi: string;
   timestamp: string;
   alert_email: string;
