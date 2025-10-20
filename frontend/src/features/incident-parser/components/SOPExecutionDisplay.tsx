@@ -233,7 +233,7 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
               <AlertTitle fontSize="sm">
                 {executionData.status === 'needs_approval' ? 'needs_approval' : 
                  executionData.status === 'completed' ? 'Completed' :
-                 executionData.status === 'failed' ? 'Failed' : '执行中'}
+                 executionData.status === 'failed' ? 'Failed' : 'Executing'}
               </AlertTitle>
               <AlertDescription fontSize="sm">
                 {executionData.message}
@@ -333,7 +333,7 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
         )}
 
         {/* 执行摘要生成按钮 (仅在完成时显示) */}
-        {executionData.status === 'completed' && incidentId && !showSummary && (
+        {executionData.status === 'completed' && !showSummary && (
           <>
             <Divider />
             <Box textAlign="center">
@@ -342,10 +342,10 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
                 size="md"
                 onClick={handleGenerateSummary}
                 isLoading={isLoadingSummary}
-                loadingText="生成摘要中..."
+                loadingText="Generating Summary..."
                 leftIcon={<span>📋</span>}
               >
-                生成执行摘要
+                Generate Execution Summary
               </Button>
             </Box>
           </>

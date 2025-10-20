@@ -289,7 +289,7 @@ class SOPExecutionService:
                     step_description=current_step_desc,
                     tool_output=agent_output, # 包含 "needs_approval" 和 "query"
                     state_token=state_token,
-                    message="高危操作，等待人工批准。",
+                    message="High Risk",
                     agent_thoughts=agent_response.get("agent_thoughts"),
                     tool_calls=agent_response.get("tool_calls"),
                     completed_steps=state.completed_steps

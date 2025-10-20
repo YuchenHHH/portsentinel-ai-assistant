@@ -17,17 +17,39 @@ sys.path.insert(0, str(agent_4_path))
 logging.info(f"Agent 4 integration: Adding path to sys.path: {agent_4_path}")
 
 try:
-    from standalone_test import SimpleResolutionFollowupAgent, ExecutionResult, L2ExecutionStatus, ResolutionSummary
+    from agent import ResolutionFollowupAgent
+    from models import ExecutionResult, L2ExecutionStatus, ResolutionSummary, FollowupResult
     logging.info("Successfully imported Agent 4 components")
 except ImportError as e:
     logging.error(f"Failed to import Agent 4 components: {e}")
     # 创建模拟实现
-    class SimpleResolutionFollowupAgent:
+    class ResolutionFollowupAgent:
         def __init__(self, escalation_contacts_path: str):
-            logging.info("SimpleResolutionFollowupAgent (模拟) 初始化完毕")
+            logging.info("ResolutionFollowupAgent (模拟) 初始化完毕")
         
         def process_followup(self, execution_result, l2_status):
-            return {"escalation_required": False, "resolution_summary": {"incident_id": "MOCK"}}
+            # 返回一个模拟的FollowupResult对象
+            class MockFollowupResult:
+                def __init__(self):
+                    self.escalation_required = False
+                    self.escalation_contact = None
+                    self.escalation_email = None
+                    self.resolution_summary = MockResolutionSummary()
+            
+            class MockResolutionSummary:
+                def __init__(self):
+                    self.incident_id = "MOCK"
+                    self.resolution_outcome = "Resolved Successfully"
+                    self.error_identified = "Mock error"
+                    self.root_cause = "Mock root cause"
+                    self.resolution_attempted = "Mock resolution"
+                    self.actions_taken = ["Mock action"]
+                    self.timeline = []
+                    self.escalated_to_l3 = False
+                    self.lessons_learned = "Mock lessons"
+                    self.generated_at = "2025-01-01T00:00:00"
+            
+            return MockFollowupResult()
         
         def save_summary_to_file(self, summary, output_dir="."):
             return "mock_summary.md"
@@ -49,7 +71,7 @@ class SOPExecutionSummaryService:
     def __init__(self):
         # 初始化 Agent 4
         contacts_path = Path(__file__).parent.parent.parent.parent / "modules" / "agent_4_followup" / "escalation_contacts.csv"
-        self.agent = SimpleResolutionFollowupAgent(str(contacts_path))
+        self.agent = ResolutionFollowupAgent(str(contacts_path))
         logging.info("SOPExecutionSummaryService 初始化完毕")
     
     def generate_execution_summary(

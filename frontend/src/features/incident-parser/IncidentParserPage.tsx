@@ -372,6 +372,18 @@ export const IncidentParserPage: React.FC<IncidentParserPageProps> = ({ onBack }
           )
           setMessages(prev => [...prev, approvalMessage])
         }
+        // Check if execution result is completed and show summary generation button
+        else if (result.execution_result.status === 'completed') {
+          const summaryMessage = createSummaryGenerationMessage(
+            '🎉 All SOP steps completed successfully! Ready to generate execution summary.',
+            {
+              incident_id: 'UNKNOWN',
+              completed_steps_count: result.execution_result.completed_steps?.length || 0,
+              execution_status: result.execution_result.status
+            }
+          )
+          setMessages(prev => [...prev, summaryMessage])
+        }
       }
     } catch (error: any) {
       console.error('Approval execution failed:', error)
@@ -460,6 +472,18 @@ export const IncidentParserPage: React.FC<IncidentParserPageProps> = ({ onBack }
           }
         )
         setMessages(prev => [...prev, continueMessage])
+      }
+      else if (result.status === 'completed') {
+        // SOP execution completed, show summary generation button
+        const summaryMessage = createSummaryGenerationMessage(
+          '🎉 All SOP steps completed successfully! Ready to generate execution summary.',
+          {
+            incident_id: 'UNKNOWN',
+            completed_steps_count: result.completed_steps?.length || 0,
+            execution_status: result.status
+          }
+        )
+        setMessages(prev => [...prev, summaryMessage])
       }
     } catch (error: any) {
       console.error('SOP plan execution failed:', error)
