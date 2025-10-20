@@ -38,24 +38,33 @@ def execute_sql_read_query(query: str) -> str:
         result = db_interface.execute_read_query(query)
         return json.dumps(result, default=str) # 确保 datetime 等对象可以序列化
     except Exception as e:
-        return f"只读查询失败: {str(e)}"
+        return f"Read-only query failed: {str(e)}"
 
 @tool("execute_sql_write_query", args_schema=SQLWriteQuery)
 def execute_sql_write_query(query: str, approval_granted: bool = False) -> str:
     """
-    执行一个高危的 SQL 写入操作 (DELETE, UPDATE, INSERT)。
-    *** 警告: *** 除非 'approval_granted' 标志为 True，否则此工具不会执行，
-    而是会返回一个请求批准的消息。
+    Execute a high-risk SQL write operation (DELETE, UPDATE, INSERT).
+    WARNING: Unless 'approval_granted' is True, this tool will NOT execute the query,
+    but will return a message requesting approval.
     """
-    logging.info(f"收到写入请求: {query[:100]}... 批准状态: {approval_granted}")
+    logging.info(f"Received write request: {query[:100]}... approved: {approval_granted}")
     
-    # 【关键的 HITL 检查】
+    # Preflight: block unresolved placeholders to avoid SQL errors (regardless of approval)
+    placeholder_detected = (('<' in query and re.search(r'<[^>]+>', query)) or (':' in query and re.search(r':\w+', query)))
+    if placeholder_detected:
+        logging.warning("Placeholders detected in SQL; execution blocked until actual values are provided.")
+        return json.dumps({
+            "status": "invalid_parameters",
+            "message": "Unresolved placeholders found in SQL (e.g., <active_vessel_advice_no>). Replace with actual values before execution.",
+            "query": query
+        })
+
+    # Human-in-the-loop approval check
     if not approval_granted:
-        logging.warning("需要人工批准。暂停执行。")
-        # 返回一个结构化的 JSON，以便编排器可以解析它
+        logging.warning("Approval required. Execution paused.")
         return json.dumps({
             "status": "needs_approval",
-            "message": "高危操作需要人工批准才能执行。",
+            "message": "High-risk operation requires human approval before execution.",
             "query": query
         })
 
@@ -64,4 +73,4 @@ def execute_sql_write_query(query: str, approval_granted: bool = False) -> str:
         result = db_interface.execute_write_query(query)
         return json.dumps(result, default=str)
     except Exception as e:
-        return f"写入查询失败: {str(e)}"
+        return f"Write query failed: {str(e)}"
