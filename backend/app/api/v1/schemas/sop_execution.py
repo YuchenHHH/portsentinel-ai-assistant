@@ -25,6 +25,10 @@ class ApprovalRequest(BaseModel):
     approved_query: str = Field(..., description="已批准的查询语句")
     approved: bool = Field(True, description="是否批准")
 
+class ContinueRequest(BaseModel):
+    """继续执行请求"""
+    state_token: str = Field(..., description="状态令牌")
+
 class ApprovalResponse(BaseModel):
     """人工批准响应"""
     success: bool = Field(..., description="批准是否成功")

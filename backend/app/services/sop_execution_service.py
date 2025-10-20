@@ -192,6 +192,25 @@ class SOPExecutionService:
                 completed_steps=state.completed_steps
             )
 
+    async def continue_next_step(self, state_token: str) -> ExecutionStepResult:
+        """
+        继续执行下一步（用于手动控制的逐步执行）
+        """
+        logging.info(f"收到继续执行请求，令牌: {state_token}")
+        
+        state = self.state_cache.get(state_token)
+        if not state:
+            logging.error("状态令牌无效或已过期")
+            return ExecutionStepResult(
+                status="failed",
+                step=0,
+                step_description="状态已过期",
+                message="执行状态已过期或无效。"
+            )
+        
+        # 继续执行下一步
+        result = await self._run_next_step(state)
+        return result
 
     async def _run_next_step(self, state: ExecutionState) -> ExecutionStepResult:
         """

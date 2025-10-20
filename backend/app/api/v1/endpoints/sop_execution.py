@@ -5,7 +5,7 @@ from typing import Dict, Any
 
 from app.api.v1.schemas.sop_execution import (
     ExecutionRequest, ExecutionResponse, ApprovalRequest, 
-    ApprovalResponse, ExecutionStatus
+    ApprovalResponse, ExecutionStatus, ContinueRequest
 )
 from app.services.sop_execution_service import SOPExecutionService
 
@@ -81,6 +81,28 @@ async def approve_execution(
     except Exception as e:
         logging.error(f"批准执行失败: {e}")
         raise HTTPException(status_code=500, detail=f"批准执行失败: {str(e)}")
+
+@router.post("/continue", response_model=ExecutionResponse)
+async def continue_execution(
+    request: ContinueRequest,
+    service: SOPExecutionService = Depends(get_sop_execution_service)
+):
+    """
+    继续执行 SOP 计划
+    """
+    try:
+        logging.info(f"收到继续执行请求，令牌: {request.state_token}")
+        
+        result = await service.continue_next_step(
+            state_token=request.state_token
+        )
+        
+        logging.info(f"继续执行结果，状态: {result.status}, 步骤: {result.step}")
+        return result
+        
+    except Exception as e:
+        logging.error(f"继续执行失败: {e}")
+        raise HTTPException(status_code=500, detail=f"继续执行失败: {str(e)}")
 
 @router.get("/status/{state_token}", response_model=ExecutionStatus)
 async def get_execution_status(
