@@ -110,7 +110,7 @@ async def get_summary_markdown(
         from pathlib import Path
         
         # 使用绝对路径
-        summaries_dir = Path("/Users/huangyuchen/Desktop/workspace/backend/execution_summaries")
+        summaries_dir = Path("/backend/execution_summaries")
         
         if incident_id == "latest":
             # 获取最新的摘要文件

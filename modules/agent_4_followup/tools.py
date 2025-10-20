@@ -11,7 +11,7 @@ This module provides utility functions for:
 import csv
 from typing import List, Optional, Dict, Any
 from pathlib import Path
-from .models import EscalationContact
+from models import EscalationContact
 
 
 class EscalationContactFinder:

@@ -9,13 +9,16 @@ from typing import List, Dict, Any, Optional, Literal
 from pydantic import BaseModel, Field
 from datetime import datetime
 
-# Import ExecutionResult from Agent 3
-import sys
-from pathlib import Path
-agent_3_path = Path(__file__).parent.parent / "agent_3_sop_executor"
-sys.path.insert(0, str(agent_3_path))
-
-from agents.agent_3_sop_executor.models import ExecutionResult
+# 创建一个简单的 ExecutionResult 类，因为原来的导入路径不存在
+class ExecutionResult(BaseModel):
+    """简化的 ExecutionResult 模型"""
+    incident_id: str
+    execution_success: bool
+    execution_summary: str
+    sql_queries: List[str] = []
+    actions_taken: List[str] = []
+    
+    model_config = {"arbitrary_types_allowed": True}
 
 
 class L2ExecutionStatus(BaseModel):

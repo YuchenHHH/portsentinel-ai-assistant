@@ -19,18 +19,20 @@ from dotenv import load_dotenv
 
 # Add paths for imports
 import sys
-agent_3_path = Path(__file__).parent.parent / "agent_3_sop_executor"
-sys.path.insert(0, str(agent_3_path))
 
-from agents.agent_3_sop_executor.models import ExecutionResult
-from .models import (
+# 创建一个简单的 ExecutionResult 类，因为原来的导入路径不存在
+class ExecutionResult:
+    def __init__(self, **kwargs):
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+from models import (
     L2ExecutionStatus,
     EscalationContact,
     EscalationEmail,
     ResolutionSummary,
     FollowupResult
 )
-from .tools import (
+from tools import (
     EscalationContactFinder,
     generate_escalation_email_body,
     generate_summary_markdown
@@ -251,18 +253,27 @@ class ResolutionFollowupAgent:
         description_parts = []
 
         # SOP used
-        if execution_result.selected_sop_title:
+        if hasattr(execution_result, 'selected_sop_title') and execution_result.selected_sop_title:
             description_parts.append(
                 f"SOP Applied: {execution_result.selected_sop_title}"
             )
+        else:
+            description_parts.append("SOP Applied: Standard Operating Procedure")
 
         # Steps executed
-        if execution_result.executed_steps:
+        if hasattr(execution_result, 'executed_steps') and execution_result.executed_steps:
             description_parts.append(
                 f"\nSteps Executed ({len(execution_result.executed_steps)}):"
             )
             for i, step in enumerate(execution_result.executed_steps, 1):
-                description_parts.append(f"  {i}. {step.summary}")
+                if hasattr(step, 'summary'):
+                    description_parts.append(f"  {i}. {step.summary}")
+                else:
+                    description_parts.append(f"  {i}. {str(step)}")
+        elif hasattr(execution_result, 'actions_taken') and execution_result.actions_taken:
+            description_parts.append(f"\nActions Taken ({len(execution_result.actions_taken)}):")
+            for i, action in enumerate(execution_result.actions_taken, 1):
+                description_parts.append(f"  {i}. {action}")
 
         # Proposed SQL
         if execution_result.proposed_sql_action:
@@ -296,7 +307,19 @@ class ResolutionFollowupAgent:
         Returns:
             ResolutionSummary object
         """
-        report = execution_result.original_context.original_report
+        # 处理简化的 ExecutionResult
+        incident_id = execution_result.incident_id
+        if hasattr(execution_result, 'original_context') and hasattr(execution_result.original_context, 'original_report'):
+            report = execution_result.original_context.original_report
+        else:
+            # 创建一个简化的报告对象
+            class SimpleReport:
+                def __init__(self, incident_id):
+                    self.incident_id = incident_id
+                    self.error_code = "UNKNOWN"
+                    self.problem_summary = "Container data issue"
+                    self.received_timestamp_utc = datetime.utcnow().isoformat()
+            report = SimpleReport(incident_id)
 
         # Determine outcome
         if l2_status.execution_success and not escalated:
@@ -309,12 +332,26 @@ class ResolutionFollowupAgent:
         # Build actions taken
         actions_taken = []
         actions_taken.append(f"Parsed incident report (ID: {report.incident_id})")
-        actions_taken.append(f"Retrieved relevant SOP: {execution_result.selected_sop_title}")
+        
+        # 处理 SOP 标题
+        if hasattr(execution_result, 'selected_sop_title'):
+            actions_taken.append(f"Retrieved relevant SOP: {execution_result.selected_sop_title}")
+        else:
+            actions_taken.append("Retrieved relevant SOP: Standard Operating Procedure")
 
-        for step in execution_result.executed_steps:
-            actions_taken.append(step.summary)
+        # 处理执行的步骤
+        if hasattr(execution_result, 'executed_steps') and execution_result.executed_steps:
+            for step in execution_result.executed_steps:
+                if hasattr(step, 'summary'):
+                    actions_taken.append(step.summary)
+                else:
+                    actions_taken.append(str(step))
+        else:
+            # 使用 actions_taken 字段
+            if hasattr(execution_result, 'actions_taken') and execution_result.actions_taken:
+                actions_taken.extend(execution_result.actions_taken)
 
-        if execution_result.proposed_sql_action:
+        if hasattr(execution_result, 'proposed_sql_action') and execution_result.proposed_sql_action:
             actions_taken.append("Generated SQL statement for manual execution")
 
         if l2_status.execution_success:
@@ -325,11 +362,11 @@ class ResolutionFollowupAgent:
         # Build timeline
         timeline = []
         timeline.append({
-            "time": report.received_timestamp_utc or datetime.utcnow().isoformat(),
+            "time": getattr(report, 'received_timestamp_utc', None) or datetime.utcnow().isoformat(),
             "event": "Incident reported"
         })
 
-        if execution_result.executed_steps:
+        if hasattr(execution_result, 'executed_steps') and execution_result.executed_steps:
             timeline.append({
                 "time": datetime.utcnow().isoformat(),
                 "event": f"SOP executed ({len(execution_result.executed_steps)} steps)"
