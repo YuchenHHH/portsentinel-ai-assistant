@@ -78,7 +78,7 @@ const ClickableSopCard: React.FC<{ sop: SopSnippet; index: number; getModuleColo
               )}
               {sop.score !== null && (
                 <Badge colorScheme="green" variant="solid">
-                  相似度: {formatScore(sop.score)}
+                  Knowledge base search complete: {formatScore(sop.score)}
                 </Badge>
               )}
               {sop.metadata._llm_validation !== undefined && (
@@ -86,7 +86,7 @@ const ClickableSopCard: React.FC<{ sop: SopSnippet; index: number; getModuleColo
                   colorScheme={sop.metadata._llm_validation ? "green" : "red"} 
                   variant="solid"
                 >
-                  {sop.metadata._llm_validation ? "✓ LLM验证通过" : "✗ LLM验证未通过"}
+                  {sop.metadata._llm_validation ? "✓ LLM validation passed" : "✗ LLM验证未通过"}
                 </Badge>
               )}
             </HStack>
@@ -176,7 +176,7 @@ const CompleteSopDisplay: React.FC<{ sop: SopSnippet }> = ({ sop }) => {
             <HStack mb={2}>
               <Icon as={InfoIcon} color="blue.500" />
               <Text fontSize="sm" fontWeight="bold" color="gray.700">
-                概述 (Overview)
+                Overview
               </Text>
             </HStack>
             <Box
@@ -199,7 +199,7 @@ const CompleteSopDisplay: React.FC<{ sop: SopSnippet }> = ({ sop }) => {
             <HStack mb={2}>
               <Icon as={WarningIcon} color="orange.500" />
               <Text fontSize="sm" fontWeight="bold" color="gray.700">
-                前置条件 (Preconditions)
+                Preconditions
               </Text>
             </HStack>
             <Box
@@ -222,7 +222,7 @@ const CompleteSopDisplay: React.FC<{ sop: SopSnippet }> = ({ sop }) => {
             <HStack mb={2}>
               <Icon as={CheckCircleIcon} color="green.500" />
               <Text fontSize="sm" fontWeight="bold" color="gray.700">
-                解决步骤 (Resolution)
+                Resolution
               </Text>
             </HStack>
             <Box
@@ -245,7 +245,7 @@ const CompleteSopDisplay: React.FC<{ sop: SopSnippet }> = ({ sop }) => {
             <HStack mb={2}>
               <Icon as={CheckCircleIcon} color="purple.500" />
               <Text fontSize="sm" fontWeight="bold" color="gray.700">
-                验证步骤 (Verification)
+                Verification
               </Text>
             </HStack>
             <Box
@@ -348,25 +348,25 @@ export const EnrichmentDisplay: React.FC<EnrichmentDisplayProps> = ({ enrichment
       <Alert status="info" borderRadius="lg">
         <AlertIcon />
         <Box>
-          <AlertTitle>知识库检索完成</AlertTitle>
+          <AlertTitle>Knowledge base search complete</AlertTitle>
           <AlertDescription>
             {enrichmentData.retrieval_summary}
           </AlertDescription>
         </Box>
       </Alert>
 
-      {/* 统计信息 */}
+      {/* Statistics */}
       <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
         <Stat>
-          <StatLabel fontSize="sm" color="gray.500">找到的 SOP 数量</StatLabel>
+          <StatLabel fontSize="sm" color="gray.500">SOPs Found</StatLabel>
           <StatNumber fontSize="lg" color="blue.600">
             {enrichmentData.total_sops_found}
           </StatNumber>
-          <StatHelpText fontSize="xs">相关标准操作程序</StatHelpText>
+          <StatHelpText fontSize="xs">Relevant Standard Operating Procedures</StatHelpText>
         </Stat>
         
         <Stat>
-          <StatLabel fontSize="sm" color="gray.500">紧急程度</StatLabel>
+          <StatLabel fontSize="sm" color="gray.500">Urgency Level</StatLabel>
           <StatNumber>
             <Tag size="sm" colorScheme={getUrgencyColor(enrichmentData.urgency)} borderRadius="full">
               <TagLeftIcon as={WarningIcon} />
@@ -376,22 +376,22 @@ export const EnrichmentDisplay: React.FC<EnrichmentDisplayProps> = ({ enrichment
         </Stat>
         
         <Stat>
-          <StatLabel fontSize="sm" color="gray.500">受影响模块</StatLabel>
+          <StatLabel fontSize="sm" color="gray.500">Affected Module</StatLabel>
           <StatNumber>
             <Tag size="sm" colorScheme={getModuleColor(enrichmentData.affected_module)} borderRadius="full">
-              <TagLabel>{enrichmentData.affected_module || '未识别'}</TagLabel>
+              <TagLabel>{enrichmentData.affected_module || 'Not Identified'}</TagLabel>
             </Tag>
           </StatNumber>
         </Stat>
       </SimpleGrid>
 
-      {/* SOP 建议列表 */}
+      {/* SOP Recommendations List */}
       {enrichmentData.retrieved_sops && enrichmentData.retrieved_sops.length > 0 ? (
         <Box>
           <HStack mb={4}>
             <Icon as={CheckCircleIcon} color="green.500" />
             <Text fontSize="lg" fontWeight="bold" color="gray.700">
-              相关 SOP 建议 ({enrichmentData.retrieved_sops.length})
+              Relevant SOP Recommendations ({enrichmentData.retrieved_sops.length})
             </Text>
           </HStack>
 
@@ -411,9 +411,9 @@ export const EnrichmentDisplay: React.FC<EnrichmentDisplayProps> = ({ enrichment
         <Alert status="warning" borderRadius="lg">
           <AlertIcon />
           <Box>
-            <AlertTitle>未找到相关 SOP</AlertTitle>
+            <AlertTitle>No Relevant SOPs Found</AlertTitle>
             <AlertDescription>
-              知识库中暂时没有找到与此次事件相关的标准操作程序。建议手动查阅相关文档或联系技术支持。
+              No standard operating procedures related to this incident were found in the knowledge base. Please manually consult relevant documentation or contact technical support.
             </AlertDescription>
           </Box>
         </Alert>
@@ -426,7 +426,7 @@ export const EnrichmentDisplay: React.FC<EnrichmentDisplayProps> = ({ enrichment
           <HStack mb={3}>
             <Icon as={WarningIcon} color="red.500" />
             <Text fontSize="sm" fontWeight="medium" color="gray.700">
-              错误代码信息
+            Error Code Message
             </Text>
           </HStack>
           <Code
@@ -448,48 +448,48 @@ export const EnrichmentDisplay: React.FC<EnrichmentDisplayProps> = ({ enrichment
           <HStack mb={3}>
             <Icon as={InfoIcon} color="blue.500" />
             <Text fontSize="lg" fontWeight="bold" color="gray.700">
-              检索指标
+            Retrieval Metrics
             </Text>
           </HStack>
           
           <SimpleGrid columns={{ base: 2, md: 3 }} spacing={4}>
             <Stat>
-              <StatLabel fontSize="sm" color="gray.500">查询变体</StatLabel>
+              <StatLabel fontSize="sm" color="gray.500">Query Variation</StatLabel>
               <StatNumber fontSize="md">{enrichmentData.retrieval_metrics.num_expanded_queries}</StatNumber>
             </Stat>
             
             <Stat>
-              <StatLabel fontSize="sm" color="gray.500">BM25 候选</StatLabel>
+              <StatLabel fontSize="sm" color="gray.500">BM25 Candidates</StatLabel>
               <StatNumber fontSize="md">{enrichmentData.retrieval_metrics.num_bm25_candidates}</StatNumber>
             </Stat>
             
             <Stat>
-              <StatLabel fontSize="sm" color="gray.500">向量候选</StatLabel>
+              <StatLabel fontSize="sm" color="gray.500">Vector Candidates</StatLabel>
               <StatNumber fontSize="md">{enrichmentData.retrieval_metrics.num_vector_candidates}</StatNumber>
             </Stat>
             
             <Stat>
-              <StatLabel fontSize="sm" color="gray.500">合并候选</StatLabel>
+              <StatLabel fontSize="sm" color="gray.500">Merged Candidates</StatLabel>
               <StatNumber fontSize="md">{enrichmentData.retrieval_metrics.num_merged_candidates}</StatNumber>
             </Stat>
             
             <Stat>
-              <StatLabel fontSize="sm" color="gray.500">RRF 后</StatLabel>
+              <StatLabel fontSize="sm" color="gray.500">RRF After</StatLabel>
               <StatNumber fontSize="md">{enrichmentData.retrieval_metrics.num_after_rrf}</StatNumber>
             </Stat>
             
             <Stat>
-              <StatLabel fontSize="sm" color="gray.500">最终结果</StatLabel>
+              <StatLabel fontSize="sm" color="gray.500">Final Results</StatLabel>
               <StatNumber fontSize="md">{enrichmentData.retrieval_metrics.num_final_results}</StatNumber>
             </Stat>
           </SimpleGrid>
           
           <HStack mt={4} spacing={4}>
             <Badge colorScheme="blue" variant="subtle">
-              BM25 权重: {enrichmentData.retrieval_metrics.bm25_weight}
+              BM25 Weight: {enrichmentData.retrieval_metrics.bm25_weight}
             </Badge>
             <Badge colorScheme="green" variant="subtle">
-              向量权重: {enrichmentData.retrieval_metrics.vector_weight}
+              Vector Weight: {enrichmentData.retrieval_metrics.vector_weight}
             </Badge>
             <Badge colorScheme="purple" variant="subtle">
               RRF k: {enrichmentData.retrieval_metrics.rrf_k}

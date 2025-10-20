@@ -1,60 +1,61 @@
 import logging
 import json
+import re
 from typing import List, Dict, Any
 from langchain_openai import AzureChatOpenAI
 from langchain.agents import AgentExecutor, create_openai_tools_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 
-# 导入我们修改过的工具
+# Import our modified tools
 try:
     from . import tools
     from .database_interface import get_database_schema
 except ImportError:
-    # 如果相对导入失败，尝试直接导入
+    # If relative import fails, try direct import
     import tools
     try:
         from database_interface import get_database_schema
     except ImportError:
-        # 如果还是失败，定义一个简单的函数
+        # If it still fails, define a simple function
         def get_database_schema():
-            return "数据库表结构：\n- 'container' table: 包含 cntr_no, vessel_id, eta_ts, created_at 等字段" 
+            return "Database Schema:\n- 'container' table: contains cntr_no, vessel_id, eta_ts, created_at fields"
 
-# 【关键的系统提示词】(取自 kan-yim 仓库，因为它写得很好)
-SYSTEM_PROMPT = """你是一个"港口运营SOP执行助手"（Port Operations SOP Execution Assistant）。
-你的唯一职责是作为一名技术专家，严格、安全、并按顺序地执行一个预先定义好的事件解决方案。你将一次收到一个计划步骤。
+# [CRITICAL SYSTEM PROMPT] (Adapted from kan-yim repository, as it's well-written)
+SYSTEM_PROMPT = """You are a "Port Operations SOP Execution Assistant".
+Your sole responsibility is to act as a technical expert, strictly, safely, and sequentially executing a predefined incident resolution plan. You will receive one plan step at a time.
 
-你的行为准则如下：
-1.  **严格遵循计划：**
-    * 你必须严格执行提供给你的当前步骤。
-    * 严禁偏离计划、跳过步骤、添加额外步骤。
+Your code of conduct is as follows:
+1.  **Strictly Follow the Plan:**
+    * You must strictly execute the current step provided to you.
+    * Deviating from the plan, skipping steps, or adding extra steps is strictly forbidden.
 
-2.  **精确使用工具：**
-    * 你拥有一套工具，包括 `execute_sql_read_query` (只读) 和 `execute_sql_write_query` (写入)。
-    * **CRITICAL RULE - 提取并执行SQL: 如果步骤描述中包含冒号(:)后跟完整SQL语句，必须逐字提取冒号后的SQL并执行，绝对不要修改任何部分（包括表名、字段名、WHERE条件、常量值等）。**
-    * **示例1**: 步骤 "Query container records: SELECT * FROM container WHERE cntr_no = 'CMAU0000020' ORDER BY created_at DESC;"
-      → 你必须执行: `SELECT * FROM container WHERE cntr_no = 'CMAU0000020' ORDER BY created_at DESC;`
-      → 不要修改为: `SELECT * FROM container WHERE cntr_no = 'ABC';` (错误!)
-    * **示例2**: 步骤 "Delete duplicate: DELETE FROM container WHERE container_id = 123;"
-      → 你必须执行: `DELETE FROM container WHERE container_id = 123;`
-      → 不要修改container_id的值
-    * 如果步骤只是描述性的（不包含SQL语句），才需要根据描述自己编写SQL。
-    * 对于查询操作，使用 `execute_sql_read_query` 工具。
-    * 对于删除、更新、插入操作，使用 `execute_sql_write_query` 工具。
-    * 不要询问更多信息，直接执行。
+2.  **Precise Tool Usage:**
+    * You have a set of tools, including `execute_sql_read_query` (read-only) and `execute_sql_write_query` (write).
+    * **CRITICAL RULE - Extract and Execute SQL: If the step description contains a colon (:) followed by a complete SQL statement, you must extract the SQL *verbatim* (exactly as written) after the colon and execute it. Do not modify any part of it (including table names, field names, WHERE conditions, constant values, etc.).**
+    * **Example 1**: Step "Query container records: SELECT * FROM container WHERE cntr_no = 'CMAU0000020' ORDER BY created_at DESC;"
+      → You must execute: `SELECT * FROM container WHERE cntr_no = 'CMAU0000020' ORDER BY created_at DESC;`
+      → Do not modify it to: `SELECT * FROM container WHERE cntr_no = 'ABC';` (Incorrect!)
+    * **Example 2**: Step "Delete duplicate: DELETE FROM container WHERE container_id = 123;"
+      → You must execute: `DELETE FROM container WHERE container_id = 123;`
+      → Do not change the container_id value.
+    * Only if the step is descriptive (does not contain a SQL statement) should you write the SQL yourself based on the description.
+    * For query operations, use the `execute_sql_read_query` tool.
+    * For delete, update, or insert operations, use the `execute_sql_write_query` tool.
+    * Do not ask for more information; execute directly.
 
-3.  **安全第一（人工审批）：**
-    * 涉及 `DELETE`、`UPDATE` 的操作是高风险的。
-    * `execute_sql_write_query` 工具在其描述中会明确指出它需要 'approval_granted' 标志。
-    * 你的任务是**始终**用 `approval_granted=False` 来调用它，除非历史消息明确指示你已获得批准。
-    * 当工具返回 "needs_approval" 时，这代表你的任务已完成，只需报告这个结果即可。
+3.  **Safety First (Human Approval):**
+    * Operations involving `DELETE` or `UPDATE` are high-risk.
+    * The `execute_sql_write_query` tool will clearly state in its description that it requires the 'approval_granted' flag.
+    * Your task is to **always** call it with `approval_granted=False`, unless the chat history explicitly indicates you have received approval.
+    * When the tool returns "needs_approval", this signifies your task for this step is complete. Simply report this result.
 
-4.  **清晰报告结果：**
-    * 在每次调用工具后，你必须将工具返回的完整输出结果作为你的回复。
+4.  **Clear Result Reporting:**
+    * After each tool call, you must return the complete, raw output from the tool as your response.
 
-5.  **立即执行：**
-    * 收到计划步骤后，立即分析步骤内容并执行相应的操作。
-    * 不要要求更多信息，直接根据步骤描述执行操作。
+5.  **Immediate Execution:**
+    * Upon receiving a plan step, immediately analyze its content and execute the corresponding action.
+    * Do not ask for more information; execute the operation directly based on the step description.
 """
 
 class SOPExecutorAgent:
@@ -62,7 +63,7 @@ class SOPExecutorAgent:
     def __init__(self):
         self.llm = AzureChatOpenAI(
             temperature=0,
-            deployment_name="gpt-4.1-mini",  # 使用现有的部署
+            deployment_name="gpt-4.1-mini",  # Use existing deployment
             api_version="2025-01-01-preview"
         )
         self.tools = [
@@ -84,107 +85,105 @@ class SOPExecutorAgent:
             agent=agent,
             tools=self.tools,
             verbose=True,
-            handle_parsing_errors=True # 增加稳定性
+            handle_parsing_errors=True # Increase stability
         )
-        logging.info("SOPExecutorAgent 初始化完毕。")
+        logging.info("SOPExecutorAgent initialized.")
 
     def _extract_sql_from_step(self, plan_step: str) -> str:
         """
-        从步骤描述中提取SQL语句。
-        如果步骤包含冒号后跟SQL关键字，提取完整的SQL语句。
+        Extracts SQL statement from a step description.
+        If the step contains a colon followed by a SQL keyword, extract the full SQL statement.
         """
-        import re
-
-        # 查找模式: "描述: SELECT/UPDATE/DELETE/INSERT ..."
-        # 支持多行SQL
+        # Find pattern: "Description: SELECT/UPDATE/DELETE/INSERT ..."
+        # Supports multi-line SQL
         pattern = r':\s*((?:SELECT|UPDATE|DELETE|INSERT|WITH)[^;]*;?)'
 
         match = re.search(pattern, plan_step, re.IGNORECASE | re.DOTALL)
         if match:
             sql = match.group(1).strip()
-            # 确保SQL以分号结尾
+            # Ensure SQL ends with a semicolon
             if not sql.endswith(';'):
                 sql += ';'
 
-            # 【关键修复】移除占位符（:VESSEL_ID, :ETA_TS, <VESSEL_ID>, <ETA_TS>等）
-            # 如果SQL包含占位符，说明Planner期望这些值从前面的步骤获取
-            # 但由于我们直接执行SQL，需要移除这些条件或让LLM处理
+            # [Critical Fix] Remove placeholders (:VESSEL_ID, :ETA_TS, <VESSEL_ID>, <ETA_TS>, etc.)
+            # If SQL contains placeholders, it means the Planner expected these values to be fetched from previous steps
+            # But since we are executing the SQL directly, we need to remove these conditions or let the LLM handle it
             if ((':' in sql and re.search(r':\w+', sql)) or ('<' in sql and re.search(r'<\w+>', sql))):
-                logging.warning(f"检测到SQL包含占位符，将使用LLM生成完整SQL")
-                logging.warning(f"原始SQL: {sql}")
-                # 移除包含占位符的WHERE条件
-                # 例如: "WHERE cntr_no = 'X' AND vessel_id = :VESSEL_ID" -> "WHERE cntr_no = 'X'"
-                # 例如: "WHERE cntr_no = 'X' AND vessel_id = '<VESSEL_ID>'" -> "WHERE cntr_no = 'X'"
+                logging.warning(f"Detected SQL with placeholders, will use LLM to generate full SQL")
+                logging.warning(f"Original SQL: {sql}")
+                # Remove WHERE conditions containing placeholders
+                # Example: "WHERE cntr_no = 'X' AND vessel_id = :VESSEL_ID" -> "WHERE cntr_no = 'X'"
+                # Example: "WHERE cntr_no = 'X' AND vessel_id = '<VESSEL_ID>'" -> "WHERE cntr_no = 'X'"
                 sql = re.sub(r'\s+AND\s+\w+\s*=\s*:?\w+', '', sql, flags=re.IGNORECASE)
                 sql = re.sub(r'\s+AND\s+\w+\s*=\s*<\w+>', '', sql, flags=re.IGNORECASE)
                 sql = re.sub(r'\s+WHERE\s+\w+\s*=\s*:?\w+\s+AND\s+', ' WHERE ', sql, flags=re.IGNORECASE)
                 sql = re.sub(r'\s+WHERE\s+\w+\s*=\s*<\w+>\s+AND\s+', ' WHERE ', sql, flags=re.IGNORECASE)
                 sql = re.sub(r'\s+WHERE\s+\w+\s*=\s*:?\w+', '', sql, flags=re.IGNORECASE)
                 sql = re.sub(r'\s+WHERE\s+\w+\s*=\s*<\w+>', '', sql, flags=re.IGNORECASE)
-                logging.info(f"移除占位符后的SQL: {sql}")
+                logging.info(f"SQL after removing placeholders: {sql}")
 
-            logging.info(f"从步骤中提取到SQL: {sql}")
+            logging.info(f"Extracted SQL from step: {sql}")
             return sql
 
-        logging.info("步骤中未找到完整SQL语句，将使用LLM生成")
+        logging.info("No complete SQL statement found in step, will use LLM to generate")
         return None
 
     def execute_step(self, plan_step: str, incident_context: Dict[str, Any], chat_history: List, step_number: int = 0) -> Dict[str, Any]:
         """
-        【关键方法】只执行一个步骤。
-        由外部的 'Orchestrator' 调用。
+        [Critical Method] Executes only one step.
+        Called by an external 'Orchestrator'.
         """
-        logging.info(f"Agent 开始执行步骤 {step_number + 1}: {plan_step}")
+        logging.info(f"Agent starting execution of step {step_number + 1}: {plan_step}")
 
-        # 【关键修复】先尝试直接提取并执行SQL，绕过LLM的"创造性"
+        # [Critical Fix] First, try to directly extract and execute SQL, bypassing LLM's "creativity"
         extracted_sql = self._extract_sql_from_step(plan_step)
         if extracted_sql:
-            logging.info(f"直接执行提取的SQL（绕过LLM）: {extracted_sql}")
+            logging.info(f"Directly executing extracted SQL (bypassing LLM): {extracted_sql}")
             try:
-                # 判断是读还是写操作
+                # Determine if it's a read or write operation
                 sql_upper = extracted_sql.upper().strip()
                 if sql_upper.startswith('SELECT') or sql_upper.startswith('SHOW') or sql_upper.startswith('DESCRIBE'):
-                    # 只读查询 - 使用invoke()方法
+                    # Read-only query - use invoke() method
                     result = tools.execute_sql_read_query.invoke({"query": extracted_sql})
-                    output = f"查询成功执行。结果: {result}"
+                    output = f"Query executed successfully. Result: {result}"
                 else:
-                    # 写操作（需要审批）- 使用invoke()方法
+                    # Write operation (requires approval) - use invoke() method
                     result = tools.execute_sql_write_query.invoke({
                         "query": extracted_sql,
                         "approval_granted": False
                     })
-                    # 直接返回工具的JSON输出，不要包装成字符串
+                    # Return the tool's JSON output directly, don't wrap it in a string
                     output = result
 
-                logging.info(f"SQL直接执行结果: {output}")
+                logging.info(f"SQL direct execution result: {output}")
                 return {
                     'output': output,
-                    'agent_thoughts': f"从步骤中提取到SQL并直接执行: {extracted_sql}",
-                    'tool_calls': f"执行工具: execute_sql_{'read' if sql_upper.startswith('SELECT') else 'write'}_query\n输入: {extracted_sql}\n输出: {output}",
+                    'agent_thoughts': f"Extracted and directly executed SQL from step: {extracted_sql}",
+                    'tool_calls': f"Executing tool: execute_sql_{'read' if sql_upper.startswith('SELECT') else 'write'}_query\nInput: {extracted_sql}\nOutput: {output}",
                     'original_response': {'output': output}
                 }
             except Exception as e:
-                logging.error(f"SQL直接执行失败: {e}")
-                # 如果直接执行失败，继续使用LLM
+                logging.error(f"SQL direct execution failed: {e}")
+                # If direct execution fails, continue with the LLM
                 pass
 
-        # 如果没有提取到SQL或直接执行失败，使用原来的LLM方式
+        # If no SQL was extracted or direct execution failed, use the original LLM method
         input_prompt = (
-            f"### 事件上下文:\n{json.dumps(incident_context, indent=2)}\n\n"
-            f"### 当前计划步骤:\n{plan_step}\n\n"
-            f"### 数据库信息:\n"
-            f"- 数据库类型: MySQL\n"
-            f"- 数据库名: appdb\n"
-            f"- 表结构:\n{get_database_schema()}\n\n"
-            f"### 执行指令:\n请严格按照上述步骤描述执行操作。特别注意：\n"
-            f"1. 这是MySQL数据库，使用MySQL语法\n"
-            f"2. 如果步骤中提到查询某个表，请使用步骤中明确指定的表名\n"
-            f"3. 如果步骤中包含SQL语句，请直接执行该SQL语句\n"
-            f"4. 不要使用步骤中未提到的表名\n"
-            f"5. 不要查询information_schema，直接查询指定的表\n"
-            f"6. 对于验证步骤，请执行相应的SELECT查询来确认结果\n"
-            f"7. 必须返回具体的执行结果，不能返回通用回复\n"
-            f"8. 立即执行，不要询问更多信息"
+            f"### Incident Context:\n{json.dumps(incident_context, indent=2)}\n\n"
+            f"### Current Plan Step:\n{plan_step}\n\n"
+            f"### Database Information:\n"
+            f"- Database Type: MySQL\n"
+            f"- Database Name: appdb\n"
+            f"- Table Structure:\n{get_database_schema()}\n\n"
+            f"### Execution Instructions:\nStrictly follow the step description to perform the operation. Pay special attention to the following:\n"
+            f"1. This is a MySQL database; use MySQL syntax\n"
+            f"2. If the step mentions querying a table, use the table name explicitly specified in the step\n"
+            f"3. If the step contains a SQL statement, execute that SQL statement directly\n"
+            f"4. Do not use table names not mentioned in the step\n"
+            f"5. Do not query information_schema; query the specified tables directly\n"
+            f"6. For verification steps, execute the corresponding SELECT query to confirm the result\n"
+            f"7. You must return the specific execution result, not a generic reply\n"
+            f"8. Execute immediately, do not ask for more information"
         )
 
         try:
@@ -193,59 +192,59 @@ class SOPExecutorAgent:
                 "chat_history": chat_history
             })
             
-            # 提取Agent的思考过程和工具调用信息
+            # Extract Agent's thought process and tool call information
             agent_thoughts = []
             tool_calls = []
             
-            # 从中间步骤中提取思考过程
+            # Extract thought process from intermediate steps
             if 'intermediate_steps' in response:
                 for step in response['intermediate_steps']:
                     if isinstance(step, tuple) and len(step) == 2:
                         action, observation = step
                         if hasattr(action, 'log'):
-                            agent_thoughts.append(f"🤔 Agent思考: {action.log}")
+                            agent_thoughts.append(f"🤔 Agent thoughts: {action.log}")
                         if hasattr(action, 'tool'):
-                            tool_calls.append(f"🔧 调用工具: {action.tool}")
+                            tool_calls.append(f"🔧 Calling tool: {action.tool}")
                             if hasattr(action, 'tool_input'):
-                                tool_calls.append(f"📝 工具输入: {action.tool_input}")
+                                tool_calls.append(f"📝 Tool input: {action.tool_input}")
                         if observation:
-                            tool_calls.append(f"📊 工具返回: {observation}")
+                            tool_calls.append(f"📊 Tool return: {observation}")
             
-            # 从Agent的输出中提取更多信息
+            # Extract more information from the Agent's output
             agent_output = response.get('output', '')
             if 'Invoking:' in agent_output:
-                # 提取工具调用信息
+                # Extract tool call information
                 lines = agent_output.split('\n')
                 for line in lines:
                     if 'Invoking:' in line:
-                        tool_calls.append(f"🔧 实际执行: {line.strip()}")
+                        tool_calls.append(f"🔧 Actual execution: {line.strip()}")
                     elif 'Finished chain.' in line:
-                        tool_calls.append(f"✅ 执行完成: {line.strip()}")
+                        tool_calls.append(f"✅ Execution complete: {line.strip()}")
             
-            # 如果没有找到思考过程，尝试从输出中提取
+            # If no thought process is found, try extracting from the output
             if not agent_thoughts and not tool_calls:
-                # 分析输出内容
-                if "查询失败" in agent_output or "表" in agent_output:
-                    agent_thoughts.append(f"🤔 Agent分析: 尝试执行数据库查询操作")
-                    agent_thoughts.append(f"📋 步骤理解: {plan_step}")
+                # Analyze output content
+                if "Query failed" in agent_output or "table" in agent_output:
+                    agent_thoughts.append(f"🤔 Agent analysis: Attempting to execute database query operation")
+                    agent_thoughts.append(f"📋 Step understanding: {plan_step}")
                 
                 if "Invoking:" in agent_output:
-                    tool_calls.append(f"🔧 工具调用: 从输出中检测到工具调用")
+                    tool_calls.append(f"🔧 Tool call: Detected tool call from output")
             
-            # 构建增强的响应
+            # Build enhanced response
             enhanced_response = {
                 'output': agent_output,
-                'agent_thoughts': '\n'.join(agent_thoughts) if agent_thoughts else f"Agent正在分析步骤: {plan_step}",
-                'tool_calls': '\n'.join(tool_calls) if tool_calls else "Agent正在准备执行数据库操作...",
+                'agent_thoughts': '\n'.join(agent_thoughts) if agent_thoughts else f"Agent is analyzing step: {plan_step}",
+                'tool_calls': '\n'.join(tool_calls) if tool_calls else "Agent is preparing to execute database operation...",
                 'original_response': response
             }
             
             return enhanced_response
             
         except Exception as e:
-            logging.error(f"Agent 步骤执行失败: {e}", exc_info=True)
+            logging.error(f"Agent step execution failed: {e}", exc_info=True)
             return {
-                "output": f"执行失败: {str(e)}",
-                "agent_thoughts": f"执行过程中发生错误: {str(e)}",
+                "output": f"Execution failed: {str(e)}",
+                "agent_thoughts": f"An error occurred during execution: {str(e)}",
                 "tool_calls": None
             }

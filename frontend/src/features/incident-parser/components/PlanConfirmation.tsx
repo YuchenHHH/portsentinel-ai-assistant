@@ -63,39 +63,39 @@ const PlanConfirmation: React.FC<PlanConfirmationProps> = ({
       }}
     >
       <VStack align="stretch" spacing={4}>
-        {/* 头部信息 */}
+        {/* Header Information */}
         <Box bg={headerBg} p={4} borderRadius="md">
           <HStack justify="space-between" align="center" mb={2}>
             <Text fontSize="lg" fontWeight="bold" color="blue.800">
-              📋 执行计划确认
+              📋 Execution Plan Confirmation
             </Text>
             <Badge colorScheme="blue" fontSize="sm">
-              {plan.length} 个步骤
+              {plan.length} Steps
             </Badge>
           </HStack>
           <Text fontSize="sm" color="blue.700">
-            请仔细审查以下执行计划，确认无误后点击"开始执行"按钮
+            Please carefully review the following execution plan and click "Start Execution" when ready
           </Text>
         </Box>
 
-        {/* 事件信息摘要 */}
+        {/* Incident Information Summary */}
         <Box>
           <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={2}>
-            事件信息:
+            Incident Information:
           </Text>
           <VStack align="stretch" spacing={2} fontSize="sm">
             <HStack>
-              <Text fontWeight="medium" minW="80px">事件ID:</Text>
+              <Text fontWeight="medium" minW="80px">Incident ID:</Text>
               <Text color="gray.700">{incidentContext.incident_id || 'N/A'}</Text>
             </HStack>
             <HStack>
-              <Text fontWeight="medium" minW="80px">问题摘要:</Text>
+              <Text fontWeight="medium" minW="80px">Problem Summary:</Text>
               <Text color="gray.700" fontSize="xs" flex={1}>
                 {incidentContext.problem_summary || 'N/A'}
               </Text>
             </HStack>
             <HStack>
-              <Text fontWeight="medium" minW="80px">影响模块:</Text>
+              <Text fontWeight="medium" minW="80px">Affected Module:</Text>
               <Text color="gray.700">{incidentContext.affected_module || 'N/A'}</Text>
             </HStack>
           </VStack>
@@ -103,10 +103,10 @@ const PlanConfirmation: React.FC<PlanConfirmationProps> = ({
 
         <Divider />
 
-        {/* 执行计划步骤 */}
+        {/* Execution Plan Steps */}
         <Box>
           <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={3}>
-            执行计划步骤:
+            Execution Plan Steps:
           </Text>
           <VStack align="stretch" spacing={3} maxH="300px" overflowY="auto">
             {plan.map((step, index) => (
@@ -145,19 +145,19 @@ const PlanConfirmation: React.FC<PlanConfirmationProps> = ({
           </VStack>
         </Box>
 
-        {/* 重要提示 */}
+        {/* Important Notice */}
         <Alert status="info" variant="subtle">
           <AlertIcon />
           <Box>
-            <AlertTitle fontSize="sm">重要提示</AlertTitle>
+            <AlertTitle fontSize="sm">Important Notice</AlertTitle>
             <AlertDescription fontSize="xs">
-              执行过程中，如果遇到高危操作（如删除、更新数据），系统将暂停并等待您的批准。
-              请确保您有足够的权限执行这些操作。
+              During execution, if high-risk operations (such as deletion or data updates) are encountered, the system will pause and wait for your approval.
+              Please ensure you have sufficient permissions to execute these operations.
             </AlertDescription>
           </Box>
         </Alert>
 
-        {/* 确认按钮 */}
+        {/* Confirmation Button */}
         <HStack justify="center" pt={2}>
           <Button
             leftIcon={<TriangleUpIcon />}
@@ -165,11 +165,11 @@ const PlanConfirmation: React.FC<PlanConfirmationProps> = ({
             size="lg"
             onClick={handleConfirm}
             isLoading={isProcessing}
-            loadingText="开始执行..."
+            loadingText="Starting..."
             minW="140px"
             fontSize="md"
           >
-            开始执行计划
+            Start Execution Plan
           </Button>
         </HStack>
       </VStack>

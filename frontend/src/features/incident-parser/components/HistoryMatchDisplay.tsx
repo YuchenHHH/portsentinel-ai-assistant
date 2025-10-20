@@ -46,7 +46,7 @@ interface HistoryMatchDisplayProps {
 }
 
 /**
- * 历史案例匹配结果显示组件
+ * Historical Case Matching Results Display Component
  */
 export const HistoryMatchDisplay: React.FC<HistoryMatchDisplayProps> = ({ historyData }) => {
   const borderColor = useColorModeValue('gray.200', 'gray.600')
@@ -75,7 +75,7 @@ export const HistoryMatchDisplay: React.FC<HistoryMatchDisplayProps> = ({ histor
 
   const formatTimestamp = (timestamp: string) => {
     try {
-      return new Date(timestamp).toLocaleString('zh-CN')
+      return new Date(timestamp).toLocaleString('en-US')
     } catch {
       return timestamp
     }
@@ -83,53 +83,53 @@ export const HistoryMatchDisplay: React.FC<HistoryMatchDisplayProps> = ({ histor
 
   return (
     <VStack spacing={4} align="stretch">
-      {/* 检索摘要 */}
+      {/* Retrieval Summary */}
       <Alert status="info" borderRadius="lg">
         <AlertIcon />
         <Box>
-          <AlertTitle>历史案例匹配完成</AlertTitle>
+          <AlertTitle>Historical Case Matching Completed</AlertTitle>
           <AlertDescription>
-            找到 {historyData.matched_cases.length} 个相似的历史案例
+            Found {historyData.matched_cases.length} similar historical cases
           </AlertDescription>
         </Box>
       </Alert>
 
-      {/* 统计信息 */}
+      {/* Statistics */}
       <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
         <Stat>
-          <StatLabel>总候选案例</StatLabel>
+          <StatLabel>Total Candidates</StatLabel>
           <StatNumber>{historyData.total_candidates}</StatNumber>
-          <StatHelpText>初始候选</StatHelpText>
+          <StatHelpText>Initial Candidates</StatHelpText>
         </Stat>
         <Stat>
-          <StatLabel>模块过滤</StatLabel>
+          <StatLabel>Module Filtered</StatLabel>
           <StatNumber>{historyData.module_filtered_count}</StatNumber>
-          <StatHelpText>模块匹配</StatHelpText>
+          <StatHelpText>Module Matched</StatHelpText>
         </Stat>
         <Stat>
-          <StatLabel>相似度过滤</StatLabel>
+          <StatLabel>Similarity Filtered</StatLabel>
           <StatNumber>{historyData.similarity_filtered_count}</StatNumber>
-          <StatHelpText>相似度匹配</StatHelpText>
+          <StatHelpText>Similarity Matched</StatHelpText>
         </Stat>
         <Stat>
-          <StatLabel>GPT验证</StatLabel>
+          <StatLabel>GPT Validated</StatLabel>
           <StatNumber>{historyData.gpt_validated_count}</StatNumber>
-          <StatHelpText>AI验证通过</StatHelpText>
+          <StatHelpText>AI Validation Passed</StatHelpText>
         </Stat>
       </SimpleGrid>
 
-      {/* 处理时间 */}
+      {/* Processing Time */}
       <Box textAlign="center">
         <Text fontSize="sm" color="gray.600">
-          处理时间: {historyData.processing_time_ms.toFixed(0)}ms
+          Processing Time: {historyData.processing_time_ms.toFixed(0)}ms
         </Text>
       </Box>
 
-      {/* 匹配的历史案例 */}
+      {/* Matched Historical Cases */}
       {historyData.matched_cases.length > 0 ? (
         <VStack spacing={4} align="stretch">
           <Text fontSize="lg" fontWeight="bold" color="gray.700">
-            相似的历史案例
+            Similar Historical Cases
           </Text>
           
           {historyData.matched_cases.map((matchedCase, index) => (
@@ -146,7 +146,7 @@ export const HistoryMatchDisplay: React.FC<HistoryMatchDisplayProps> = ({ histor
             <HStack>
               <Icon as={InfoIcon} color="gray.500" />
               <Text color="gray.600">
-                未找到相似的历史案例
+                No similar historical cases found
               </Text>
             </HStack>
           </CardBody>
@@ -157,7 +157,7 @@ export const HistoryMatchDisplay: React.FC<HistoryMatchDisplayProps> = ({ histor
 }
 
 /**
- * 单个历史案例卡片组件
+ * Individual Historical Case Card Component
  */
 const HistoryCaseCard: React.FC<{ 
   matchedCase: MatchedCase
@@ -189,7 +189,7 @@ const HistoryCaseCard: React.FC<{
 
   const formatTimestamp = (timestamp: string) => {
     try {
-      return new Date(timestamp).toLocaleString('zh-CN')
+      return new Date(timestamp).toLocaleString('en-US')
     } catch {
       return timestamp
     }
@@ -204,7 +204,7 @@ const HistoryCaseCard: React.FC<{
           <HStack justify="space-between">
             <HStack>
               <Text fontSize="lg" fontWeight="bold" color="gray.700">
-                案例 #{index}: {historyCase.id}
+                Case #{index}: {historyCase.id}
               </Text>
               <Badge colorScheme={getModuleColor(historyCase.module)}>
                 {historyCase.module}
@@ -215,34 +215,34 @@ const HistoryCaseCard: React.FC<{
               <Tag colorScheme={getValidationColor(gpt_validation)} size="sm">
                 <TagLeftIcon as={getValidationIcon(gpt_validation)} />
                 <TagLabel>
-                  {gpt_validation ? 'GPT验证通过' : 'GPT验证未通过'}
+                  {gpt_validation ? 'GPT Validated' : 'GPT Validation Failed'}
                 </TagLabel>
               </Tag>
             </HStack>
           </HStack>
 
-          {/* 相似度分数 */}
+          {/* Similarity Scores */}
           <SimpleGrid columns={{ base: 2, md: 4 }} spacing={4}>
             <Box>
-              <Text fontSize="sm" color="gray.600">综合相似度</Text>
+              <Text fontSize="sm" color="gray.600">Overall Similarity</Text>
               <Text fontSize="lg" fontWeight="bold" color="blue.500">
                 {formatScore(similarity_score.final_score)}
               </Text>
             </Box>
             <Box>
-              <Text fontSize="sm" color="gray.600">文本相似度</Text>
+              <Text fontSize="sm" color="gray.600">Text Similarity</Text>
               <Text fontSize="md" color="gray.700">
                 {formatScore(similarity_score.similarity_score)}
               </Text>
             </Box>
             <Box>
-              <Text fontSize="sm" color="gray.600">实体重合度</Text>
+              <Text fontSize="sm" color="gray.600">Entity Overlap</Text>
               <Text fontSize="md" color="gray.700">
                 {formatScore(similarity_score.entity_overlap_score)}
               </Text>
             </Box>
             <Box>
-              <Text fontSize="sm" color="gray.600">模块匹配度</Text>
+              <Text fontSize="sm" color="gray.600">Module Match</Text>
               <Text fontSize="md" color="gray.700">
                 {formatScore(similarity_score.module_match_score)}
               </Text>
@@ -253,32 +253,32 @@ const HistoryCaseCard: React.FC<{
 
       <CardBody pt={0}>
         <VStack spacing={4} align="stretch">
-          {/* 基本信息 */}
+          {/* Basic Information */}
           <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
             <Box>
-              <Text fontSize="sm" fontWeight="medium" color="gray.600">报告方式</Text>
+              <Text fontSize="sm" fontWeight="medium" color="gray.600">Report Method</Text>
               <Text>{historyCase.mode}</Text>
             </Box>
             <Box>
-              <Text fontSize="sm" fontWeight="medium" color="gray.600">EDI相关</Text>
+              <Text fontSize="sm" fontWeight="medium" color="gray.600">EDI Related</Text>
               <Text>{historyCase.is_edi}</Text>
             </Box>
             <Box>
-              <Text fontSize="sm" fontWeight="medium" color="gray.600">时间戳</Text>
+              <Text fontSize="sm" fontWeight="medium" color="gray.600">Timestamp</Text>
               <Text fontSize="sm">{formatTimestamp(historyCase.timestamp)}</Text>
             </Box>
             <Box>
-              <Text fontSize="sm" fontWeight="medium" color="gray.600">案例ID</Text>
+              <Text fontSize="sm" fontWeight="medium" color="gray.600">Case ID</Text>
               <Text fontSize="sm" fontFamily="mono">{historyCase.id}</Text>
             </Box>
           </SimpleGrid>
 
           <Divider />
 
-          {/* 问题描述 */}
+          {/* Problem Description */}
           <Box>
             <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={2}>
-              问题描述
+              Problem Description
             </Text>
             <Box
               bg={bgColor}
@@ -293,10 +293,10 @@ const HistoryCaseCard: React.FC<{
             </Box>
           </Box>
 
-          {/* 解决方案 */}
+          {/* Solution */}
           <Box>
             <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={2}>
-              解决方案
+              Solution
             </Text>
             <Box
               bg={bgColor}
@@ -311,11 +311,11 @@ const HistoryCaseCard: React.FC<{
             </Box>
           </Box>
 
-          {/* GPT验证推理 */}
+          {/* GPT Validation Reasoning */}
           {gpt_reasoning && (
             <Box>
               <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={2}>
-                GPT验证推理
+                GPT Validation Reasoning
               </Text>
               <Box
                 bg={getValidationColor(gpt_validation) === 'green' ? 'green.50' : 'red.50'}
@@ -331,7 +331,7 @@ const HistoryCaseCard: React.FC<{
             </Box>
           )}
 
-          {/* 完整文本（可折叠） */}
+          {/* Full Text (Collapsible) */}
           <Box>
             <Accordion allowToggle>
               <AccordionItem border="none">
@@ -345,7 +345,7 @@ const HistoryCaseCard: React.FC<{
                       <HStack>
                         <Icon as={ExternalLinkIcon} color="gray.500" />
                         <Text fontSize="sm" fontWeight="medium" color="gray.600">
-                          查看完整案例文本
+                          View Full Case Text
                         </Text>
                       </HStack>
                     </Box>
