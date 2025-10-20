@@ -383,7 +383,7 @@ class SOPExecutionService:
                 step_description=current_step_desc,
                 tool_output=agent_output,
                 state_token=state_token,
-                message=f"步骤 {state.current_step_index} 执行完成，等待继续下一步。",
+                message=f"Step {state.current_step_index} Execution complete. Awaiting next step",
                 agent_thoughts=agent_response.get("agent_thoughts"),
                 tool_calls=agent_response.get("tool_calls"),
                 completed_steps=state.completed_steps

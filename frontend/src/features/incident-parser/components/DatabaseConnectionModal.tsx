@@ -17,11 +17,8 @@ import {
   AlertTitle,
   AlertDescription,
   Text,
-  Badge,
   useColorModeValue,
-  Spinner,
   Box,
-  Divider
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
 import { testDatabaseConnection, configureDatabase } from '../../../services/api';
@@ -40,7 +37,7 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
   onClose,
   onConnectionSuccess
 }) => {
-  const [formData, setFormData] = useState<DatabaseConfigRequest>({
+  const [formData, setFormData] = React.useState<DatabaseConfigRequest>({
     host: 'localhost',
     user: 'root',
     password: '',
@@ -48,20 +45,19 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
     port: 3306
   });
   
-  const [isTesting, setIsTesting] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [testResult, setTestResult] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [isTesting, setIsTesting] = React.useState(false);
+  const [isConnecting, setIsConnecting] = React.useState(false);
+  const [testResult, setTestResult] = React.useState<any>(null);
+  const [error, setError] = React.useState<string | null>(null);
 
   const bgColor = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
 
   const handleInputChange = (field: keyof DatabaseConfigRequest, value: string | number) => {
     setFormData((prev: DatabaseConfigRequest) => ({
       ...prev,
       [field]: value
     }));
-    // 清除之前的测试结果
+    // Clear previous test results
     setTestResult(null);
     setError(null);
   };
@@ -123,16 +119,16 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
       <ModalContent bg={bgColor}>
         <ModalHeader>
           <HStack>
-            <Text fontSize="lg" fontWeight="bold">🗄️ 数据库连接配置</Text>
+            <Text fontSize="lg" fontWeight="bold">🗄️ Database Connection Configuration</Text>
           </HStack>
         </ModalHeader>
         
         <ModalBody>
           <VStack spacing={4} align="stretch">
-            {/* 连接表单 */}
+            {/* Connection Form */}
             <VStack spacing={3} align="stretch">
               <FormControl>
-                <FormLabel fontSize="sm" fontWeight="medium">主机地址</FormLabel>
+                <FormLabel fontSize="sm" fontWeight="medium">Host Address</FormLabel>
                 <Input
                   value={formData.host}
                   onChange={(e) => handleInputChange('host', e.target.value)}
@@ -142,7 +138,7 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
               </FormControl>
               
               <FormControl>
-                <FormLabel fontSize="sm" fontWeight="medium">端口</FormLabel>
+                <FormLabel fontSize="sm" fontWeight="medium">Port</FormLabel>
                 <Input
                   type="number"
                   value={formData.port}
@@ -153,7 +149,7 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
               </FormControl>
               
               <FormControl>
-                <FormLabel fontSize="sm" fontWeight="medium">用户名</FormLabel>
+                <FormLabel fontSize="sm" fontWeight="medium">Username</FormLabel>
                 <Input
                   value={formData.user}
                   onChange={(e) => handleInputChange('user', e.target.value)}
@@ -163,18 +159,18 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
               </FormControl>
               
               <FormControl>
-                <FormLabel fontSize="sm" fontWeight="medium">密码</FormLabel>
+                <FormLabel fontSize="sm" fontWeight="medium">Password</FormLabel>
                 <Input
                   type="password"
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
-                  placeholder="请输入数据库密码"
+                  placeholder="Enter database password"
                   size="sm"
                 />
               </FormControl>
               
               <FormControl>
-                <FormLabel fontSize="sm" fontWeight="medium">数据库名称</FormLabel>
+                <FormLabel fontSize="sm" fontWeight="medium">Database Name</FormLabel>
                 <Input
                   value={formData.database}
                   onChange={(e) => handleInputChange('database', e.target.value)}
@@ -184,22 +180,22 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
               </FormControl>
             </VStack>
 
-            {/* 测试连接按钮 */}
+            {/* Test Connection Button */}
             <HStack justify="center" pt={2}>
               <Button
                 colorScheme="blue"
                 variant="outline"
                 onClick={handleTestConnection}
                 isLoading={isTesting}
-                loadingText="测试中..."
+                loadingText="Testing..."
                 leftIcon={isTesting ? undefined : <Text>🔍</Text>}
                 size="sm"
               >
-                测试连接
+                Test Connection
               </Button>
             </HStack>
 
-            {/* 测试结果 */}
+            {/* Test Result */}
             {testResult && (
               <MotionBox
                 initial={{ opacity: 0, y: 10 }}
@@ -210,14 +206,14 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
                   <Alert status="success">
                     <AlertIcon />
                     <Box>
-                      <AlertTitle fontSize="sm">连接测试成功！</AlertTitle>
+                      <AlertTitle fontSize="sm">Connection Test Successful!</AlertTitle>
                       <AlertDescription fontSize="xs">
                         <VStack align="start" spacing={1} mt={1}>
-                          <Text>数据库: {testResult.database_info?.current_database}</Text>
-                          <Text>用户: {testResult.database_info?.current_user}</Text>
-                          <Text>版本: {testResult.database_info?.mysql_version}</Text>
+                          <Text>Database: {testResult.database_info?.current_database}</Text>
+                          <Text>User: {testResult.database_info?.current_user}</Text>
+                          <Text>Version: {testResult.database_info?.mysql_version}</Text>
                           {testResult.database_info?.tables && (
-                            <Text>表数量: {testResult.database_info.tables.length}</Text>
+                            <Text>Table Count: {testResult.database_info.tables.length}</Text>
                           )}
                         </VStack>
                       </AlertDescription>
@@ -227,7 +223,7 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
                   <Alert status="error">
                     <AlertIcon />
                     <Box>
-                      <AlertTitle fontSize="sm">连接测试失败</AlertTitle>
+                      <AlertTitle fontSize="sm">Connection Test Failed</AlertTitle>
                       <AlertDescription fontSize="xs">
                         {testResult.message}
                       </AlertDescription>
@@ -237,12 +233,12 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
               </MotionBox>
             )}
 
-            {/* 错误信息 */}
+            {/* Error Message */}
             {error && (
               <Alert status="error">
                 <AlertIcon />
                 <Box>
-                  <AlertTitle fontSize="sm">错误</AlertTitle>
+                  <AlertTitle fontSize="sm">Error</AlertTitle>
                   <AlertDescription fontSize="xs">
                     {error}
                   </AlertDescription>
@@ -255,17 +251,17 @@ const DatabaseConnectionModal: React.FC<DatabaseConnectionModalProps> = ({
         <ModalFooter>
           <HStack spacing={3}>
             <Button variant="ghost" onClick={handleClose} size="sm">
-              取消
+              Cancel
             </Button>
             <Button
               colorScheme="green"
               onClick={handleConnect}
               isLoading={isConnecting}
-              loadingText="连接中..."
+              loadingText="Connecting..."
               isDisabled={!testResult?.success}
               size="sm"
             >
-              确认连接
+              Confirm Connection
             </Button>
           </HStack>
         </ModalFooter>

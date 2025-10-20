@@ -135,7 +135,7 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
             <HStack spacing={2}>
               <Text fontSize="lg">{getStatusIcon(executionData.status)}</Text>
               <Text fontSize="md" fontWeight="semibold">
-                SOP 执行状态
+                SOP Execute State
               </Text>
               <Badge colorScheme={
                 executionData.status === 'needs_approval' ? 'orange' :
@@ -154,7 +154,7 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
         {/* 步骤描述 */}
         <Box>
           <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={1}>
-            当前步骤:
+            Current State:
           </Text>
           <Text fontSize="md" color="gray.800">
             {executionData.step_description}
@@ -165,7 +165,7 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
         {executionData.agent_thoughts && (
           <Box>
             <Text fontSize="sm" fontWeight="medium" color="blue.600" mb={2}>
-              🤔 Agent思考过程:
+              🤔 Agent Thinking:
             </Text>
             <Box 
               fontSize="xs" 
@@ -187,7 +187,7 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
         {executionData.tool_calls && (
           <Box>
             <Text fontSize="sm" fontWeight="medium" color="green.600" mb={2}>
-              🔧 Agent执行指令:
+              🔧 Agent Execute:
             </Text>
             <Box 
               fontSize="xs" 
