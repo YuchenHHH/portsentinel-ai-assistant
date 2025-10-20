@@ -39,11 +39,12 @@ interface SOPExecutionDisplayProps {
     }>;
   };
   incidentId?: string;
+  onContinue?: (stateToken: string) => Promise<void>;
 }
 
 const MotionBox = motion(Box);
 
-const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData, incidentId }) => {
+const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData, incidentId, onContinue }) => {
   const cardBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('blue.200', 'blue.700');
   const headerBg = useColorModeValue('blue.50', 'blue.900');

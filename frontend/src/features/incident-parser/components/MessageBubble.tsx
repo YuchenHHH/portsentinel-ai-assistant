@@ -16,6 +16,8 @@ import { EnrichmentDisplay } from './EnrichmentDisplay'
 import { HistoryMatchDisplay } from './HistoryMatchDisplay'
 import SOPExecutionDisplay from './SOPExecutionDisplay'
 import ApprovalRequest from './ApprovalRequest'
+import ContinueExecution from './ContinueExecution'
+import NextStepConfirm from './NextStepConfirm'
 import PlanConfirmation from './PlanConfirmation'
 import { 
   ChatMessage, 
@@ -26,6 +28,8 @@ import {
   isLoadingMessage,
   isSOPExecutionMessage,
   isApprovalRequestMessage,
+  isContinueExecutionMessage,
+  isNextStepConfirmMessage,
   isPlanConfirmationMessage,
   isSystemMessage 
 } from '../../../types/chat'
@@ -37,6 +41,8 @@ interface MessageBubbleProps {
   onApprovalApprove?: (stateToken: string, approvedQuery: string) => Promise<void>;
   onApprovalReject?: (stateToken: string) => Promise<void>;
   onPlanConfirm?: (plan: string[], incidentContext: Record<string, any>) => Promise<void>;
+  onContinueExecution?: (stateToken: string) => Promise<void>;
+  onNextStepConfirm?: (parsedResult: any) => Promise<void>;
   incidentId?: string;
 }
 
@@ -48,6 +54,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   onApprovalApprove, 
   onApprovalReject,
   onPlanConfirm,
+  onContinueExecution,
+  onNextStepConfirm,
   incidentId
 }) => {
   const userBgColor = useColorModeValue('blue.50', 'blue.900')
@@ -188,7 +196,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   <Text fontSize="sm" fontWeight="medium" color="gray.700">
                     {message.content}
                   </Text>
-                  <SOPExecutionDisplay executionData={message.executionData} incidentId={incidentId} />
+                  <SOPExecutionDisplay 
+                    executionData={message.executionData} 
+                    incidentId={incidentId}
+                    onContinue={onContinueExecution}
+                  />
                 </VStack>
               ) : isApprovalRequestMessage(message) ? (
                 <VStack align="stretch" spacing={3}>
@@ -201,6 +213,30 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     stepDescription={message.approvalData.step_description}
                     onApprove={onApprovalApprove || (async () => {})}
                     onReject={onApprovalReject || (async () => {})}
+                  />
+                </VStack>
+              ) : isContinueExecutionMessage(message) ? (
+                <VStack align="stretch" spacing={3}>
+                  <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                    {message.content}
+                  </Text>
+                  <ContinueExecution
+                    stateToken={message.continueData.state_token}
+                    stepDescription={message.continueData.step_description}
+                    toolOutput={message.continueData.tool_output}
+                    onContinue={onContinueExecution || (async () => {})}
+                  />
+                </VStack>
+              ) : isNextStepConfirmMessage(message) ? (
+                <VStack align="stretch" spacing={3}>
+                  <Text fontSize="sm" fontWeight="medium" color="gray.700">
+                    {message.content}
+                  </Text>
+                  <NextStepConfirm
+                    stepName={message.nextStepData.step_name}
+                    stepDescription={message.nextStepData.step_description}
+                    parsedResult={message.nextStepData.parsed_result}
+                    onConfirm={() => onNextStepConfirm?.(message.nextStepData.parsed_result) || Promise.resolve()}
                   />
                 </VStack>
               ) : isPlanConfirmationMessage(message) ? (

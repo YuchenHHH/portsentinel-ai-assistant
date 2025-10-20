@@ -5,7 +5,7 @@ import { ChatInput } from './components/ChatInput'
 import { ChatWindow } from './components/ChatWindow'
 import DatabaseConnectionModal from './components/DatabaseConnectionModal'
 import { useAuth } from '../../contexts/AuthContext'
-import { parseIncidentReport, matchHistoryCases, enrichIncident, fetchExecutionPlan, executeSOPPlan, approveSOPExecution, getDatabaseStatus } from '../../services/api'
+import { parseIncidentReport, matchHistoryCases, enrichIncident, fetchExecutionPlan, executeSOPPlan, approveSOPExecution, continueSOPExecution, getDatabaseStatus } from '../../services/api'
 import { IncidentReportResponse, HistoryMatchRequest, EnrichmentRequest, PlanRequest } from '../../types/api'
 import { 
   createUserMessage, 
@@ -15,6 +15,8 @@ import {
   createLoadingMessage,
   createSOPExecutionMessage,
   createApprovalRequestMessage,
+  createContinueExecutionMessage,
+  createNextStepConfirmMessage,
   createPlanConfirmationMessage,
   ChatMessage 
 } from '../../types/chat'
@@ -64,6 +66,37 @@ export const IncidentParserPage: React.FC = () => {
         )
       )
 
+      // Show next step confirmation
+      const nextStepMessage = createNextStepConfirmMessage(
+        'Ready to proceed to historical case matching',
+        {
+          step_name: 'Incident Parsing',
+          step_description: 'Incident parsing completed successfully',
+          parsed_result: parsedResult
+        }
+      )
+      setMessages(prev => [...prev, nextStepMessage])
+
+    } catch (error: any) {
+      console.error('Incident parsing failed:', error)
+      const errorMessage = createAssistantMessage(
+        `❌ Incident parsing failed: ${error.message}`,
+        {} as IncidentReportResponse
+      )
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === parsingLoadingMessage.id ? errorMessage : msg
+        )
+      )
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Handle next step confirmation (historical case matching and beyond)
+  const handleNextStepConfirm = async (parsedResult: IncidentReportResponse) => {
+    setIsLoading(true)
+    try {
       // Step 2: Historical case matching
       const historyLoadingMessage = createLoadingMessage('Matching historical cases...')
       setMessages((prev) => [...prev, historyLoadingMessage])
@@ -236,22 +269,78 @@ export const IncidentParserPage: React.FC = () => {
         )
       }
 
-    } catch (parseError: any) {
-      console.error('Incident parsing failed:', parseError)
+    } catch (error: any) {
+      console.error('Next step processing failed:', error)
       const errorMessage = createAssistantMessage(
-        `Parsing failed: ${parseError.message || 'AI parsing service temporarily unavailable, please try again later.'}`,
-        {} as IncidentReportResponse // Empty result object
+        `❌ Next step processing failed: ${error.message}`,
+        {} as IncidentReportResponse
       )
-
-      // Update parsing loading message with error information
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === parsingLoadingMessage.id ? errorMessage : msg
-        )
-      )
+      setMessages(prev => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // Handle continue execution
+  const handleContinueExecution = async (stateToken: string) => {
+    setIsLoading(true)
+    try {
+      const result = await continueSOPExecution({ state_token: stateToken })
+      
+      // Add execution result message
+      const executionMessage = createSOPExecutionMessage(
+        `🔄 Continuing SOP execution...`,
+        result
+      )
+      setMessages(prev => [...prev, executionMessage])
+
+      // Handle different execution statuses
+      if (result.status === 'needs_approval' && result.state_token) {
+        // Parse SQL query from tool_output
+        let sqlQuery = '';
+        try {
+          if (result.tool_output) {
+            const toolOutput = JSON.parse(result.tool_output);
+            if (toolOutput && toolOutput.query) {
+              sqlQuery = toolOutput.query;
+            } else {
+              sqlQuery = result.tool_output;
+            }
+          }
+        } catch (e) {
+          sqlQuery = result.tool_output || '';
+        }
+
+        const approvalMessage = createApprovalRequestMessage(
+          `⚠️ High-risk operation detected, manual approval required`,
+          {
+            state_token: result.state_token,
+            query: sqlQuery,
+            step_description: result.step_description
+          }
+        )
+        setMessages(prev => [...prev, approvalMessage])
+      }
+      else if (result.status === 'in_progress' && result.state_token) {
+        const continueMessage = createContinueExecutionMessage(
+          `✅ Step ${result.step + 1} completed successfully. Ready for next step.`,
+          {
+            state_token: result.state_token,
+            step_description: result.step_description,
+            tool_output: result.tool_output || ''
+          }
+        )
+        setMessages(prev => [...prev, continueMessage])
+      }
+    } catch (error: any) {
+      console.error('Continue execution failed:', error)
+      const errorMessage = createAssistantMessage(
+        `❌ Continue execution failed: ${error.message}`,
+        {} as IncidentReportResponse
+      )
+      setMessages(prev => [...prev, errorMessage])
+    }
+    setIsLoading(false)
   }
 
   // Handle approval request
@@ -395,6 +484,18 @@ export const IncidentParserPage: React.FC = () => {
         )
         setMessages(prev => [...prev, approvalMessage])
       }
+      // If execution status is in_progress, show continue button
+      else if (result.status === 'in_progress' && result.state_token) {
+        const continueMessage = createContinueExecutionMessage(
+          `✅ Step ${result.step + 1} completed successfully. Ready for next step.`,
+          {
+            state_token: result.state_token,
+            step_description: result.step_description,
+            tool_output: result.tool_output || ''
+          }
+        )
+        setMessages(prev => [...prev, continueMessage])
+      }
     } catch (error: any) {
       console.error('SOP plan execution failed:', error)
       const errorMessage = createAssistantMessage(
@@ -464,6 +565,8 @@ export const IncidentParserPage: React.FC = () => {
           onApprovalApprove={handleApprovalApprove}
           onApprovalReject={handleApprovalReject}
           onPlanConfirm={handlePlanConfirm}
+          onContinueExecution={handleContinueExecution}
+          onNextStepConfirm={handleNextStepConfirm}
           incidentId={(messages.find(m => m.type === 'assistant' && (m as any).incidentReport?.incident_id) as any)?.incidentReport?.incident_id}
         />
       </Box>

@@ -10,6 +10,7 @@ import {
   ExecutionResponse,
   ApprovalRequest,
   ApprovalResponse,
+  ContinueRequest,
   DatabaseConfigRequest,
   DatabaseConfigResponse,
   HistoryMatchRequest,
@@ -274,6 +275,40 @@ export const approveSOPExecution = async (approvalRequest: ApprovalRequest): Pro
     }
     console.error('SOP Approval Unexpected Error:', error);
     throw new Error('SOP 批准过程中发生意外错误');
+  }
+};
+
+// 继续 SOP 执行
+export const continueSOPExecution = async (request: ContinueRequest): Promise<ExecutionResponse> => {
+  try {
+    console.log('Continue SOP Execution API Request:', request);
+    
+    const response = await apiClient.post('/api/v1/sop-execution/continue', request);
+    
+    console.log('Continue SOP Execution API Response:', response.data);
+    
+    return response.data;
+  } catch (error: any) {
+    if (axios.isAxiosError(error)) {
+      const errorData = error.response?.data;
+      
+      // 检查是否是结构化的错误响应
+      if (isApiErrorResponse(errorData)) {
+        console.error('Continue SOP Execution API Error:', errorData);
+        throw new Error(`${errorData.error}: ${errorData.message}`);
+      } else if (errorData?.detail) {
+        // 处理 FastAPI 的错误格式
+        console.error('Continue SOP Execution API Error:', errorData.detail);
+        throw new Error(typeof errorData.detail === 'string' 
+          ? errorData.detail 
+          : JSON.stringify(errorData.detail));
+      } else {
+        console.error('Continue SOP Execution API Error:', error.message);
+        throw new Error(error.message || '继续 SOP 执行服务发生意外错误');
+      }
+    }
+    console.error('Continue SOP Execution Unexpected Error:', error);
+    throw new Error('继续 SOP 执行过程中发生意外错误');
   }
 };
 

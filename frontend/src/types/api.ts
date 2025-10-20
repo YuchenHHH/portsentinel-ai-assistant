@@ -236,6 +236,11 @@ export interface ApprovalRequest {
   approved: boolean;
 }
 
+// 继续执行请求接口
+export interface ContinueRequest {
+  state_token: string;
+}
+
 // 批准响应接口
 export interface ApprovalResponse {
   success: boolean;

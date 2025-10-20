@@ -17,6 +17,8 @@ interface ChatWindowProps {
   onApprovalApprove?: (stateToken: string, approvedQuery: string) => Promise<void>;
   onApprovalReject?: (stateToken: string) => Promise<void>;
   onPlanConfirm?: (plan: string[], incidentContext: Record<string, any>) => Promise<void>;
+  onContinueExecution?: (stateToken: string) => Promise<void>;
+  onNextStepConfirm?: (parsedResult: any) => Promise<void>;
   incidentId?: string;
 }
 
@@ -28,6 +30,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   onApprovalApprove, 
   onApprovalReject,
   onPlanConfirm,
+  onContinueExecution,
+  onNextStepConfirm,
   incidentId
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -103,6 +107,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               onApprovalApprove={onApprovalApprove}
               onApprovalReject={onApprovalReject}
               onPlanConfirm={onPlanConfirm}
+              onContinueExecution={onContinueExecution}
+              onNextStepConfirm={onNextStepConfirm}
               incidentId={incidentId}
             />
           </MotionBox>
