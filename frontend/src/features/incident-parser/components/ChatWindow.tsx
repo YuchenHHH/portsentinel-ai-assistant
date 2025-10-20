@@ -40,7 +40,6 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const previousMessageCount = useRef(0)
   const bgColor = useColorModeValue('gray.50', 'gray.900')
-  const borderColor = useColorModeValue('gray.200', 'gray.700')
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -65,16 +64,31 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   return (
     <Box
       ref={scrollContainerRef}
-      flex={1}
+      h="100%"
+      w="100%"
       bg={bgColor}
-      display="flex"
-      flexDirection="column"
-      minH={0}
+      overflowY="auto"
+      overflowX="hidden"
       p={4}
+      sx={{
+        '&::-webkit-scrollbar': {
+          width: '8px',
+        },
+        '&::-webkit-scrollbar-track': {
+          background: 'transparent',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: 'gray.300',
+          borderRadius: '4px',
+        },
+        '&::-webkit-scrollbar-thumb:hover': {
+          background: 'gray.400',
+        },
+      }}
     >
       <VStack spacing={4} align="stretch" pb={4}>
         {messages.length === 0 && (
-          <Center flex={1} minH="200px">
+          <Center minH="200px">
             <MotionBox
               textAlign="center"
               color="gray.500"

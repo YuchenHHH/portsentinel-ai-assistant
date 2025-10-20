@@ -38,23 +38,16 @@ export const IncidentParserPage: React.FC = () => {
   const handleSubmit = async (text: string, sourceType: 'Email' | 'SMS' | 'Call') => {
     setIsLoading(true)
 
-    // Create user message
     const userMessage = createUserMessage(text, sourceType)
-
-    // Create parsing loading message
     const parsingLoadingMessage = createLoadingMessage('Parsing incident report...')
-
-    // Add messages to state
     setMessages((prev) => [...prev, userMessage, parsingLoadingMessage])
 
     try {
-      // Step 1: Call API to parse incident
       const parsedResult: IncidentReportResponse = await parseIncidentReport({
         source_type: sourceType,
         raw_text: text,
       })
 
-      // Update parsing loading message with parsing result
       const assistantMessage = createAssistantMessage(
         'Incident parsing completed. Here are the parsing results:',
         parsedResult
@@ -66,7 +59,6 @@ export const IncidentParserPage: React.FC = () => {
         )
       )
 
-      // Show next step confirmation
       const nextStepMessage = createNextStepConfirmMessage(
         'Ready to proceed to historical case matching',
         {
@@ -93,16 +85,13 @@ export const IncidentParserPage: React.FC = () => {
     }
   }
 
-  // Handle next step confirmation (historical case matching and beyond)
   const handleNextStepConfirm = async (parsedResult: IncidentReportResponse) => {
     setIsLoading(true)
     try {
-      // Step 2: Historical case matching
       const historyLoadingMessage = createLoadingMessage('Matching historical cases...')
       setMessages((prev) => [...prev, historyLoadingMessage])
 
       try {
-        // Build historical case matching request
         const historyRequest: HistoryMatchRequest = {
           incident_id: parsedResult.incident_id,
           source_type: parsedResult.source_type,
@@ -114,16 +103,12 @@ export const IncidentParserPage: React.FC = () => {
           raw_text: parsedResult.raw_text,
         }
 
-        // Call historical case matching API
         const historyResult = await matchHistoryCases(historyRequest)
-
-        // Create historical case matching message
         const historyMessage = createHistoryMatchMessage(
           'Historical case matching completed. Here are similar historical cases:',
           historyResult
         )
 
-        // Update historical case matching loading message with matching result
         setMessages((prev) =>
           prev.map((msg) =>
             msg.id === historyLoadingMessage.id ? historyMessage : msg
@@ -138,15 +123,13 @@ export const IncidentParserPage: React.FC = () => {
             msg.id === historyLoadingMessage.id ? errorMessage : msg
           )
         )
-        return // If historical case matching fails, return directly without continuing to subsequent steps
+        return
       }
 
-      // Step 3: Call RAG enrichment
       const ragLoadingMessage = createLoadingMessage('Retrieving knowledge base...')
       setMessages((prev) => [...prev, ragLoadingMessage])
 
       try {
-          // Build RAG request
           const enrichmentRequest: EnrichmentRequest = {
             incident_id: parsedResult.incident_id,
             source_type: parsedResult.source_type,
@@ -158,28 +141,22 @@ export const IncidentParserPage: React.FC = () => {
             raw_text: parsedResult.raw_text,
           }
 
-          // Call RAG enrichment API
           const enrichmentResult = await enrichIncident(enrichmentRequest)
-
-          // Create RAG enrichment message
           const enrichmentMessage = createEnrichmentMessage(
             'Knowledge base retrieval completed. Here are relevant SOP suggestions:',
             enrichmentResult
           )
 
-          // Update RAG loading message with enrichment result
           setMessages((prev) =>
             prev.map((msg) =>
               msg.id === ragLoadingMessage.id ? enrichmentMessage : msg
             )
           )
 
-          // Step 4: Generate execution plan
           const planLoadingMessage = createLoadingMessage('Generating execution plan...')
           setMessages((prev) => [...prev, planLoadingMessage])
 
         try {
-          // Build execution plan request
           const planRequest: PlanRequest = {
             incident_context: {
               incident_id: parsedResult.incident_id,
@@ -200,11 +177,9 @@ export const IncidentParserPage: React.FC = () => {
             }
           }
 
-          // Call execution plan generation API
           const planResult = await fetchExecutionPlan(planRequest)
 
           if (planResult.success && planResult.plan.length > 0) {
-            // Create plan confirmation message
             const planConfirmationMessage = createPlanConfirmationMessage(
               `📋 Execution plan generation completed with ${planResult.plan.length} steps. Please confirm to start execution:`,
               {
@@ -221,13 +196,11 @@ export const IncidentParserPage: React.FC = () => {
               }
             )
 
-            // Remove loading message and add plan confirmation message
             setMessages((prev) => [
               ...prev.filter((msg) => msg.id !== planLoadingMessage.id),
               planConfirmationMessage
             ])
           } else {
-            // Plan generation failed
             const planErrorMessage = createAssistantMessage(
               `Execution plan generation failed: ${planResult.message || 'Unable to generate execution plan'}`,
               {} as IncidentReportResponse
@@ -246,7 +219,6 @@ export const IncidentParserPage: React.FC = () => {
             {} as IncidentReportResponse
           )
 
-          // Update plan loading message with error information
           setMessages((prev) =>
             prev.map((msg) =>
               msg.id === planLoadingMessage.id ? planErrorMessage : msg
@@ -261,7 +233,6 @@ export const IncidentParserPage: React.FC = () => {
           parsedResult
         )
 
-        // Update RAG loading message with error information
         setMessages((prev) =>
           prev.map((msg) =>
             msg.id === ragLoadingMessage.id ? ragErrorMessage : msg
@@ -281,22 +252,18 @@ export const IncidentParserPage: React.FC = () => {
     }
   }
 
-  // Handle continue execution
   const handleContinueExecution = async (stateToken: string) => {
     setIsLoading(true)
     try {
       const result = await continueSOPExecution({ state_token: stateToken })
       
-      // Add execution result message
       const executionMessage = createSOPExecutionMessage(
         `🔄 Continuing SOP execution...`,
         result
       )
       setMessages(prev => [...prev, executionMessage])
 
-      // Handle different execution statuses
       if (result.status === 'needs_approval' && result.state_token) {
-        // Parse SQL query from tool_output
         let sqlQuery = '';
         try {
           if (result.tool_output) {
@@ -343,7 +310,6 @@ export const IncidentParserPage: React.FC = () => {
     setIsLoading(false)
   }
 
-  // Handle approval request
   const handleApprovalApprove = async (stateToken: string, approvedQuery: string) => {
     setIsProcessingApproval(true)
     try {
@@ -354,7 +320,6 @@ export const IncidentParserPage: React.FC = () => {
       })
 
       if (result.success && result.execution_result) {
-        // Add execution result message
         console.log('Approval execution result:', result.execution_result)
         console.log('completed_steps count:', result.execution_result.completed_steps?.length)
         const executionMessage = createSOPExecutionMessage(
@@ -363,9 +328,7 @@ export const IncidentParserPage: React.FC = () => {
         )
         setMessages(prev => [...prev, executionMessage])
 
-        // Check if execution result needs another approval
         if (result.execution_result.status === 'needs_approval' && result.execution_result.state_token) {
-          // Parse SQL query from tool_output
           let sqlQuery = '';
           try {
             if (result.execution_result.tool_output) {
@@ -373,11 +336,10 @@ export const IncidentParserPage: React.FC = () => {
               if (toolOutput && toolOutput.query) {
                 sqlQuery = toolOutput.query;
               } else {
-                sqlQuery = result.execution_result.tool_output; // If not JSON format, use directly
+                sqlQuery = result.execution_result.tool_output;
               }
             }
           } catch (e) {
-            // If parsing fails, use original output
             sqlQuery = result.execution_result.tool_output || '';
           }
 
@@ -391,15 +353,6 @@ export const IncidentParserPage: React.FC = () => {
           )
           setMessages(prev => [...prev, approvalMessage])
         }
-
-        // If execution is completed, don't show completion message
-        // if (result.execution_result.status === 'completed') {
-        //   const completionMessage = createAssistantMessage(
-        //     '🎉 SOP execution plan completed successfully!',
-        //     {} as IncidentReportResponse
-        //   )
-        //   setMessages(prev => [...prev, completionMessage])
-        // }
       }
     } catch (error: any) {
       console.error('Approval execution failed:', error)
@@ -437,11 +390,9 @@ export const IncidentParserPage: React.FC = () => {
     setIsProcessingApproval(false)
   }
 
-  // Handle plan confirmation
   const handlePlanConfirm = async (plan: string[], incidentContext: Record<string, any>) => {
     setIsLoading(true)
     try {
-      // Start executing SOP plan
       const executionRequest = {
         plan: plan,
         incident_context: incidentContext
@@ -449,16 +400,13 @@ export const IncidentParserPage: React.FC = () => {
 
       const result = await executeSOPPlan(executionRequest)
       
-      // Add execution result message
       const executionMessage = createSOPExecutionMessage(
         `🚀 Starting SOP plan execution with ${plan.length} steps`,
         result
       )
       setMessages(prev => [...prev, executionMessage])
 
-      // If execution status is needs_approval, show approval request
       if (result.status === 'needs_approval' && result.state_token) {
-        // Parse SQL query from tool_output
         let sqlQuery = '';
         try {
           if (result.tool_output) {
@@ -466,11 +414,10 @@ export const IncidentParserPage: React.FC = () => {
             if (toolOutput && toolOutput.query) {
               sqlQuery = toolOutput.query;
             } else {
-              sqlQuery = result.tool_output; // If not JSON format, use directly
+              sqlQuery = result.tool_output;
             }
           }
         } catch (e) {
-          // If parsing fails, use original output
           sqlQuery = result.tool_output || '';
         }
 
@@ -484,7 +431,6 @@ export const IncidentParserPage: React.FC = () => {
         )
         setMessages(prev => [...prev, approvalMessage])
       }
-      // If execution status is in_progress, show continue button
       else if (result.status === 'in_progress' && result.state_token) {
         const continueMessage = createContinueExecutionMessage(
           `✅ Step ${result.step + 1} completed successfully. Ready for next step.`,
@@ -507,7 +453,6 @@ export const IncidentParserPage: React.FC = () => {
     setIsLoading(false)
   }
 
-  // Check database status
   const checkDatabaseStatus = async () => {
     try {
       const status = await getDatabaseStatus()
@@ -517,13 +462,10 @@ export const IncidentParserPage: React.FC = () => {
     }
   }
 
-  // Handle database connection success
   const handleDatabaseConnectionSuccess = () => {
     checkDatabaseStatus()
-    // Don't show success message, silently update status
   }
 
-  // Check database status when component mounts
   React.useEffect(() => {
     checkDatabaseStatus()
   }, [])
@@ -531,12 +473,14 @@ export const IncidentParserPage: React.FC = () => {
   
   return (
     <Box 
+      position="fixed"
+      top="7%"
+      left={0}
+      right={0}
+      bottom={0}
       bg={bgColor} 
-      h="93%"
-      maxH="93%"
       display="flex" 
-      flexDirection="column" 
-      overflow="hidden"
+      flexDirection="column"
     >
       {/* Status Bar */}
       <Box px={4} py={2} bg="gray.50" borderBottom="1px" borderColor={borderColor} flexShrink={0}>
@@ -559,14 +503,10 @@ export const IncidentParserPage: React.FC = () => {
         </HStack>
       </Box>
   
-      {/* Chat Messages Area - 单一可滚动容器，占据剩余空间 */}
+      {/* Chat Messages Area */}
       <Box 
-        flex={1} 
-        overflowY="auto" 
-        overflowX="hidden"
-        display="flex"
-        flexDirection="column"
-        minH={0}
+        flex={1}
+        overflow="hidden"
       >
         <ChatWindow 
           messages={messages} 
@@ -579,7 +519,7 @@ export const IncidentParserPage: React.FC = () => {
         />
       </Box>
   
-      {/* Chat Input - 仅在没有消息时显示，避免首屏过低 */}
+      {/* Chat Input */}
       {messages.length === 0 && (
         <Box 
           flexShrink={0}
