@@ -1,0 +1,5 @@
+contact_name,role,email,module,error_codes
+John Smith,Senior Developer,john.smith@company.com,Vessel,"VES001,VES002"
+Jane Doe,Technical Lead,jane.doe@company.com,Container,"CNT001,CNT002"
+Mike Johnson,System Admin,mike.johnson@company.com,EDI/API,"EDI001,API001"
+Sarah Wilson,Product Manager,sarah.wilson@company.com,Others,"GEN001,GEN002"

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   VStack,
@@ -12,9 +12,12 @@ import {
   AlertDescription,
   Code,
   Divider,
-  useColorModeValue
+  useColorModeValue,
+  Button
 } from '@chakra-ui/react';
 import { motion } from 'framer-motion';
+import { generateExecutionSummary, getLatestSummaryMarkdown } from '../../../services/executionSummaryApi';
+import MarkdownRenderer from '../../../components/MarkdownRenderer';
 
 interface SOPExecutionDisplayProps {
   executionData: {
@@ -35,15 +38,52 @@ interface SOPExecutionDisplayProps {
       status: string;
     }>;
   };
+  incidentId?: string;
 }
 
 const MotionBox = motion(Box);
 
-const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData }) => {
+const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData, incidentId }) => {
   const cardBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('blue.200', 'blue.700');
   const headerBg = useColorModeValue('blue.50', 'blue.900');
+  
+  const [summaryData, setSummaryData] = useState<any>(null);
+  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+  const [showSummary, setShowSummary] = useState(false);
+  const [markdownContent, setMarkdownContent] = useState<string>('');
 
+  // 生成执行摘要
+  const handleGenerateSummary = async () => {
+    if (!incidentId || !executionData.completed_steps) return;
+    
+    setIsLoadingSummary(true);
+    try {
+      const result = await generateExecutionSummary(incidentId, {
+        execution_status: executionData.status === 'completed' ? 'completed' : 'failed',
+        execution_notes: executionData.message || 'SOP execution completed',
+        total_execution_time_hours: executionData.completed_steps.length * 0.5, // 估算时间
+        completed_steps: executionData.completed_steps
+      });
+      
+      setSummaryData(result.summary);
+      setShowSummary(true);
+      
+      // 获取最新的 Markdown 内容 - 添加延迟确保 Agent 4 完成摘要生成
+      try {
+        // 等待 1 秒确保文件写入完成
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const markdownResult = await getLatestSummaryMarkdown();
+        setMarkdownContent(markdownResult.markdown_content);
+      } catch (markdownError: any) {
+        console.error('获取最新 Markdown 内容失败:', markdownError);
+      }
+    } catch (error: any) {
+      console.error('生成摘要失败:', error);
+    } finally {
+      setIsLoadingSummary(false);
+    }
+  };
 
   const getStatusText = (status: string) => {
     switch (status) {
@@ -288,6 +328,119 @@ const SOPExecutionDisplay: React.FC<SOPExecutionDisplayProps> = ({ executionData
               <Code fontSize="xs" colorScheme="gray">
                 {executionData.state_token}
               </Code>
+            </Box>
+          </>
+        )}
+
+        {/* 执行摘要生成按钮 (仅在完成时显示) */}
+        {executionData.status === 'completed' && incidentId && !showSummary && (
+          <>
+            <Divider />
+            <Box textAlign="center">
+              <Button
+                colorScheme="purple"
+                size="md"
+                onClick={handleGenerateSummary}
+                isLoading={isLoadingSummary}
+                loadingText="生成摘要中..."
+                leftIcon={<span>📋</span>}
+              >
+                生成执行摘要
+              </Button>
+            </Box>
+          </>
+        )}
+
+        {/* 执行摘要显示 */}
+        {showSummary && summaryData && (
+          <>
+            <Divider />
+            <Box>
+              <Text fontSize="md" fontWeight="semibold" mb={3} color="purple.700">
+                📋 执行摘要
+              </Text>
+              <Box p={4} bg="purple.50" borderRadius="md" border="1px" borderColor="purple.200">
+                <VStack align="stretch" spacing={3}>
+                  {/* 基本信息 */}
+                  <HStack justify="space-between">
+                    <Text fontSize="sm" fontWeight="medium" color="gray.600">
+                      解析结果:
+                    </Text>
+                    <Badge colorScheme={summaryData.resolution_outcome === 'SUCCESS' ? 'green' : 'orange'}>
+                      {summaryData.resolution_outcome}
+                    </Badge>
+                  </HStack>
+                  
+                  <HStack justify="space-between">
+                    <Text fontSize="sm" fontWeight="medium" color="gray.600">
+                      升级状态:
+                    </Text>
+                    <Badge colorScheme={summaryData.escalation_required ? 'orange' : 'green'}>
+                      {summaryData.escalation_required ? '需要升级' : '无需升级'}
+                    </Badge>
+                  </HStack>
+
+                  {/* 错误详情 */}
+                  {summaryData.error_identified && (
+                    <Box>
+                      <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={1}>
+                        识别的错误:
+                      </Text>
+                      <Text fontSize="sm" color="gray.700" p={2} bg="white" borderRadius="md">
+                        {summaryData.error_identified}
+                      </Text>
+                    </Box>
+                  )}
+
+                  {summaryData.root_cause && (
+                    <Box>
+                      <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={1}>
+                        根本原因:
+                      </Text>
+                      <Text fontSize="sm" color="gray.700" p={2} bg="white" borderRadius="md">
+                        {summaryData.root_cause}
+                      </Text>
+                    </Box>
+                  )}
+
+                  {/* L2 团队备注 */}
+                  {summaryData.l2_team_notes && (
+                    <Box>
+                      <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={1}>
+                        L2 团队备注:
+                      </Text>
+                      <Text fontSize="sm" color="gray.700" p={2} bg="white" borderRadius="md">
+                        {summaryData.l2_team_notes}
+                      </Text>
+                    </Box>
+                  )}
+
+                  {/* 摘要文件路径 */}
+                  {summaryData.summary_path && (
+                    <Box>
+                      <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={1}>
+                        摘要文件:
+                      </Text>
+                      <Code fontSize="xs" colorScheme="gray" p={2} display="block">
+                        {summaryData.summary_path.split('/').pop()}
+                      </Code>
+                    </Box>
+                  )}
+
+                  {/* Markdown 内容显示 */}
+                  {markdownContent && (
+                    <Box>
+                      <Text fontSize="sm" fontWeight="medium" color="gray.600" mb={3}>
+                        📄 详细摘要内容:
+                      </Text>
+                      <MarkdownRenderer 
+                        content={markdownContent}
+                        maxHeight="600px"
+                      />
+                    </Box>
+                  )}
+                </VStack>
+              </Box>
             </Box>
           </>
         )}

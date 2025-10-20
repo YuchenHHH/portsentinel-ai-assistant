@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.core.config import settings
-from app.api.v1.endpoints import incident_parser, rag, orchestrator, sop_execution, database, history_match, auth
+from app.api.v1.endpoints import incident_parser, rag, orchestrator, sop_execution, database, history_match, auth, execution_summary
 
 # 配置日志
 logging.basicConfig(
@@ -73,6 +73,12 @@ app.include_router(
     auth.router,
     prefix=f"{settings.api_v1_prefix}/auth",
     tags=["用户认证"]
+)
+
+app.include_router(
+    execution_summary.router,
+    prefix=f"{settings.api_v1_prefix}/execution-summary",
+    tags=["执行摘要"]
 )
 
 

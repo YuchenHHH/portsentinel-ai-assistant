@@ -1,0 +1,18 @@
+To: john.smith@company.com
+Subject: URGENT: L2 Escalation Required - Incident TEST-DB-002
+Priority: HIGH
+
+Dear John Smith,
+
+This is an escalation request for incident TEST-DB-002.
+
+L2 Team Status: FAILED
+Time Elapsed: 3.0 hours
+Execution Notes: Database permission error. Cannot modify vessel_advice table.
+
+Summary: Failed to execute database update due to permission issues
+
+Please provide assistance at your earliest convenience.
+
+Best regards,
+PortSentinel AI Assistant

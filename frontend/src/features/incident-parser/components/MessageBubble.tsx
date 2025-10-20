@@ -37,6 +37,7 @@ interface MessageBubbleProps {
   onApprovalApprove?: (stateToken: string, approvedQuery: string) => Promise<void>;
   onApprovalReject?: (stateToken: string) => Promise<void>;
   onPlanConfirm?: (plan: string[], incidentContext: Record<string, any>) => Promise<void>;
+  incidentId?: string;
 }
 
 /**
@@ -46,7 +47,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   message, 
   onApprovalApprove, 
   onApprovalReject,
-  onPlanConfirm
+  onPlanConfirm,
+  incidentId
 }) => {
   const userBgColor = useColorModeValue('blue.50', 'blue.900')
   const assistantBgColor = useColorModeValue('gray.50', 'gray.700')
@@ -198,7 +200,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   <Text fontSize="sm" fontWeight="medium" color="gray.700">
                     {message.content}
                   </Text>
-                  <SOPExecutionDisplay executionData={message.executionData} />
+                  <SOPExecutionDisplay executionData={message.executionData} incidentId={incidentId} />
                 </VStack>
               ) : isApprovalRequestMessage(message) ? (
                 // 批准请求显示

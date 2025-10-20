@@ -17,6 +17,7 @@ interface ChatWindowProps {
   onApprovalApprove?: (stateToken: string, approvedQuery: string) => Promise<void>;
   onApprovalReject?: (stateToken: string) => Promise<void>;
   onPlanConfirm?: (plan: string[], incidentContext: Record<string, any>) => Promise<void>;
+  incidentId?: string;
 }
 
 /**
@@ -26,7 +27,8 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   messages, 
   onApprovalApprove, 
   onApprovalReject,
-  onPlanConfirm
+  onPlanConfirm,
+  incidentId
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const bgColor = useColorModeValue('gray.50', 'gray.900')
@@ -94,6 +96,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
               onApprovalApprove={onApprovalApprove}
               onApprovalReject={onApprovalReject}
               onPlanConfirm={onPlanConfirm}
+              incidentId={incidentId}
             />
           </MotionBox>
         ))}

@@ -6,7 +6,7 @@ import { ChatWindow } from './components/ChatWindow'
 import DatabaseConnectionModal from './components/DatabaseConnectionModal'
 import { useAuth } from '../../contexts/AuthContext'
 import { parseIncidentReport, matchHistoryCases, enrichIncident, fetchExecutionPlan, executeSOPPlan, approveSOPExecution, getDatabaseStatus } from '../../services/api'
-import { IncidentReportResponse, HistoryMatchRequest, EnrichmentRequest, PlanRequest, ParsedIncident, SOPResponse } from '../../types/api'
+import { IncidentReportResponse, HistoryMatchRequest, EnrichmentRequest, PlanRequest } from '../../types/api'
 import { 
   createUserMessage, 
   createAssistantMessage, 
@@ -297,7 +297,7 @@ export const IncidentParserPage: React.FC = () => {
   const handleApprovalReject = async (stateToken: string) => {
     setIsProcessingApproval(true)
     try {
-      const result = await approveSOPExecution({
+      await approveSOPExecution({
         state_token: stateToken,
         approved_query: '',
         approved: false
@@ -479,6 +479,7 @@ export const IncidentParserPage: React.FC = () => {
           onApprovalApprove={handleApprovalApprove}
           onApprovalReject={handleApprovalReject}
           onPlanConfirm={handlePlanConfirm}
+          incidentId={(messages.find(m => m.type === 'assistant' && (m as any).incidentReport?.incident_id) as any)?.incidentReport?.incident_id}
         />
       </VStack>
 

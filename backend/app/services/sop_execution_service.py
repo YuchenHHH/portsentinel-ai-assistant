@@ -5,6 +5,7 @@ from typing import List, Dict, Any, Union, Optional
 from pydantic import BaseModel
 from pathlib import Path
 from langchain_core.messages import HumanMessage, AIMessage
+from datetime import datetime
 
 # 添加 SOP executor 模块到 Python 路径（与orchestrator_service.py相同的方式）
 # 从 backend/app/services/sop_execution_service.py 到 modules/sop_executor/src
@@ -198,6 +199,31 @@ class SOPExecutionService:
         """
         if state.current_step_index >= len(state.plan):
             logging.info(f"计划执行完成，返回completed状态。completed_steps数量: {len(state.completed_steps)}")
+            
+            # 调用 Agent 4 生成执行摘要
+            try:
+                from .agent_4_integration import get_sop_summary_service
+                summary_service = get_sop_summary_service()
+                
+                # 计算执行时间（简化计算）
+                execution_time_hours = len(state.completed_steps) * 0.5  # 假设每个步骤平均0.5小时
+                
+                summary_result = summary_service.generate_execution_summary(
+                    incident_id=state.incident_context.get("incident_id", "UNKNOWN"),
+                    completed_steps=state.completed_steps,
+                    execution_status="completed",
+                    execution_notes="SOP execution completed successfully",
+                    total_execution_time_hours=execution_time_hours
+                )
+                
+                if summary_result.get("success"):
+                    logging.info(f"Agent 4 摘要生成成功: {summary_result.get('summary_path')}")
+                else:
+                    logging.warning(f"Agent 4 摘要生成失败: {summary_result.get('error')}")
+                    
+            except Exception as e:
+                logging.error(f"调用 Agent 4 生成摘要时出错: {e}")
+            
             return ExecutionStepResult(
                 status="completed",
                 step=state.current_step_index - 1,  # 返回最后一个执行的步骤编号
