@@ -40,8 +40,9 @@ import { DashboardCards } from '../components/dashboard/DashboardCards';
 import { CaseList } from '../components/dashboard/CaseList';
 import { CaseDetail } from '../components/dashboard/CaseDetail';
 import { KnowledgeBase } from '../components/dashboard/KnowledgeBase';
+import { DataUpload } from '../components/dashboard/DataUpload';
 
-type DashboardView = 'overview' | 'pending-cases' | 'resolved-cases' | 'knowledge-base' | 'case-detail';
+type DashboardView = 'overview' | 'pending-cases' | 'resolved-cases' | 'knowledge-base' | 'data-upload' | 'case-detail';
 
 export const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -83,6 +84,8 @@ export const Dashboard: React.FC = () => {
         return <CaseList type="resolved" onCaseSelect={handleCaseSelect} />;
       case 'knowledge-base':
         return <KnowledgeBase />;
+      case 'data-upload':
+        return <DataUpload />;
       case 'case-detail':
         return (
           <CaseDetail 

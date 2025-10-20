@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.core.config import settings
-from app.api.v1.endpoints import incident_parser, rag, orchestrator, sop_execution, database, history_match, auth, execution_summary
+from app.api.v1.endpoints import incident_parser, rag, orchestrator, sop_execution, database, history_match, auth, execution_summary, data_upload, knowledge_upload
 
 logging.basicConfig(
     level=getattr(logging, settings.log_level.upper()),
@@ -74,6 +74,18 @@ app.include_router(
     execution_summary.router,
     prefix=f"{settings.api_v1_prefix}/execution-summary",
     tags=["执行摘要"]
+)
+
+app.include_router(
+    data_upload.router,
+    prefix=f"{settings.api_v1_prefix}/data",
+    tags=["Data Upload"]
+)
+
+app.include_router(
+    knowledge_upload.router,
+    prefix=f"{settings.api_v1_prefix}/knowledge",
+    tags=["Knowledge Upload"]
 )
 
 

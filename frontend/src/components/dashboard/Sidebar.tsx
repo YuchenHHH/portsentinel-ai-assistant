@@ -26,6 +26,7 @@ import {
   ChatIcon,
   SearchIcon,
   AddIcon,
+  AttachmentIcon,
 } from '@chakra-ui/icons';
 
 interface SidebarProps {
@@ -75,6 +76,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'knowledge-base',
       label: 'Knowledge Base',
       icon: SettingsIcon,
+      badge: null,
+    },
+    {
+      id: 'data-upload',
+      label: 'Data Upload',
+      icon: AttachmentIcon,
       badge: null,
     },
   ];

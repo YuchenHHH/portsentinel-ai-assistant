@@ -2,449 +2,397 @@
  * KnowledgeBase - 知识库管理界面
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Box,
   VStack,
   HStack,
   Text,
   Button,
-  Input,
-  InputGroup,
-  InputLeftElement,
-  Textarea,
-  Select,
   Card,
   CardBody,
   useColorModeValue,
   Icon,
   Badge,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  useDisclosure,
-  FormControl,
-  FormLabel,
-  FormErrorMessage,
-  Flex,
-  Spacer,
+  Progress,
+  useToast,
+  Alert,
+  AlertIcon,
+  AlertTitle,
+  AlertDescription,
+  SimpleGrid,
+  Stat,
+  StatLabel,
+  StatNumber,
+  StatHelpText,
   Divider,
-  IconButton,
 } from '@chakra-ui/react';
 import {
-  AddIcon,
-  SearchIcon,
-  EditIcon,
-  DeleteIcon,
-  ViewIcon,
-  DownloadIcon,
   AttachmentIcon,
-  InfoIcon,
+  CheckCircleIcon,
+  WarningIcon,
 } from '@chakra-ui/icons';
+import api from '../../services/api';
 
-interface KnowledgeItem {
-  id: string;
-  title: string;
-  content: string;
-  category: string;
-  tags: string[];
-  createdAt: string;
-  updatedAt: string;
-  author: string;
-  status: 'active' | 'draft' | 'archived';
+interface KnowledgeUploadResult {
+  success: boolean;
+  message: string;
+  data?: {
+    totalSOPs: number;
+    modules: string[];
+    processingTime: number;
+    vectorized: boolean;
+  };
 }
 
-// 模拟知识库数据
-const mockKnowledgeItems: KnowledgeItem[] = [
-  {
-    id: '1',
-    title: 'Container Loading Procedures',
-    content: 'Standard operating procedures for container loading operations...',
-    category: 'SOP',
-    tags: ['container', 'loading', 'safety'],
-    createdAt: '2024-01-10T09:00:00Z',
-    updatedAt: '2024-01-15T14:30:00Z',
-    author: 'John Doe',
-    status: 'active',
-  },
-  {
-    id: '2',
-    title: 'Weather Impact Assessment',
-    content: 'Guidelines for assessing weather impact on port operations...',
-    category: 'Guidelines',
-    tags: ['weather', 'assessment', 'safety'],
-    createdAt: '2024-01-12T11:00:00Z',
-    updatedAt: '2024-01-12T11:00:00Z',
-    author: 'Jane Smith',
-    status: 'active',
-  },
-  {
-    id: '3',
-    title: 'EDI System Troubleshooting',
-    content: 'Common EDI system issues and resolution steps...',
-    category: 'Troubleshooting',
-    tags: ['EDI', 'IT', 'troubleshooting'],
-    createdAt: '2024-01-08T16:00:00Z',
-    updatedAt: '2024-01-14T10:15:00Z',
-    author: 'Mike Johnson',
-    status: 'active',
-  },
-];
-
 export const KnowledgeBase: React.FC = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterCategory, setFilterCategory] = useState('all');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [selectedItem, setSelectedItem] = useState<KnowledgeItem | null>(null);
-  
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const { isOpen: isEditOpen, onOpen: onEditOpen, onClose: onEditClose } = useDisclosure();
+  const [file, setFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadResult, setUploadResult] = useState<KnowledgeUploadResult | null>(null);
+  const [dragActive, setDragActive] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const toast = useToast();
 
   const cardBg = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const textColor = useColorModeValue('gray.600', 'gray.300');
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active': return 'green';
-      case 'draft': return 'yellow';
-      case 'archived': return 'gray';
-      default: return 'gray';
+  const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
     }
   };
 
-  const filteredItems = mockKnowledgeItems.filter(item => {
-    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesCategory = filterCategory === 'all' || item.category === filterCategory;
-    const matchesStatus = filterStatus === 'all' || item.status === filterStatus;
-
-    return matchesSearch && matchesCategory && matchesStatus;
-  });
-
-  const handleViewItem = (item: KnowledgeItem) => {
-    setSelectedItem(item);
-    onOpen();
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      const uploadedFile = e.dataTransfer.files[0];
+      if (validateFile(uploadedFile)) {
+        setFile(uploadedFile);
+        setUploadResult(null);
+      }
+    }
   };
 
-  const handleEditItem = (item: KnowledgeItem) => {
-    setSelectedItem(item);
-    onEditOpen();
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const uploadedFile = e.target.files[0];
+      if (validateFile(uploadedFile)) {
+        setFile(uploadedFile);
+        setUploadResult(null);
+      }
+    }
+  };
+
+  const validateFile = (uploadedFile: File): boolean => {
+    const allowedTypes = [
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/msword'
+    ];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+
+    if (!allowedTypes.includes(uploadedFile.type)) {
+      toast({
+        title: 'Invalid file type',
+        description: 'Only .docx and .doc files are allowed.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+      return false;
+    }
+
+    if (uploadedFile.size > maxSize) {
+      toast({
+        title: 'File too large',
+        description: 'File size cannot exceed 10MB.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+      return false;
+    }
+    return true;
+  };
+
+  const handleUpload = async () => {
+    if (!file) {
+      toast({
+        title: 'No file selected',
+        description: 'Please select a Word document to upload.',
+        status: 'warning',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadProgress(0);
+    setUploadResult(null);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await api.post<KnowledgeUploadResult>('/api/v1/knowledge/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        onUploadProgress: (progressEvent: any) => {
+          if (progressEvent.total) {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress(percentCompleted);
+          }
+        },
+      });
+      setUploadResult(response.data);
+      toast({
+        title: 'Upload successful',
+        description: response.data.message,
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      setUploadResult({
+        success: false,
+        message: error.response?.data?.detail || 'An error occurred during upload.',
+      });
+      toast({
+        title: 'Upload failed',
+        description: error.response?.data?.detail || 'An error occurred during upload.',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+      setFile(null);
+    }
   };
 
   return (
-    <VStack spacing={6} align="stretch">
-      {/* Header */}
-      <Flex justify="space-between" align="center">
-        <VStack align="start" spacing={1}>
-          <Text fontSize="2xl" fontWeight="bold">
-            Knowledge Base
+    <Box p={4} h="100%" overflowY="auto">
+      <VStack spacing={4} align="stretch">
+        {/* Header */}
+        <Box>
+          <Text fontSize="lg" fontWeight="bold" mb={1}>
+            Knowledge Base Management
           </Text>
-          <Text color={textColor}>
-            Manage and organize your knowledge resources
+          <Text fontSize="sm" color={textColor}>
+            Upload Word documents to automatically convert and vectorize SOP knowledge
           </Text>
-        </VStack>
-        
-        <HStack spacing={3}>
-          <Button size="sm" variant="outline" leftIcon={<DownloadIcon />}>
-            Export
-          </Button>
-          <Button size="sm" variant="outline" leftIcon={<AttachmentIcon />}>
-            Import
-          </Button>
-          <Button size="sm" colorScheme="blue" leftIcon={<AddIcon />}>
-            Add Knowledge
-          </Button>
-        </HStack>
-      </Flex>
+        </Box>
 
-      {/* Filters */}
-      <Card bg={cardBg} border="1px" borderColor={borderColor}>
-        <CardBody>
-          <HStack spacing={4} wrap="wrap">
-            <InputGroup maxW="300px">
-              <InputLeftElement>
-                <Icon as={SearchIcon} color="gray.400" />
-              </InputLeftElement>
-              <Input
-                placeholder="Search knowledge base..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </InputGroup>
-            
-            <Select
-              maxW="150px"
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-            >
-              <option value="all">All Categories</option>
-              <option value="SOP">SOP</option>
-              <option value="Guidelines">Guidelines</option>
-              <option value="Troubleshooting">Troubleshooting</option>
-            </Select>
-            
-            <Select
-              maxW="150px"
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="draft">Draft</option>
-              <option value="archived">Archived</option>
-            </Select>
-          </HStack>
-        </CardBody>
-      </Card>
-
-      {/* Knowledge Items Table */}
-      <Card bg={cardBg} border="1px" borderColor={borderColor}>
-        <CardBody p={0}>
-          <Table variant="simple">
-            <Thead>
-              <Tr>
-                <Th>Title</Th>
-                <Th>Category</Th>
-                <Th>Tags</Th>
-                <Th>Author</Th>
-                <Th>Status</Th>
-                <Th>Updated</Th>
-                <Th>Actions</Th>
-              </Tr>
-            </Thead>
-            <Tbody>
-              {filteredItems.map((item) => (
-                <Tr key={item.id}>
-                  <Td>
-                    <VStack align="start" spacing={1}>
-                      <Text fontWeight="semibold" fontSize="sm">
-                        {item.title}
-                      </Text>
-                      <Text fontSize="xs" color={textColor} noOfLines={2}>
-                        {item.content.substring(0, 100)}...
-                      </Text>
-                    </VStack>
-                  </Td>
-                  
-                  <Td>
-                    <Badge colorScheme="blue" variant="subtle">
-                      {item.category}
-                    </Badge>
-                  </Td>
-                  
-                  <Td>
-                    <HStack spacing={1} wrap="wrap">
-                      {item.tags.slice(0, 2).map((tag, index) => (
-                        <Badge key={index} size="sm" variant="outline">
-                          {tag}
-                        </Badge>
-                      ))}
-                      {item.tags.length > 2 && (
-                        <Text fontSize="xs" color={textColor}>
-                          +{item.tags.length - 2}
-                        </Text>
-                      )}
-                    </HStack>
-                  </Td>
-                  
-                  <Td>
-                    <Text fontSize="sm">{item.author}</Text>
-                  </Td>
-                  
-                  <Td>
-                    <Badge
-                      colorScheme={getStatusColor(item.status)}
-                      variant="solid"
-                    >
-                      {item.status.toUpperCase()}
-                    </Badge>
-                  </Td>
-                  
-                  <Td>
-                    <Text fontSize="sm" color={textColor}>
-                      {new Date(item.updatedAt).toLocaleDateString()}
-                    </Text>
-                  </Td>
-                  
-                  <Td>
-                    <HStack spacing={1}>
-                      <IconButton
-                        aria-label="View"
-                        icon={<ViewIcon />}
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleViewItem(item)}
-                      />
-                      <IconButton
-                        aria-label="Edit"
-                        icon={<EditIcon />}
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleEditItem(item)}
-                      />
-                      <IconButton
-                        aria-label="Delete"
-                        icon={<DeleteIcon />}
-                        size="sm"
-                        variant="ghost"
-                        colorScheme="red"
-                      />
-                    </HStack>
-                  </Td>
-                </Tr>
-              ))}
-            </Tbody>
-          </Table>
-        </CardBody>
-      </Card>
-
-      {/* Summary Stats */}
-      <HStack justify="space-between" color={textColor} fontSize="sm">
-        <Text>
-          Showing {filteredItems.length} of {mockKnowledgeItems.length} items
-        </Text>
-        <HStack spacing={4}>
-          <Text>
-            Active: {mockKnowledgeItems.filter(i => i.status === 'active').length}
-          </Text>
-          <Text>
-            Draft: {mockKnowledgeItems.filter(i => i.status === 'draft').length}
-          </Text>
-          <Text>
-            Archived: {mockKnowledgeItems.filter(i => i.status === 'archived').length}
-          </Text>
-        </HStack>
-      </HStack>
-
-      {/* View Modal */}
-      <Modal isOpen={isOpen} onClose={onClose} size="xl">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>
-            {selectedItem?.title}
-          </ModalHeader>
-          <ModalBody>
-            <VStack spacing={4} align="stretch">
-              <HStack spacing={4}>
-                <Badge colorScheme="blue" variant="subtle">
-                  {selectedItem?.category}
-                </Badge>
-                <Badge
-                  colorScheme={getStatusColor(selectedItem?.status || '')}
-                  variant="solid"
-                >
-                  {selectedItem?.status?.toUpperCase()}
-                </Badge>
-              </HStack>
-              
-              <Text fontSize="sm" color={textColor}>
-                Author: {selectedItem?.author} | 
-                Created: {selectedItem?.createdAt ? new Date(selectedItem.createdAt).toLocaleString() : ''} |
-                Updated: {selectedItem?.updatedAt ? new Date(selectedItem.updatedAt).toLocaleString() : ''}
-              </Text>
-              
-              <Divider />
-              
-              <Text>
-                {selectedItem?.content}
-              </Text>
-              
-              <VStack align="start" spacing={2}>
+        {/* Upload Area */}
+        <Card bg={cardBg}>
+          <CardBody>
+            <VStack spacing={2}>
+              <Box
+                w="100%"
+                h="80px"
+                border="2px dashed"
+                borderColor={dragActive ? 'blue.400' : borderColor}
+                borderRadius="lg"
+                bg={dragActive ? 'blue.50' : 'transparent'}
+                display="flex"
+                flexDirection="column"
+                alignItems="center"
+                justifyContent="center"
+                cursor="pointer"
+                transition="all 0.2s"
+                _hover={{
+                  borderColor: 'blue.400',
+                  bg: 'blue.50',
+                }}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Icon as={AttachmentIcon} w={5} h={5} color="blue.500" mb={1} />
                 <Text fontSize="sm" fontWeight="semibold">
-                  Tags:
+                  Drop Word document here or click to browse
                 </Text>
-                <HStack spacing={2} wrap="wrap">
-                  {selectedItem?.tags.map((tag, index) => (
-                    <Badge key={index} size="sm" variant="outline">
-                      {tag}
-                    </Badge>
-                  ))}
+                <Text fontSize="xs" color={textColor}>
+                  Supports .docx and .doc files (max 10MB)
+                </Text>
+              </Box>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".docx,.doc"
+                onChange={handleFileInputChange}
+                style={{ display: 'none' }}
+              />
+
+              <Button
+                colorScheme="blue"
+                leftIcon={<AttachmentIcon />}
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                isDisabled={isUploading}
+              >
+                Select Word Document
+              </Button>
+            </VStack>
+          </CardBody>
+        </Card>
+
+        {/* File Info and Upload Button */}
+        {file && !isUploading && (
+          <Card bg={cardBg}>
+            <CardBody>
+              <VStack spacing={3} align="stretch">
+                <HStack justify="space-between" align="center">
+                  <HStack>
+                    <Icon as={CheckCircleIcon} color="green.500" />
+                    <Text fontWeight="semibold">{file.name}</Text>
+                    <Text fontSize="sm" color={textColor}>({(file.size / 1024 / 1024).toFixed(2)} MB)</Text>
+                  </HStack>
+                  <Button colorScheme="green" onClick={handleUpload} isLoading={isUploading}>
+                    Process & Vectorize
+                  </Button>
                 </HStack>
               </VStack>
-            </VStack>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onClose}>
-              Close
-            </Button>
-            <Button colorScheme="blue" onClick={() => {
-              onClose();
-              onEditOpen();
-            }}>
-              Edit
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+            </CardBody>
+          </Card>
+        )}
 
-      {/* Edit Modal */}
-      <Modal isOpen={isEditOpen} onClose={onEditClose} size="xl">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>
-            Edit Knowledge Item
-          </ModalHeader>
-          <ModalBody>
-            <VStack spacing={4} align="stretch">
-              <FormControl>
-                <FormLabel>Title</FormLabel>
-                <Input defaultValue={selectedItem?.title} />
-              </FormControl>
-              
-              <FormControl>
-                <FormLabel>Category</FormLabel>
-                <Select defaultValue={selectedItem?.category}>
-                  <option value="SOP">SOP</option>
-                  <option value="Guidelines">Guidelines</option>
-                  <option value="Troubleshooting">Troubleshooting</option>
-                </Select>
-              </FormControl>
-              
-              <FormControl>
-                <FormLabel>Content</FormLabel>
-                <Textarea
-                  defaultValue={selectedItem?.content}
-                  rows={6}
-                />
-              </FormControl>
-              
-              <FormControl>
-                <FormLabel>Tags (comma-separated)</FormLabel>
-                <Input defaultValue={selectedItem?.tags.join(', ')} />
-              </FormControl>
-              
-              <FormControl>
-                <FormLabel>Status</FormLabel>
-                <Select defaultValue={selectedItem?.status}>
-                  <option value="active">Active</option>
-                  <option value="draft">Draft</option>
-                  <option value="archived">Archived</option>
-                </Select>
-              </FormControl>
+        {/* Upload Progress */}
+        {isUploading && (
+          <Card bg={cardBg}>
+            <CardBody>
+              <VStack spacing={3}>
+                <Text fontWeight="semibold">Processing: {file?.name}</Text>
+                <Progress value={uploadProgress} size="lg" colorScheme="blue" w="full" hasStripe isAnimated />
+                <Text fontSize="sm" color={textColor}>{uploadProgress}% Complete</Text>
+                <Alert status="info">
+                  <AlertIcon />
+                  <Box>
+                    <AlertTitle>Processing in progress!</AlertTitle>
+                    <AlertDescription>
+                      Converting Word document to JSON format and vectorizing for RAG system...
+                    </AlertDescription>
+                  </Box>
+                </Alert>
+              </VStack>
+            </CardBody>
+          </Card>
+        )}
+
+        {/* Upload Result */}
+        {uploadResult && (
+          <Card bg={cardBg}>
+            <CardBody>
+              <VStack spacing={4} align="stretch">
+                <HStack>
+                  <Icon as={uploadResult.success ? CheckCircleIcon : WarningIcon} 
+                        color={uploadResult.success ? 'green.500' : 'red.500'} />
+                  <Text fontSize="lg" fontWeight="bold" 
+                        color={uploadResult.success ? 'green.600' : 'red.600'}>
+                    {uploadResult.success ? 'Processing Successful!' : 'Processing Failed!'}
+                  </Text>
+                </HStack>
+                <Text fontSize="sm" color={textColor}>{uploadResult.message}</Text>
+                
+                {uploadResult.success && uploadResult.data && (
+                  <VStack spacing={3} align="stretch">
+                    <SimpleGrid columns={{ base: 1, md: 3 }} spacing={3}>
+                      <Stat textAlign="center">
+                        <StatLabel fontSize="xs">Total SOPs</StatLabel>
+                        <StatNumber fontSize="lg" color="blue.500">
+                          {uploadResult.data.totalSOPs}
+                        </StatNumber>
+                        <StatHelpText fontSize="xs">SOPs processed</StatHelpText>
+                      </Stat>
+                      <Stat textAlign="center">
+                        <StatLabel fontSize="xs">Modules</StatLabel>
+                        <StatNumber fontSize="lg" color="green.500">
+                          {uploadResult.data.modules.length}
+                        </StatNumber>
+                        <StatHelpText fontSize="xs">Different modules</StatHelpText>
+                      </Stat>
+                      <Stat textAlign="center">
+                        <StatLabel fontSize="xs">Vectorized</StatLabel>
+                        <StatNumber fontSize="lg" color={uploadResult.data.vectorized ? "green.500" : "red.500"}>
+                          {uploadResult.data.vectorized ? "Yes" : "No"}
+                        </StatNumber>
+                        <StatHelpText fontSize="xs">Ready for RAG</StatHelpText>
+                      </Stat>
+                    </SimpleGrid>
+
+                    <Divider />
+
+                    <Box>
+                      <Text fontSize="sm" fontWeight="semibold" mb={2}>Modules Found:</Text>
+                      <HStack spacing={1} flexWrap="wrap">
+                        {uploadResult.data.modules.map((module, index) => (
+                          <Badge key={index} colorScheme="blue" variant="subtle" size="sm">
+                            {module}
+                          </Badge>
+                        ))}
+                      </HStack>
+                    </Box>
+
+                    <Alert status={uploadResult.data.vectorized ? "success" : "warning"}>
+                      <AlertIcon />
+                      <Box>
+                        <AlertTitle>
+                          {uploadResult.data.vectorized ? "Knowledge Base Ready!" : "Vectorization Pending"}
+                        </AlertTitle>
+                        <AlertDescription>
+                          {uploadResult.data.vectorized 
+                            ? "Your knowledge base has been successfully vectorized and is ready for RAG queries."
+                            : "The document has been converted to JSON format. Vectorization may take additional time."
+                          }
+                        </AlertDescription>
+                      </Box>
+                    </Alert>
+                  </VStack>
+                )}
+              </VStack>
+            </CardBody>
+          </Card>
+        )}
+
+        {/* Instructions */}
+        <Card bg={cardBg}>
+          <CardBody>
+            <VStack spacing={3} align="stretch">
+              <Text fontSize="md" fontWeight="bold" color="blue.600">
+                📋 How it works
+              </Text>
+              <VStack spacing={2} align="start">
+                <Text fontSize="sm" color={textColor}>
+                  • Upload a Word document containing SOP procedures
+                </Text>
+                <Text fontSize="sm" color={textColor}>
+                  • The system automatically converts it to structured JSON format
+                </Text>
+                <Text fontSize="sm" color={textColor}>
+                  • Knowledge is vectorized and integrated into the RAG system
+                </Text>
+                <Text fontSize="sm" color={textColor}>
+                  • SOPs become available for AI-powered incident response
+                </Text>
+              </VStack>
             </VStack>
-          </ModalBody>
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={onEditClose}>
-              Cancel
-            </Button>
-            <Button colorScheme="blue">
-              Save Changes
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </VStack>
+          </CardBody>
+        </Card>
+      </VStack>
+    </Box>
   );
 };
