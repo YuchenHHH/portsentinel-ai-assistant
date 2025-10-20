@@ -139,6 +139,19 @@ class SOPExecutionSummaryService:
                 # 兜底：直接返回 backend/execution_summaries/<file>
                 summary_path_rel = str(Path("backend") / "execution_summaries" / Path(summary_path_abs).name)
             
+            # 隐藏功能：导出到 data/case_log_rag.json 作为历史案例
+            try:
+                self._export_case_to_rag(
+                    incident_id=incident_id,
+                    completed_steps=completed_steps or [],
+                    execution_status=execution_status,
+                    execution_notes=execution_notes,
+                    total_execution_time_hours=total_execution_time_hours,
+                    summary=result.resolution_summary.__dict__ if hasattr(result, 'resolution_summary') else {}
+                )
+            except Exception as export_err:
+                logging.warning(f"Export case to RAG failed (non-blocking): {export_err}")
+
             # 返回结构化结果
             return {
                 "success": True,
@@ -222,6 +235,89 @@ class SOPExecutionSummaryService:
             return f"Execution timed out after {len(completed_steps)} steps."
         else:
             return f"Execution ended with status: {execution_status}"
+
+    def _export_case_to_rag(
+        self,
+        incident_id: str,
+        completed_steps: list,
+        execution_status: str,
+        execution_notes: str,
+        total_execution_time_hours: float,
+        summary: Dict[str, Any]
+    ) -> None:
+        """
+        Hidden feature: Convert the whole execution flow into a historical case record
+        and append it to data/case_log_rag.json for future RAG referencing.
+        """
+        try:
+            project_root = Path(__file__).parent.parent.parent.parent
+            data_file = project_root / "data" / "case_log_rag.json"
+
+            module = summary.get("module") or summary.get("affected_module") or "Unknown"
+            mode = summary.get("source_type") or "Unknown"
+            is_edi = "Yes" if str(summary.get("is_edi", "")).lower() in ("yes", "true", "1") else "No"
+            timestamp = summary.get("execution_timestamp") or summary.get("timestamp") or datetime.utcnow().isoformat()
+
+            problem_statement = (
+                summary.get("problem_summary")
+                or summary.get("issue")
+                or (completed_steps[0].get("step_description") if completed_steps else "")
+                or ""
+            )
+
+            actions_taken = []
+            for step in completed_steps or []:
+                text = step.get("step_description") or step.get("tool_output") or step.get("status")
+                if text:
+                    actions_taken.append(str(text))
+            resolution_outcome = summary.get("resolution_outcome") or execution_status
+            solution = "; ".join(actions_taken[:6]) or f"Outcome: {resolution_outcome}"
+
+            full_text_chunks = [
+                f"Module: {module}",
+                f"Mode: {mode}",
+                f"EDI: {is_edi}",
+                f"Incident: {incident_id}",
+                f"Status: {execution_status}",
+            ]
+            if problem_statement:
+                full_text_chunks.append(f"Problem: {problem_statement}")
+            if solution:
+                full_text_chunks.append(f"Solution: {solution}")
+            full_text = "\n".join(full_text_chunks)
+
+            record = {
+                "id": f"case_{incident_id}",
+                "module": module,
+                "mode": mode,
+                "is_edi": is_edi,
+                "timestamp": timestamp,
+                "alert_email": summary.get("alert_email", ""),
+                "problem_statement": problem_statement,
+                "solution": solution,
+                "sop": summary.get("sop_title", ""),
+                "full_text": full_text
+            }
+
+            existing: list = []
+            if data_file.exists():
+                try:
+                    with open(data_file, "r", encoding="utf-8") as rf:
+                        existing = json.load(rf)
+                except Exception:
+                    existing = []
+
+            # De-duplicate by id
+            existing = [r for r in existing if r.get("id") != record["id"]]
+            existing.append(record)
+
+            data_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(data_file, "w", encoding="utf-8") as wf:
+                json.dump(existing, wf, ensure_ascii=False, indent=2)
+
+            logging.info(f"Case exported to RAG: {data_file}")
+        except Exception as e:
+            logging.warning(f"Export case to RAG failed: {e}")
 
 
 # 全局实例
