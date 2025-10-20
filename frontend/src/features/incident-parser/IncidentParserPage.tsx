@@ -274,6 +274,35 @@ export const IncidentParserPage: React.FC = () => {
         )
         setMessages(prev => [...prev, executionMessage])
 
+        // Check if execution result needs another approval
+        if (result.execution_result.status === 'needs_approval' && result.execution_result.state_token) {
+          // Parse SQL query from tool_output
+          let sqlQuery = '';
+          try {
+            if (result.execution_result.tool_output) {
+              const toolOutput = JSON.parse(result.execution_result.tool_output);
+              if (toolOutput && toolOutput.query) {
+                sqlQuery = toolOutput.query;
+              } else {
+                sqlQuery = result.execution_result.tool_output; // If not JSON format, use directly
+              }
+            }
+          } catch (e) {
+            // If parsing fails, use original output
+            sqlQuery = result.execution_result.tool_output || '';
+          }
+
+          const approvalMessage = createApprovalRequestMessage(
+            `⚠️ Another high-risk operation detected, manual approval required`,
+            {
+              state_token: result.execution_result.state_token,
+              query: sqlQuery,
+              step_description: result.execution_result.step_description
+            }
+          )
+          setMessages(prev => [...prev, approvalMessage])
+        }
+
         // If execution is completed, don't show completion message
         // if (result.execution_result.status === 'completed') {
         //   const completionMessage = createAssistantMessage(
