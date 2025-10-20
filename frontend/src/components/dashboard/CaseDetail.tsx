@@ -88,7 +88,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseId, onBack }) => {
   // 如果是新案例（caseId为null），直接显示聊天界面
   if (!caseId) {
     return (
-      <Box h="100%" display="flex" flexDirection="column">
+      <Box h="100%" display="flex" flexDirection="column" minH="0">
         {/* 新案例头部 */}
         <Box flexShrink={0} p={4} bg={cardBg} borderBottom="1px" borderColor={borderColor}>
           <Button
@@ -102,7 +102,7 @@ export const CaseDetail: React.FC<CaseDetailProps> = ({ caseId, onBack }) => {
         </Box>
 
         {/* 聊天界面 */}
-        <Box flex={1} overflow="hidden">
+        <Box flex={1} minH="0" overflow="hidden">
           <IncidentParserPage />
         </Box>
       </Box>

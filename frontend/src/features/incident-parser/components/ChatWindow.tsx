@@ -64,7 +64,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   return (
     <Box
       ref={scrollContainerRef}
-      flex={1}
+      h="100%"
       w="100%"
       bg={bgColor}
       overflowY="auto"
